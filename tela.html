@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Consiste Informática</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 97vh; /* Ajustei a altura para diminuir 3% */
+            margin: 1;
+            border: 3px solid #F4A460;
+			width: 98vw; /* Largura do corpo */
+        }
+        h1 {
+            margin-top: -10px; /* Subindo o "Olá!" */
+        }
+        .container {
+            text-align: center;
+			margin-top: -30px; /* Ajuste aqui para mover tudo mais para cima */
+        }
+        .logo {
+			margin-bottom: 120px; /* Espaço abaixo do logotipo */
+            margin-top: -99px; /* Move o logo mais próximo da margem superior */
+        }
+        .login-form {
+            display: inline-block;
+            text-align: left;
+        }
+        .login-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-form input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .login-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #F4A460;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login-form button:hover {
+            background-color: #e59450;
+        }
+        .forgot-password {
+            margin-top: 10px;
+        }
+        .forgot-password a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="Cabec_consiste.png" alt="Consiste Informática">
+        </div>
+        <h1>Ol&aacute! Que bom ter voc&ecirc aqui!</h1>
+        <h1>Acesse o Sistema de Rastreabilidade Bovina</h1>
+        <h2>Conecte-se</h2>
+        <form class="login-form">
+            <label for="id">Seu ID:</label>
+            <input type="text" id="id" name="id">
+            <label for="password">Sua Senha:</label>
+            <input type="password" id="password" name="password">
+            <label>
+                <input type="checkbox" name="remember"> Lembrar-me
+            </label>
+            <button type="submit">ENTRAR</button>
+        </form>
+        <div class="forgot-password">
+            <p>Esqueceu sua senha? <a href="#">Clique aqui!</a></p>
+        </div>
+    </div>
+</body>
+</html>

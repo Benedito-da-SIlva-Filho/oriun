@@ -1,0 +1,39 @@
+Eis o script para revisão, validação, fazer inclusão das melhorias refatoração e devolução do novo script para que seja sobreposto o atual.
+
+UPDATE a001_propriedades
+SET a001_data_de_movimentacao = CURRENT_TIMESTAMP
+WHERE a001_cod_propriedade = 3;
+
+UPDATE a001_propriedades
+SET a001_car = 'CAR555555'
+WHERE a001_cod_propriedade = 5;
+
+
+SELECT * FROM a001_propriedades;
+sELECT * FROM "01-Cadastros"."a001_propriedades";
+
+
+UPDATE a001_propriedades
+SET a001_data_de_criacao = CURRENT_TIMESTAMP
+WHERE a001_cod_propriedade = 5;
+
+UPDATE a001_propriedades
+SET a001_data_de_movimentacao = CURRENT_TIMESTAMP
+WHERE a001_cod_propriedade = 2;
+
+UPDATE "01-Cadastros".a001_propriedades
+SET a001_car = 'CAR1111111',
+    a001_data_de_movimentacao = CURRENT_TIMESTAMP,
+    a001_data_de_criacao = CURRENT_TIMESTAMP
+WHERE a001_cod_propriedade = 1;
+
+Select * from "01-Cadastros".a001_propriedades;
+
+UPDATE "01-Cadastros".a001_propriedades
+SET a001_nome_propriedade = 'Fazenda Origem Remota',
+    a001_data_de_movimentacao = CURRENT_TIMESTAMP
+WHERE a001_cod_propriedade = 6;
+
+SELECT a001_nome_propriedade, a001_data_de_movimentacao
+FROM a001_propriedades
+WHERE a001_cod_propriedade = 6;
