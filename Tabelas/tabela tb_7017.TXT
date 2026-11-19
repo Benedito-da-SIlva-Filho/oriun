@@ -1,0 +1,76 @@
+-- -*- coding: utf-8 -*-
+-- PROJETO: Orion SISBOV
+-- PASTA: database/migrations
+-- MODULO: Criacao da tabela tb_7017_entrada_brincos_rfid (Registro Definitivo Consolidado do Sisbov, ref. GERAS 7017)
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 13/07/2026 17:35 -03
+-- ATUALIZADO EM: 13/07/2026 17:35 -03
+-- VERSAO: 1.0
+--
+-- CHANGELOG:
+-- v1.0 - 13/07/2026 17:35 -03 - Criacao inicial. Fluxo confirmado: tb_3007_brincos_entrada gera
+--        tb_7017_entrada_brincos_rfid, que depois e atualizada pela tb_5001_brincagem (RFID, Saida
+--        Data quando Abate, GTA, Saida Origem, Raca, Nascimento, Eras, Sexo, Brincagem). Em seguida
+--        vem tb_2012_com_entrada, que gera o Comunicado de Entrada e carrega os animais definitivamente
+--        para tb_2001_entrada_animais.
+--        Campos obsoletos do GERAS excluidos por decisao de negocio: Brincos Qtde, Brincos Validade,
+--        Brincos Fornecedor, Brincos Responsavel, Brincos Solicitacao, RFid Fabricante,
+--        RFid Data Entrada, RFid N.Fiscal, Sequencia, Caixa.
+--        Campo "Brincos N.Fiscal" substituido por FK id_lote_entrada -> tb_3007_brincos_entrada(id),
+--        mesma logica ja aplicada na tb_3008_brincos_saida.
+--        Campo Sisbov mantido como texto (15 digitos, DV incorporado), SEM foreign key por enquanto -
+--        a tabela do Animal (tb_2001) ainda nao foi criada. Adicionar FK retroativamente quando existir.
+--        Campo "Saida Origem" mantido como VARCHAR livre (NAO usa ENUM) - decisao de negocio: o mesmo
+--        campo e alimentado por processos diferentes conforme o evento (tb_5001_brincagem preenche no
+--        caso de Entrada; uma futura tabela de Saida/Abate/Venda/Morte preenche no caso de Saida),
+--        misturando valores dos dois enums de movimentacao (Tipo Entrada e Tipo Saida). Mesma regra
+--        sera aplicada futuramente na tb_2017 (historico de eventos do animal).
+
+CREATE TABLE tb_7017_entrada_brincos_rfid (
+    id                  SERIAL PRIMARY KEY,
+    id_produtor         INTEGER NOT NULL REFERENCES produtores(id),
+    id_propriedade      INTEGER NOT NULL REFERENCES propriedades(id),
+    id_lote_entrada     INTEGER NOT NULL REFERENCES tb_3007_brincos_entrada(id),
+    sisbov              VARCHAR(15) NOT NULL,
+    manejo              VARCHAR(6),
+    rfid                VARCHAR(15),
+    saida_data          DATE,
+    saida_gta           VARCHAR(10),
+    saida_origem        VARCHAR(20),
+    raca                VARCHAR(2),
+    nascimento          DATE,
+    eras_dias           INTEGER,
+    sexo                VARCHAR(6),
+    data_brincagem      DATE,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Indices de apoio
+CREATE INDEX idx_tb_7017_entrada_brincos_rfid_produtor
+    ON tb_7017_entrada_brincos_rfid (id_produtor);
+
+CREATE INDEX idx_tb_7017_entrada_brincos_rfid_propriedade
+    ON tb_7017_entrada_brincos_rfid (id_propriedade);
+
+CREATE INDEX idx_tb_7017_entrada_brincos_rfid_sisbov
+    ON tb_7017_entrada_brincos_rfid (sisbov);
+
+CREATE INDEX idx_tb_7017_entrada_brincos_rfid_lote_entrada
+    ON tb_7017_entrada_brincos_rfid (id_lote_entrada);
+
+-- Trigger dedicado para atualizado_em (padrao: trg_<tablename>_atualizado_em)
+CREATE OR REPLACE FUNCTION trg_tb_7017_entrada_brincos_rfid_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_7017_entrada_brincos_rfid_atualizado_em
+    BEFORE UPDATE ON tb_7017_entrada_brincos_rfid
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_tb_7017_entrada_brincos_rfid_atualizado_em();
+
+-- FIM DE ARQUIVO

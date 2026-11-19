@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\propriedade_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-02 16:09 -03
+     ATUALIZADO EM: 2026-11-12 17:40 -03
+     VERSAO: 1.25.0
+     v1.25.0: Sessao 122 (2026-11-12 17:40 -03) - Auditoria Etapa 2 (item 3): Codigo ERAS e OESA ficam so de leitura para cargos sem permissao (explica o motivo); a secao de Protocolos envia a marca protocolos_enviados, para o servidor so mexer nos Protocolos quando eles estiverem na tela. REVERSAO: .bak_antes_s122_etapa2.
+     v1.24.0: Sessao 116 (2026-11-06 16:01 -03) - "+ Adicionar Produtor" so ativo para Titular/Administrador; os outros veem o botao cinza e o aviso. REVERSAO: .bak_antes_s116_addprodutor.
+     v1.24.1: Sessao 122 (2026-11-12 13:55 -03) - Auditoria Etapa 1: alert() nativo trocado pelo aviso padrao (mostrarAviso) e peca modal_confirmacao incluida. REVERSAO: .bak_antes_s122_etapa1.
+
+     DESCRICAO:
+         Formulario de cadastro e edicao de Propriedade.
+         Ate a v1.11.0, exclusivo da plataforma Consiste (perfil
+         CONSISTE). A partir da v1.12.0, tambem acessado pelo
+         perfil PRODUTOR - APENAS para completar sua propria 1a
+         Propriedade, pre-cadastrada pelo Convite Publico (P-040,
+         ver propriedades.py v1.12.0 e auth.py v1.10.0). Menu
+         lateral via include consiste/consiste_menu.html.
+         Campo id_certificadora e status_atividade NAO aparecem
+         aqui - pertencem a outro fluxo (Certificadora, P-013).
+         codigo_eras (Codigo SISBOV/ERAS) PASSA A APARECER a
+         partir da v1.20.0 - ver changelog abaixo.
+         Secao de Produtores Vinculados sera adicionada em
+         etapa futura (P-015).
+
+         v1.0.0 a v1.16.0: historico completo mantido no arquivo
+             original do projeto (ver sessoes 010, 011, 011.1,
+             032 e 033 - trava progressiva Proprietario -> Produtor
+             -> Dados da Propriedade no onboarding do Convite).
+         v1.17.0: Sessao 033 - Benedito identificou que o
+             Ativar/Inativar solto na lista de Proprietario(s)/
+             Produtor(es) nao dava nenhuma forma de EDITAR os
+             dados da pessoa ja vinculada - so trocava o status
+             do vinculo. Substituido o botao "Ativar/Inativar" por
+             um link "Editar" em ambas as listas, levando para
+             proprietario_cadastro.html/produtor_cadastro.html
+             (agora tambem acessiveis ao PRODUTOR para a propria
+             Propriedade - ver proprietarios.py v2.6.0 e
+             produtores.py v1.7.0). O controle de status (Ativo/
+             Inativo) migrou para DENTRO dessas telas de edicao
+             (novo bloco "Vinculo com esta Propriedade"). O status
+             continua aparecendo aqui na lista como texto
+             informativo (nao mais como botao de acao).
+         v1.18.0: Sessao 034 - Benedito testou o fluxo PRODUTOR
+             ponta a ponta e notou que esta tela (que funciona
+             como "tela principal" do PRODUTOR apos completar o
+             onboarding) nao tinha NENHUMA forma de sair sem
+             deslogar - o botao "Voltar" so existia para o perfil
+             CONSISTE (history.back()). Corrigido: novo bloco
+             condicional no topo (perfil igual a PRODUTOR),
+             mostrando um link "Voltar" que leva para
+             auth.produtor_home (a Home real do PRODUTOR,
+             confirmada em auth.py v1.10.0 - produtor/
+             produtor_home.html, com os atalhos de trabalho).
+             Comportamento esperado e aceito: se a Propriedade
+             ainda estiver com cadastro_completo == False (trava
+             progressiva P-040 ativa), produtor_home() ja
+             redireciona de volta para ca automaticamente - nao e
+             bug, e a mesma trava de sempre. Por esta tela ja
+             existir antes da Regra de UX de telas novas (aviso de
+             "alteracoes nao salvas" obrigatorio), este botao NAO
+             ganhou o modal de confirmacao (mesmo padrao simples
+             do "Voltar" que o CONSISTE ja tinha aqui, sem
+             intercept) - fica registrado como possivel pendencia
+             futura separada, se Benedito quiser.
+         v1.19.0: Sessao 034 - Benedito testou o botao "Voltar"
+             novo (v1.18.0) e, na pratica, ele parecia "nao fazer
+             nada" na 1a Propriedade (onboarding do Convite ainda
+             incompleto) - na verdade auth.produtor_home() ja
+             redireciona de volta para ca automaticamente enquanto
+             propriedade.cadastro_completo for False (P-040), so
+             que isso e invisivel para quem nao conhece a regra.
+             Adicionado banner de orientacao (novo bloco
+             aviso-onboarding-incompleto), visivel SOMENTE quando
+             usuario_perfil == 'PRODUTOR' E a Propriedade ja existe
+             E cadastro_completo == False - explica que e preciso
+             completar Municipio/UF (secao Dados da Propriedade,
+             mais abaixo) e clicar em "Salvar Alteracoes" para
+             liberar o "Voltar" de verdade. Some sozinho assim que
+             cadastro_completo virar True (mesma condicao ja usada
+             por auth.py/propriedades.py - nenhuma variavel nova
+             precisou ser passada pelo router).
+         v1.20.0: Sessao 034 (continuacao 5, 11/08/2026, 16:10 -03) -
+             DUAS mudancas, decisao de Benedito apos teste real:
+               (1) Novo campo "Codigo SISBOV (ERAS)" (name=
+                   codigo_eras, opcional, maxlength=20) na secao
+                   "Dados da Propriedade", posicionado ANTES de
+                   OESA - fecha a grade de 12 colunas junto com
+                   OESA e Area (Hectares), os 3 como col-4. Motivo:
+                   a coluna codigo_eras ja existe no banco desde a
+                   Sessao 024 (propriedade.py v2.3.0/model ja
+                   tinha o campo), mas nunca apareceu no formulario
+                   - nascia sempre nulo, preenchimento reservado a
+                   um fluxo futuro da Certificadora (P-013). Como
+                   esta tela agora atende tanto o Produtor comum
+                   quanto o exportador/SISBOV, faz sentido permitir
+                   que a Consiste ja preencha na hora do cadastro,
+                   quando o dado for conhecido - NAO substitui nem
+                   invalida o fluxo futuro da Certificadora (P-013
+                   continua pendente para o caso de a Certificadora
+                   preencher/alterar depois).
+               (2) Campos Latitude/Longitude trocam de <input
+                   type="number"> para <input type="text"> e
+                   ganham conversao automatica de formato via JS
+                   (funcoes normalizarCoordenada/dmsParaDecimal).
+                   Motivo: o campo numerico nativo obrigava o
+                   usuario a digitar em graus decimais - um
+                   produtor leigo, com a coordenada em graus/
+                   minutos/segundos (formato que qualquer GPS ou
+                   Google Maps mostra por padrao), nao tinha como
+                   preencher sem calcular a conversao na mao (erro
+                   real relatado por Benedito ao testar). Agora
+                   aceita: decimal com ponto (-18.918611), decimal
+                   com virgula (-18,918611), graus/minutos/segundos
+                   com simbolos (-18°55'07.0" ou 18° 55' 07,00" S),
+                   ou colar o par "latitude, longitude" direto do
+                   Google Maps (separa sozinho nos 2 campos). A
+                   conversao roda no blur de cada campo E de novo
+                   no submit do formulario (rede de seguranca) -
+                   o valor que chega ao servidor continua sendo
+                   sempre decimal simples, a validacao real em
+                   propriedades.py (min/max -90/90 e -180/180)
+                   NAO MUDOU.
+         v1.21.0: Sessao 034 (continuacao 5, 11/08/2026, 17:10 -03) -
+                 Aviso de "alteracoes nao salvas" ao tentar sair da
+                 tela, decisao de Benedito (pedido explicito de
+                 replicar o padrao ja usado em produtor_cadastro.html
+                 v2.3.0 e proprietario_cadastro.html - unico arquivo
+                 real conferido antes desta mudanca, regra de ouro).
+                 Mecanismo identico: (1) window.beforeunload nativo
+                 do navegador, cobre fechar aba/atualizar/digitar
+                 outra URL - dispara sempre que formularioModificado
+                 for true; (2) modal customizado
+                 (overlay-confirmacao-saida) intercepta especifi-
+                 camente os botoes internos "Voltar" e "Cancelar",
+                 com texto proprio e opcao "Continuar editando" ou
+                 "Sair sem salvar". formularioModificado vira true em
+                 qualquer input/change dentro do form principal
+                 (id="form-propriedade", novo - antes o form nao
+                 tinha id), e volta a false no momento do submit
+                 (para nao disparar o aviso justamente ao salvar com
+                 sucesso). AJUSTE em relacao ao padrao original de
+                 produtor_cadastro.html: la, interceptarSaida()
+                 assume que .btn-voltar-topo sempre tem href - o que
+                 e verdade para o perfil PRODUTOR (link real), mas
+                 FALSO para o perfil CONSISTE nesta tela (o botao
+                 "Voltar" do CONSISTE e <button onclick=
+                 "history.back()">, sem href). Corrigido aqui:
+                 interceptarSaida() aceita um segundo parametro
+                 opcional (acao alternativa) - quando o elemento e um
+                 <button> sem href, guarda a funcao history.back()
+                 para executar depois da confirmacao, em vez de
+                 tentar navegar para um href vazio (que quebraria o
+                 botao Voltar do CONSISTE em qualquer tela que
+                 reaproveitasse esse padrao sem essa correcao).
+         v1.22.0: Sessao 034 (continuacao 9, 13/08/2026, 19:10 -03) -
+                 Cracha "PRODUTOR" removido do topo para este perfil
+                 (mesma decisao de produtor_home.html v1.1.0 - ver
+                 changelog la para o motivo completo).
+         v1.23.0: Sessao 108 (29/10/2026, 09:25 -03) - So o rotulo do campo
+                 name=oesa mudou: de "OESA *" para "Codigo do Estabelecimento
+                 (OESA) *". Motivo: o OESA e o Codigo do Estabelecimento de 11
+                 digitos (os 11 primeiros do Codigo de Exploracao de 15 digitos
+                 da GTA), chave que o Orion usa para achar a Propriedade de
+                 destino da Transferencia; o escritorio nao reconhecia o nome.
+                 Nenhum outro campo, nome, tamanho ou regra foi alterado.
+                 REVERSAO: restaurar propriedade_cadastro.html.bak_antes_s108_rotulo_oesa.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'Editar' if propriedade else 'Nova' }} Propriedade</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include consiste_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        /* ---- Formulario ---- */
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 900px; margin-bottom: 20px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-8  { grid-column: span 8; }
+        .col-6  { grid-column: span 6; }
+        .col-4  { grid-column: span 4; }
+        .col-3  { grid-column: span 3; }
+        .col-2  { grid-column: span 2; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #D4370A; }
+        .form-group .dica { font-size: 11px; color: #999999; }
+        .upper { text-transform: uppercase; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .aviso-onboarding-incompleto { background: #fff8e1; border: 1px solid #f9a825; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: #8a6d00; line-height: 1.5; }
+        .aviso-onboarding-incompleto strong { color: #8a6d00; }
+
+        /* ---- Secoes desabilitadas (Propriedade Nova / trava de onboarding) ---- */
+        .secao-desabilitada { opacity: 0.5; pointer-events: none; }
+        .aviso-desabilitado { font-size: 12px; color: #D4370A; font-style: italic; margin-bottom: 12px; }
+
+        /* ---- Protocolos de Certificacao ---- */
+        .protocolos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .protocolo-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+        .protocolo-card input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; }
+        .protocolo-info strong { display: block; font-size: 13px; color: #333333; }
+        .protocolo-info span { display: block; font-size: 12px; color: #777777; margin-top: 3px; line-height: 1.4; }
+
+        /* ---- Proprietario(s) / Produtor(es) ---- */
+        .proprietarios-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        .proprietario-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .proprietario-info strong { display: block; font-size: 13px; color: #333333; }
+        .proprietario-info span { display: block; font-size: 12px; color: #777777; margin-top: 3px; }
+        .status-ativo { color: #2e7d32; font-weight: bold; font-size: 12px; }
+        .status-inativo { color: #c62828; font-weight: bold; font-size: 12px; }
+        .btn-toggle-vinculo { background: none; border: none; color: #666666; font-size: 12px; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+        .btn-toggle-vinculo:hover { color: #333333; }
+        .sem-proprietarios { font-size: 13px; color: #999999; padding: 10px 0; }
+        .btn-adicionar-proprietario { display: inline-block; padding: 9px 18px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-adicionar-proprietario:hover { background: #FBE9E4; }
+        /* s116 - botao desativado + aviso (so Titular/Administrador) */
+        .btn-adicionar-proprietario.desativado { background: #eeeeee; border-color: #bbbbbb; color: #999999; cursor: not-allowed; }
+        .btn-adicionar-proprietario.desativado:hover { background: #eeeeee; }
+        .aviso-so-titular { margin-top: 8px; font-size: 12.5px; color: #888888; }
+
+        /* ---- Modal de Desativacao de Protocolo ---- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: #ffffff; border-radius: 10px; padding: 24px; max-width: 440px; width: 90%; }
+        .modal-box h3 { color: #D4370A; font-size: 16px; margin-bottom: 8px; }
+        .modal-box p { font-size: 13px; color: #555555; margin-bottom: 16px; }
+        .modal-motivo-opcao { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #333333; }
+        .modal-motivo-opcao input { width: auto; }
+        .modal-botoes { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+        /* ---- Botoes ---- */
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Confirmacao de saida sem salvar (Sessao 034 cont. 5) ---- */
+        .overlay-confirmacao { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-confirmacao { background: #ffffff; border-radius: 10px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+        .modal-confirmacao-titulo { font-size: 16px; font-weight: bold; color: #D4370A; margin-bottom: 10px; }
+        .modal-confirmacao-texto { font-size: 14px; color: #333333; margin-bottom: 22px; line-height: 1.5; }
+        .modal-confirmacao-botoes { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-sair-sem-salvar { padding: 10px 20px; background: #c62828; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-sair-sem-salvar:hover { background: #a02020; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            {% if usuario_perfil == 'CONSISTE' %}
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            {% endif %}
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            {% if usuario_perfil != 'PRODUTOR' %}
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            {% endif %}
+            {% if usuario_perfil == 'CONSISTE' %}
+            <button onclick="history.back()" class="btn-voltar-topo">&#8592; Voltar</button>
+            {% elif usuario_perfil == 'PRODUTOR' %}
+            <a href="{{ url_for('auth.produtor_home') }}" class="btn-voltar-topo">&#8592; Voltar</a>
+            {% endif %}
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — exclusivo da plataforma Consiste.
+             PRODUTOR (P-040, completar 1a Propriedade) nao ve
+             nenhum menu - so o formulario em si. -->
+        {% if usuario_perfil == 'CONSISTE' %}
+        {% include 'consiste/consiste_menu.html' %}
+        {% endif %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#127968; {{ 'Editar' if propriedade else 'Nova' }} Propriedade</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if usuario_perfil == 'PRODUTOR' and propriedade and propriedade.id and not propriedade.cadastro_completo %}
+            <div class="aviso-onboarding-incompleto">
+                &#9888; <strong>Complete seu cadastro:</strong> preencha Município e UF (mais abaixo, em "Dados da Propriedade") e clique em "Salvar Alterações" para finalizar. Até lá, o botão "Voltar" sempre trará você de volta a esta tela.
+            </div>
+            {% endif %}
+
+            <!-- ================================================
+                 SECAO PROPRIETARIO(S) - visivel para CONSISTE e
+                 tambem para PRODUTOR (P-040, Sessao 032). FORA do
+                 formulario principal, pois o link "Editar" e o
+                 futuro botao de status vivem em outra tela agora
+                 (Sessao 033 - ver changelog no cabecalho).
+                 ================================================ -->
+            <div class="form-container">
+                <div class="form-secao">Proprietário(s)</div>
+
+                <div class="{{ 'secao-desabilitada' if not (propriedade and propriedade.id) else '' }}">
+
+                    {% if not (propriedade and propriedade.id) %}
+                    <div class="aviso-desabilitado">&#9888; Salve a Propriedade primeiro para adicionar Proprietários.</div>
+                    {% endif %}
+
+                    <div class="proprietarios-lista">
+                        {% for item in proprietarios_vinculados %}
+                        <div class="proprietario-card">
+                            <div class="proprietario-info">
+                                <strong>{{ item.proprietario.nome }}</strong>
+                                <span>
+                                    {{ 'CPF' if item.proprietario.tipo_pessoa == 'FISICA' else 'CNPJ' }}: {{ item.proprietario.cpf_cnpj }}
+                                    &#8212; Vinculado desde {{ item.data_inicio.strftime('%d/%m/%Y') if item.data_inicio else '-' }}
+                                    {% if not item.ativo %} &#8212; Encerrado em {{ item.data_fim.strftime('%d/%m/%Y') if item.data_fim else '-' }}{% endif %}
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                {% if item.ativo %}
+                                <span class="status-ativo">&#9679; Ativo</span>
+                                {% else %}
+                                <span class="status-inativo">&#9679; Inativo</span>
+                                {% endif %}
+                                <a href="{{ url_for('proprietarios.editar', id=item.proprietario.id, id_propriedade=propriedade.id) }}" class="btn-toggle-vinculo">
+                                    Editar
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="sem-proprietarios">Nenhum Proprietário vinculado no momento.</div>
+                        {% endfor %}
+                    </div>
+
+                    {% if propriedade and propriedade.id %}
+                    <a href="{{ url_for('proprietarios.novo', id_propriedade=propriedade.id) }}" class="btn-adicionar-proprietario">
+                        + Adicionar Proprietário
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- ================================================
+                 SECAO PRODUTOR(ES) - visivel para CONSISTE e
+                 tambem para PRODUTOR (P-040, Sessao 032/033).
+                 ================================================ -->
+            <div class="form-container">
+                <div class="form-secao">Produtor(es)</div>
+
+                <div class="{{ 'secao-desabilitada' if (not (propriedade and propriedade.id)) or trava_secao_produtor else '' }}">
+
+                    {% if not (propriedade and propriedade.id) %}
+                    <div class="aviso-desabilitado">&#9888; Salve a Propriedade primeiro para adicionar Produtores.</div>
+                    {% elif trava_secao_produtor %}
+                    <div class="aviso-desabilitado">&#9888; Cadastre o Proprietário primeiro para liberar esta seção.</div>
+                    {% endif %}
+
+                    <div class="proprietarios-lista">
+                        {% for item in produtores_vinculados %}
+                        <div class="proprietario-card">
+                            <div class="proprietario-info">
+                                <strong>{{ item.produtor.nome }}</strong>
+                                <span>
+                                    {{ 'CPF' if item.produtor.tipo_pessoa == 'FISICA' else 'CNPJ' }}: {{ item.produtor.cpf_cnpj }}
+                                    &#8212; Vinculado desde {{ item.data_inicio.strftime('%d/%m/%Y') if item.data_inicio else '-' }}
+                                    {% if not item.ativo %} &#8212; Encerrado em {{ item.data_fim.strftime('%d/%m/%Y') if item.data_fim else '-' }}{% endif %}
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                {% if item.ativo %}
+                                <span class="status-ativo">&#9679; Ativo</span>
+                                {% else %}
+                                <span class="status-inativo">&#9679; Inativo</span>
+                                {% endif %}
+                                <a href="{{ url_for('produtores.editar', id=item.produtor.id, id_propriedade=propriedade.id) }}" class="btn-toggle-vinculo">
+                                    Editar
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="sem-proprietarios">Nenhum Produtor vinculado no momento.</div>
+                        {% endfor %}
+                    </div>
+
+                    {% if propriedade and propriedade.id %}
+                    {% if pode_adicionar_produtor %}
+                    <a href="{{ url_for('produtores.novo', id_propriedade=propriedade.id) }}" class="btn-adicionar-proprietario">
+                        + Adicionar Produtor
+                    </a>
+                    {% else %}
+                    <span class="btn-adicionar-proprietario desativado" aria-disabled="true">+ Adicionar Produtor</span>
+                    <div class="aviso-so-titular">{{ msg_so_titular_admin }}</div>
+                    {% endif %}
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('propriedades.salvar') }}" id="form-propriedade" autocomplete="off">
+                    <input type="hidden" name="id" value="{{ propriedade.id if propriedade else '' }}">
+
+                    <!-- ============================================
+                         Sessao 033: envolve Dados da Propriedade +
+                         Endereco + Contato + Localizacao com a trava
+                         trava_dados_propriedade - so chega True para
+                         PRODUTOR em onboarding sem o Produtor Titular
+                         ter completado os proprios placeholders
+                         (municipio/UF). Protocolos (abaixo, exclusivo
+                         CONSISTE) mantem sua propria trava
+                         independente, como sempre.
+                         ============================================ -->
+                    <div class="{{ 'secao-desabilitada' if trava_dados_propriedade else '' }}">
+
+                    {% if trava_dados_propriedade %}
+                    <div class="aviso-desabilitado">&#9888; Complete o cadastro do Produtor primeiro para editar os dados da propriedade.</div>
+                    {% endif %}
+
+                    <!-- Dados da Propriedade -->
+                    <div class="form-secao">Dados da Propriedade</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-8">
+                            <label>Nome *</label>
+                            <input type="text" name="nome" required maxlength="150" class="upper" autocomplete="off"
+                                value="{{ propriedade.nome if propriedade else '' }}"
+                                placeholder="Nome da Propriedade / Fazenda">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Tipo *</label>
+                            <select name="tipo" required autocomplete="off">
+                                <option value="">Selecione...</option>
+                                {% for t in tipos %}
+                                <option value="{{ t }}" {{ 'selected' if propriedade and propriedade.tipo == t else '' }}>
+                                    {{ t }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Inscrição Estadual</label>
+                            <input type="text" name="inscricao_estadual" maxlength="30" class="upper" autocomplete="off"
+                                value="{{ propriedade.inscricao_estadual if propriedade else '' }}">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>NIRF / INCRA</label>
+                            <input type="text" name="nirf_incra" maxlength="30" class="upper" autocomplete="off"
+                                value="{{ (propriedade.nirf_incra or '') if propriedade else '' }}">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>CAR</label>
+                            <input type="text" name="car" maxlength="50" class="upper" autocomplete="off"
+                                value="{{ (propriedade.car or '') if propriedade else '' }}"
+                                placeholder="Cadastro Ambiental Rural">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Código SISBOV (ERAS)</label>
+                            <input type="text" name="codigo_eras" maxlength="20" class="upper" autocomplete="off"
+                                {{ 'readonly title="' ~ msg_so_cargos_certificacao ~ '"' if (propriedade and propriedade.id and usuario_perfil != 'CONSISTE' and not pode_alterar_certificacao) else '' }}
+                                value="{{ (propriedade.codigo_eras or '') if propriedade else '' }}"
+                                placeholder="Se já souber - Produtor não-SISBOV deixa em branco">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Código do Estabelecimento (OESA) *</label>
+                            <input type="text" name="oesa" required maxlength="11" class="upper" autocomplete="off"
+                                {{ 'readonly title="' ~ msg_so_cargos_certificacao ~ '"' if (propriedade and propriedade.id and usuario_perfil != 'CONSISTE' and not pode_alterar_certificacao) else '' }}
+                                value="{{ (propriedade.oesa or '') if propriedade else '' }}"
+                                placeholder="Código no órgão estadual (GTA)">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Área (hectares) *</label>
+                            <input type="number" step="0.01" name="area_hectares" required autocomplete="off"
+                                value="{{ propriedade.area_hectares if propriedade else '' }}">
+                        </div>
+
+                    </div>
+
+                    <!-- Endereco -->
+                    <div class="form-secao">Endereço</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-8">
+                            <label>Logradouro</label>
+                            <input type="text" name="logradouro" maxlength="200" class="upper" autocomplete="off"
+                                value="{{ (propriedade.logradouro or '') if propriedade else '' }}"
+                                placeholder="Rodovia, estrada, endereço...">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label>Número</label>
+                            <input type="text" name="numero" maxlength="10" class="upper" autocomplete="off"
+                                value="{{ (propriedade.numero or '') if propriedade else '' }}">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label>UF *</label>
+                            <select name="uf" required autocomplete="off">
+                                <option value="">--</option>
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if propriedade and propriedade.uf == sigla else '' }}>
+                                    {{ sigla }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-8">
+                            <label>Bairro</label>
+                            <input type="text" name="bairro" maxlength="100" class="upper" autocomplete="off"
+                                value="{{ (propriedade.bairro or '') if propriedade else '' }}">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>CEP</label>
+                            <input type="text" id="campo-cep" name="cep" maxlength="9" autocomplete="off"
+                                value="{{ (propriedade.cep or '') if propriedade else '' }}"
+                                placeholder="00000-000">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Município *</label>
+                            <input type="text" name="municipio" required maxlength="100" class="upper" autocomplete="off"
+                                value="{{ propriedade.municipio if propriedade else '' }}">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Roteiro de Acesso *</label>
+                            <textarea name="roteiro_acesso" required class="upper" autocomplete="off"
+                                placeholder="Como chegar na Propriedade a partir do centro da cidade / referência próxima">{{ propriedade.roteiro_acesso if propriedade else '' }}</textarea>
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Distância da Sede à Cidade Próxima</label>
+                            <input type="text" name="distancia_sede_cidade" maxlength="200" class="upper" autocomplete="off"
+                                value="{{ (propriedade.distancia_sede_cidade or '') if propriedade else '' }}"
+                                placeholder="Ex: 15KM ASFALTO + 3KM TERRA">
+                        </div>
+
+                    </div>
+
+                    <!-- Contato -->
+                    <div class="form-secao">Contato</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-6">
+                            <label>Email *</label>
+                            <input type="email" name="email" required maxlength="150" autocomplete="off"
+                                value="{{ propriedade.email if propriedade else '' }}">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Telefone *</label>
+                            <input type="text" id="campo-telefone" name="telefone" required maxlength="15" autocomplete="off"
+                                value="{{ propriedade.telefone if propriedade else '' }}"
+                                placeholder="(00) 00000-0000">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Telefone 2</label>
+                            <input type="text" id="campo-telefone2" name="telefone2" maxlength="15" autocomplete="off"
+                                value="{{ (propriedade.telefone2 or '') if propriedade else '' }}"
+                                placeholder="(00) 00000-0000">
+                        </div>
+
+                    </div>
+
+                    <!-- Localizacao -->
+                    <div class="form-secao">Localização Geográfica</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-4">
+                            <label>Latitude</label>
+                            <input type="text" id="campo-latitude" name="latitude" autocomplete="off"
+                                title="Aceita decimal (-19.3232123), graus/min/seg (-19°19'23.6") ou colar o par lat,long do Google Maps"
+                                value="{{ (propriedade.latitude or '') if propriedade else '' }}"
+                                placeholder="Ex: -19.3232123 ou -19°19'23.6&quot;">
+                            <span class="dica">Decimal, GMS ou colar o par direto do Google Maps</span>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Longitude</label>
+                            <input type="text" id="campo-longitude" name="longitude" autocomplete="off"
+                                title="Aceita decimal (-49.2121330), graus/min/seg (-49°12'43.7") ou colar o par lat,long do Google Maps"
+                                value="{{ (propriedade.longitude or '') if propriedade else '' }}"
+                                placeholder="Ex: -49.2121330 ou -49°12'43.7&quot;">
+                        </div>
+
+                    </div>
+
+                    </div>
+                    <!-- fim da div trava_dados_propriedade -->
+
+                    {% if usuario_perfil == 'CONSISTE' %}
+                    <!-- Protocolos de Certificacao - exclusivo CONSISTE -->
+                    <div class="form-secao">Protocolos de Certificação</div>
+                    <input type="hidden" name="protocolos_enviados" value="1">
+                    <div class="{{ 'secao-desabilitada' if not (propriedade and propriedade.id) else '' }}">
+
+                        {% if not (propriedade and propriedade.id) %}
+                        <div class="aviso-desabilitado">&#9888; Salve a Propriedade primeiro para ativar Protocolos.</div>
+                        {% endif %}
+
+                        <div class="protocolos-grid">
+                            {% for protocolo in protocolos %}
+                            <div class="protocolo-card">
+                                <input type="checkbox"
+                                    class="checkbox-protocolo"
+                                    id="protocolo_{{ protocolo.id }}"
+                                    name="protocolo_{{ protocolo.id }}"
+                                    data-id-protocolo="{{ protocolo.id }}"
+                                    data-nome-protocolo="{{ protocolo.nome }}"
+                                    {{ 'disabled' if not (propriedade and propriedade.id) else '' }}
+                                    {{ 'checked' if protocolo.id in vinculos_ativos_ids else '' }}>
+                                <div class="protocolo-info">
+                                    <strong>{{ protocolo.codigo }} &#8212; {{ protocolo.nome }}</strong>
+                                    <span>{{ protocolo.resumo }}</span>
+                                </div>
+                                <input type="hidden" id="motivo_inativacao_{{ protocolo.id }}" name="motivo_inativacao_{{ protocolo.id }}" value="">
+                                <input type="hidden" id="observacao_inativacao_{{ protocolo.id }}" name="observacao_inativacao_{{ protocolo.id }}" value="">
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    {% endif %}
+
+                    <!-- Botoes -->
+                    <div class="form-botoes">
+                        {% if usuario_perfil == 'CONSISTE' %}
+                        <a href="{{ url_for('propriedades.lista') }}" class="btn-cancelar">Cancelar</a>
+                        {% endif %}
+                        <button type="submit" class="btn-salvar">
+                            {{ 'Salvar Alterações' if propriedade else 'Cadastrar' }}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Desativacao de Protocolo - exclusivo CONSISTE -->
+    {% if usuario_perfil == 'CONSISTE' %}
+    <div class="modal-overlay" id="modal-desativacao">
+        <div class="modal-box">
+            <h3>&#9888; Desativar Protocolo</h3>
+            <p>Você está desativando <strong id="modal-nome-protocolo"></strong>. Os animais deste lote perderão o status vinculado a este protocolo. Informe o motivo:</p>
+
+            <label class="modal-motivo-opcao">
+                <input type="radio" name="modal-motivo" value="voluntaria"> Voluntária (o Produtor optou por sair)
+            </label>
+            <label class="modal-motivo-opcao">
+                <input type="radio" name="modal-motivo" value="compulsoria"> Compulsória (irregularidade constatada por entidade externa)
+            </label>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label>Observação</label>
+                <textarea id="modal-observacao" placeholder="Detalhe o motivo (opcional para voluntária, recomendado para compulsória)"></textarea>
+            </div>
+
+            <div class="modal-botoes">
+                <button type="button" class="btn-cancelar" onclick="cancelarDesativacao()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="confirmarDesativacao()">Confirmar Desativação</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- MODAL: Alteracoes nao salvas (Sessao 034 cont. 5) -->
+    <div class="overlay-confirmacao" id="overlay-confirmacao-saida">
+        <div class="modal-confirmacao">
+            <div class="modal-confirmacao-titulo">Alterações não salvas</div>
+            <div class="modal-confirmacao-texto">Você tem alterações neste cadastro que ainda não foram salvas. Se sair agora, elas serão perdidas.</div>
+            <div class="modal-confirmacao-botoes">
+                <button type="button" id="botao-continuar-editando" class="btn-cancelar">Continuar editando</button>
+                <button type="button" id="botao-sair-sem-salvar" class="btn-sair-sem-salvar">Sair sem salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+
+        // Uppercase automatico em todos os campos marcados
+        // com a classe "upper" - EXCETO email, que fica minusculo
+        document.querySelectorAll('.upper').forEach(function(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+
+        // ---- Mascara de Telefone ----
+        function aplicarMascaraTelefone(campo) {
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 11);
+                var formatado = digitos;
+
+                if (digitos.length > 10) {
+                    formatado = digitos.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+                } else if (digitos.length > 6) {
+                    formatado = digitos.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                } else if (digitos.length > 2) {
+                    formatado = digitos.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                } else if (digitos.length > 0) {
+                    formatado = digitos.replace(/^(\d{0,2})/, '($1');
+                }
+
+                this.value = formatado.trim();
+            });
+        }
+        aplicarMascaraTelefone(document.getElementById('campo-telefone'));
+        aplicarMascaraTelefone(document.getElementById('campo-telefone2'));
+
+        // ---- Mascara de CEP: XXXXX-XXX ----
+        var campoCep = document.getElementById('campo-cep');
+        campoCep.addEventListener('input', function() {
+            var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+            var formatado = digitos;
+            if (digitos.length > 5) {
+                formatado = digitos.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+            }
+            this.value = formatado.trim();
+        });
+
+        // ---- Coordenadas Geograficas (Sessao 034 cont. 5) ----
+        // Converte graus/minutos/segundos (com simbolos ° ' ") ou
+        // decimal com virgula para decimal com ponto, formato que
+        // o servidor (propriedades.py) espera. NAO substitui a
+        // validacao real do servidor (-90/90 e -180/180) - so
+        // converte o FORMATO antes de chegar la.
+        function dmsParaDecimal(texto) {
+            var m = texto.match(/(-?\d+(?:[.,]\d+)?)\s*[°º]\s*(\d+(?:[.,]\d+)?)?\s*'?\s*(\d+(?:[.,]\d+)?)?\s*"?\s*([NSEWnsew])?/);
+            if (!m) { return null; }
+            var graus = parseFloat(m[1].replace(',', '.'));
+            var minutos = m[2] ? parseFloat(m[2].replace(',', '.')) : 0;
+            var segundos = m[3] ? parseFloat(m[3].replace(',', '.')) : 0;
+            var negativo = graus < 0;
+            var valor = Math.abs(graus) + (minutos / 60) + (segundos / 3600);
+            if (negativo) { valor = -valor; }
+            if (m[4] && /[SWsw]/.test(m[4])) { valor = -Math.abs(valor); }
+            return valor;
+        }
+
+        function normalizarCoordenada(valorBruto) {
+            var texto = (valorBruto || '').trim();
+            if (!texto) { return texto; }
+
+            // Graus/minutos/segundos (contem simbolo de grau, apostrofo ou aspas)
+            if (/[°º'"]/.test(texto)) {
+                var decimal = dmsParaDecimal(texto);
+                return decimal !== null ? decimal.toFixed(6) : texto;
+            }
+
+            // Decimal com virgula (formato brasileiro), numero unico
+            if (/^-?\d+,\d+$/.test(texto)) {
+                return texto.replace(',', '.');
+            }
+
+            // Ja esta em decimal com ponto - nao mexe
+            return texto;
+        }
+
+        var campoLatitude = document.getElementById('campo-latitude');
+        var campoLongitude = document.getElementById('campo-longitude');
+
+        campoLatitude.addEventListener('blur', function() {
+            this.value = normalizarCoordenada(this.value);
+        });
+        campoLongitude.addEventListener('blur', function() {
+            this.value = normalizarCoordenada(this.value);
+        });
+
+        // Colar o par "latitude, longitude" direto do Google Maps
+        // (formato copiado ao clicar com o botao direito no mapa)
+        // no campo Latitude - separa sozinho nos 2 campos.
+        campoLatitude.addEventListener('paste', function(e) {
+            var texto = (e.clipboardData || window.clipboardData).getData('text');
+            var partes = texto.split(',');
+            if (partes.length === 2) {
+                var lat = partes[0].trim();
+                var lon = partes[1].trim();
+                if (/^-?\d+\.\d+$/.test(lat) && /^-?\d+\.\d+$/.test(lon)) {
+                    e.preventDefault();
+                    campoLatitude.value = lat;
+                    campoLongitude.value = lon;
+                }
+            }
+        });
+
+        // ---- Limpa mascara / normaliza coordenadas antes de enviar o formulario ----
+        var formPropriedade = document.getElementById('form-propriedade');
+        formPropriedade.addEventListener('submit', function() {
+            ['campo-telefone', 'campo-telefone2', 'campo-cep'].forEach(function(idCampo) {
+                var campo = document.getElementById(idCampo);
+                if (campo) {
+                    campo.value = campo.value.replace(/\D/g, '');
+                }
+            });
+            campoLatitude.value = normalizarCoordenada(campoLatitude.value);
+            campoLongitude.value = normalizarCoordenada(campoLongitude.value);
+
+            formularioModificado = false;
+        });
+
+        // ---- Alteracoes nao salvas (Sessao 034 cont. 5) ----
+        // Mesmo padrao ja usado em produtor_cadastro.html/
+        // proprietario_cadastro.html - beforeunload nativo do
+        // navegador cobre fechar aba/atualizar/clicar em qualquer
+        // link; o modal customizado cobre especificamente os
+        // botoes internos "Voltar" e "Cancelar", com texto e
+        // opcao de continuar editando.
+        var formularioModificado = false;
+
+        formPropriedade.addEventListener('input', function() {
+            formularioModificado = true;
+        });
+        formPropriedade.addEventListener('change', function() {
+            formularioModificado = true;
+        });
+
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioModificado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+
+        var overlayConfirmacaoSaida = document.getElementById('overlay-confirmacao-saida');
+        var botaoContinuarEditando = document.getElementById('botao-continuar-editando');
+        var botaoSairSemSalvar = document.getElementById('botao-sair-sem-salvar');
+        var linkDestinoPendente = null;
+        var acaoPendente = null;
+
+        // Aceita tanto um link normal (href) quanto uma acao
+        // alternativa (ex: history.back(), usado pelo botao
+        // "Voltar" do perfil CONSISTE, que nao e um <a href>).
+        function interceptarSaida(elemento, acaoAlternativa) {
+            if (!elemento) {
+                return;
+            }
+            elemento.addEventListener('click', function(evento) {
+                if (formularioModificado) {
+                    evento.preventDefault();
+                    if (acaoAlternativa) {
+                        acaoPendente = acaoAlternativa;
+                        linkDestinoPendente = null;
+                    } else {
+                        linkDestinoPendente = elemento.getAttribute('href');
+                        acaoPendente = null;
+                    }
+                    overlayConfirmacaoSaida.style.display = 'flex';
+                }
+            });
+        }
+
+        var botaoVoltarTopo = document.querySelector('.btn-voltar-topo');
+        if (botaoVoltarTopo && botaoVoltarTopo.tagName === 'BUTTON') {
+            // Perfil CONSISTE - botao com history.back(), sem href
+            interceptarSaida(botaoVoltarTopo, function() { history.back(); });
+        } else {
+            // Perfil PRODUTOR - link normal com href
+            interceptarSaida(botaoVoltarTopo);
+        }
+        interceptarSaida(document.querySelector('.btn-cancelar'));
+
+        botaoContinuarEditando.addEventListener('click', function() {
+            overlayConfirmacaoSaida.style.display = 'none';
+            linkDestinoPendente = null;
+            acaoPendente = null;
+        });
+
+        botaoSairSemSalvar.addEventListener('click', function() {
+            formularioModificado = false;
+            overlayConfirmacaoSaida.style.display = 'none';
+            if (acaoPendente) {
+                acaoPendente();
+            } else if (linkDestinoPendente) {
+                window.location.href = linkDestinoPendente;
+            }
+        });
+
+        // ---- Protocolos de Certificacao: ativacao/desativacao ----
+        // So existe quando usuario_perfil == 'CONSISTE' (bloco
+        // condicional acima) - checagem defensiva evita erro em
+        // JS quando os checkboxes nao existem na tela (PRODUTOR).
+        var checkboxesProtocolo = document.querySelectorAll('.checkbox-protocolo');
+        if (checkboxesProtocolo.length > 0) {
+            var protocolosAtivosNoCarregamento = new Set(
+                Array.from(checkboxesProtocolo)
+                    .filter(function(cb) { return cb.checked; })
+                    .map(function(cb) { return cb.dataset.idProtocolo; })
+            );
+
+            var protocoloEmDesativacao = null;
+            var checkboxEmDesativacao = null;
+
+            checkboxesProtocolo.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    var idProtocolo = this.dataset.idProtocolo;
+
+                    if (!this.checked && protocolosAtivosNoCarregamento.has(idProtocolo)) {
+                        this.checked = true;
+                        protocoloEmDesativacao = idProtocolo;
+                        checkboxEmDesativacao = this;
+                        document.getElementById('modal-nome-protocolo').textContent = this.dataset.nomeProtocolo;
+                        document.getElementById('modal-desativacao').style.display = 'flex';
+                    } else if (this.checked) {
+                        limparMotivoObservacao(idProtocolo);
+                    }
+                });
+            });
+        }
+
+        function cancelarDesativacao() {
+            fecharModalDesativacao();
+        }
+
+        function confirmarDesativacao() {
+            var motivo = document.querySelector('input[name="modal-motivo"]:checked');
+            if (!motivo) {
+                mostrarAviso('Selecione o motivo da desativação (Voluntária ou Compulsória).');
+                return;
+            }
+
+            var observacao = document.getElementById('modal-observacao').value;
+
+            document.getElementById('motivo_inativacao_' + protocoloEmDesativacao).value = motivo.value;
+            document.getElementById('observacao_inativacao_' + protocoloEmDesativacao).value = observacao;
+
+            checkboxEmDesativacao.checked = false;
+
+            fecharModalDesativacao();
+        }
+
+        function fecharModalDesativacao() {
+            document.getElementById('modal-desativacao').style.display = 'none';
+            document.getElementById('modal-observacao').value = '';
+            document.querySelectorAll('input[name="modal-motivo"]').forEach(function(r) { r.checked = false; });
+            protocoloEmDesativacao = null;
+            checkboxEmDesativacao = null;
+        }
+
+        function limparMotivoObservacao(idProtocolo) {
+            var campoMotivo = document.getElementById('motivo_inativacao_' + idProtocolo);
+            var campoObs = document.getElementById('observacao_inativacao_' + idProtocolo);
+            if (campoMotivo) campoMotivo.value = '';
+            if (campoObs) campoObs.value = '';
+        }
+    </script>
+
+{% include 'produtor/modal_confirmacao.html' %}
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\propriedade_cadastro.html
+     ========================================================= -->

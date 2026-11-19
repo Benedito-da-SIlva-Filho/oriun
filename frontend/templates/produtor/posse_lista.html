@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\posse_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-05 14:15 -03
+     ATUALIZADO EM: 2026-11-05 19:00 -03
+     v1.3.1: Sessao 115 (2026-11-05 19:00 -03) - Vincular com animal marcado e nao gravado pede confirmacao. REVERSAO: .bak_antes_s115_aviso_vincular.
+     v1.3.0: Sessao 115 (2026-11-05 18:35 -03) - Botao Vincular a DTA ao lado de Gravar marcados (habilita quando os lidos atendem a DTA). REVERSAO: .bak_antes_s115_btn_vincular.
+     v1.2.1: Sessao 115 (2026-11-05 17:35 -03) - Ao voltar pelo navegador a tela recarrega (pageshow), sem mostrar numeros velhos. REVERSAO: .bak_antes_s115_pageshow.
+     v1.2.0: Sessao 115 (2026-11-05 17:20 -03) - Gravado tem caixinha marcada: desmarcar desfaz a leitura (com confirmacao); Desmarcar todos tambem oferece desfazer os gravados. REVERSAO: .bak_antes_s115_desfazer.
+     v1.1.0: Sessao 115 (2026-11-05 16:55 -03) - Animais ja gravados ficam na tabela (travados, no topo, "Lido em"); filtro Situacao; contador Ja gravados; apos gravar a linha vira gravada. REVERSAO: .bak_antes_s115_gravados.
+     v1.0.2: Sessao 115 (2026-11-05 16:40 -03) - Confirmacao no modal padrao do Orion (confirmarAcaoAssincrona), no lugar do confirm() do navegador. REVERSAO: .bak_antes_s115_modal.
+     v1.0.1: Sessao 115 (2026-11-05 14:30 -03) - Layout compacto: info numa linha, filtros e botoes numa barra, tabela ocupa a altura toda. REVERSAO: .bak_antes_s115_layout.
+     v1.0.0: Sessao 115 (05/11/2026) - Lista da Alteracao de Posse: animais em estoque com SISBOV, Manejo, Sexo, ERAS e Raca;
+         filtros de Sexo e ERAS; marcar todos (so os filtrados); grava a leitura de Posse (tipo POSSE, em aberto). Sem Lote (decisao do Benedito).
+         Router: backend/routers/posse_leitura.py (via lista).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Lista da Altera&#231;&#227;o de Posse</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 780px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-3  { grid-column: span 3; }   /* v1.4.0 */
+        .col-4  { grid-column: span 4; }
+        .col-5  { grid-column: span 5; }   /* v1.4.0 */
+        .col-6  { grid-column: span 6; }
+        .col-9  { grid-column: span 9; }   /* v-s108 */
+        .col-8  { grid-column: span 8; }   /* v1.0.1 - campo CPF/CNPJ do destino */
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .campo-destaque input, .campo-destaque select { font-size: 17px; font-weight: bold; }
+
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 8px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+        .aviso-construcao { background: #fff8e1; border-left: 6px solid #f9a825; padding: 14px 18px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #8a6d00; margin-top: 12px; display: none; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+
+        /* v1.5.0 - brincagens em aberto do Tipo escolhido */
+        .bloco-abertas { margin-top: 14px; background: #fff8e1; border: 1px solid #f9a825; border-radius: 8px; padding: 10px 14px; display: none; }
+        .bloco-abertas .titulo-abertas { font-size: 13px; font-weight: bold; color: #8a6d00; margin-bottom: 8px; }
+        .bloco-abertas .aberta-vazia { font-size: 13px; color: #8a8a8a; }
+        .item-aberta { display: flex; align-items: baseline; gap: 14px; width: 100%; text-align: left; background: #ffffff; border: 1px solid #e0c36a; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; cursor: pointer; font-family: Arial, sans-serif; }
+        .item-aberta:hover { background: #fffdf0; border-color: #D4370A; }
+        .item-aberta.escolhida { background: #e8f5e9; border-color: #2e7d32; }
+        .item-aberta .aberta-data { font-size: 16px; font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .item-aberta .aberta-rotulo { font-size: 13px; color: #555555; }
+        /* v1.4.0 - GTAs aguardando animais: mesmo formato do quadro amarelo, em azul */
+        .bloco-gtas { margin-top: 14px; background: #e3f2fd; border: 1px solid #1565c0; border-radius: 8px; padding: 10px 14px; }
+        .bloco-gtas .titulo-gtas { font-size: 13px; font-weight: bold; color: #0d47a1; margin-bottom: 8px; }
+        .bloco-gtas .aberta-vazia { font-size: 13px; color: #8a8a8a; }
+        .item-gta { display: flex; align-items: baseline; gap: 14px; width: 100%; text-align: left; background: #ffffff; border: 1px solid #90caf9; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; cursor: pointer; font-family: Arial, sans-serif; }
+        .item-gta:hover { border-color: #1565c0; }
+        .item-gta.escolhida { background: #e8f5e9; border-color: #2e7d32; }
+        .item-gta .gta-num { font-size: 16px; font-weight: bold; color: #0d47a1; white-space: nowrap; }
+        .item-gta .gta-dest { font-size: 13px; color: #555555; }
+        /* v1.4.0 - Avancar no fim do cartao, como na Compra (rodape fixo removido) */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        .form-botoes { justify-content: flex-end; align-items: center; }
+        .bloco-abertas { display: block; }
+        .item-aberta { font-family: Arial, sans-serif; font-size: 13px; }
+
+        /* ---- Alteracao de Posse (Sessao 115): selecao da data e das DTAs ---- */
+        .linha-doc { display: flex; gap: 10px; align-items: flex-end; }
+        .linha-doc .form-group { flex: 1; }
+        .btn-buscar { padding: 9px 22px; background: #FBE9E4; border: 2px solid #D4370A; color: #7a1f04; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-buscar:hover { background: #D4370A; color: #ffffff; }
+        .msg-destino { margin-top: 10px; font-size: 14px; font-weight: bold; color: #c62828; }
+        .msg-destino:empty { display: none; }
+        .bloco-destinos { margin-top: 10px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; }
+        .bloco-destinos .titulo-destinos { font-size: 13px; font-weight: bold; color: #333333; margin-bottom: 8px; }
+        .item-destino { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #dddddd; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; cursor: pointer; font-size: 15px; }
+        .item-destino:hover { border-color: #D4370A; }
+        .item-destino.escolhido { background: #e8f5e9; border-color: #2e7d32; }
+        .item-destino input { width: 18px; height: 18px; flex-shrink: 0; }
+        .item-destino .nome { font-weight: bold; color: #333333; }
+        .item-destino .local { color: #777777; font-size: 13px; margin-left: auto; white-space: nowrap; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-confirma { background: #ffffff; border: 3px solid #D4370A; border-radius: 10px; padding: 24px 28px; max-width: 560px; width: 94%; }
+        .modal-confirma h3 { color: #7a1f04; font-size: 20px; text-align: center; margin-bottom: 14px; }
+        .modal-confirma .bloco-conferencia { margin-bottom: 14px; }
+        .modal-confirma .aviso { font-size: 13px; color: #8a6d00; background: #fff8e1; border-left: 5px solid #f9a825; padding: 8px 12px; border-radius: 4px; margin-bottom: 14px; }
+        .modal-confirma .botoes { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-sec { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #555555; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-sec:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Lista da Alteracao de Posse (Sessao 115, pacote 2B) - v1.0.1: tabela ocupa a altura toda ---- */
+        .conteudo { display: flex; flex-direction: column; overflow: hidden; padding: 10px 20px 12px; }
+        .pagina-header { margin-bottom: 8px; }
+        .pagina-header h2 { font-size: 18px; }
+        .form-container.larga { max-width: none; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 16px; margin-bottom: 0; }
+        .info-linha { display: flex; gap: 28px; flex-wrap: wrap; font-size: 13px; color: #555555; padding-bottom: 8px; border-bottom: 2px solid #D4370A; margin-bottom: 10px; }
+        .info-linha b { color: #333333; }
+        .barra { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 8px; }
+        .barra .campo label { display: block; font-size: 11px; color: #555555; font-weight: bold; margin-bottom: 2px; }
+        .barra select, .barra input[type=text] { height: 32px; padding: 0 8px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; background: #ffffff; min-width: 140px; }
+        .barra .btn-sec { height: 32px; padding: 0 14px; font-size: 13px; }
+        .barra .contadores { margin-left: auto; display: flex; gap: 18px; font-size: 14px; color: #333333; align-self: center; }
+        .contadores b { color: #D4370A; }
+        .aviso-corte { margin: 0 0 8px; padding: 6px 12px; background: #fff8e1; border-left: 5px solid #f9a825; border-radius: 4px; font-size: 12px; color: #8a6d00; }
+        .caixa-tabela { flex: 1; min-height: 160px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; }
+        table.lista { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        table.lista th { position: sticky; top: 0; z-index: 2; background: #FBE9E4; color: #7a1f04; text-align: left; padding: 6px 10px; border-bottom: 2px solid #D4370A; }
+        table.lista td { padding: 3px 10px; border-bottom: 1px solid #eeeeee; line-height: 1.2; }
+        table.lista tr:hover td { background: #fff5f2; }
+        table.lista tr.marcada td { background: #e8f5e9; }
+        table.lista tr.gravada td { background: #eef7ee; color: #2e5d31; }
+        table.lista .cad { font-size: 14px; }
+        table.lista .sit { font-size: 12px; white-space: nowrap; }
+        table.lista td.chk, table.lista th.chk { width: 36px; text-align: center; }
+        table.lista input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; vertical-align: middle; }
+        .vazio-lista { padding: 24px; text-align: center; color: #888888; }
+        .resultado { display: none; margin-top: 8px; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+        .resultado.ok { display: block; background: #e8f5e9; border: 1px solid #2e7d32; color: #1b5e20; }
+        .resultado.falha { display: block; background: #fdecea; border: 1px solid #c62828; color: #7f1d1d; }
+        .resultado ul { margin: 6px 0 0 18px; max-height: 110px; overflow-y: auto; }
+        .rodape-acoes { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 10px; }
+        .btn-gravar-lista { padding: 9px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gravar-lista:hover { background: #C0392B; }
+        .btn-vincular-lista { padding: 9px 24px; background: #1565c0; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-vincular-lista:hover { background: #0d47a1; }
+        .btn-vincular-lista:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .dica-vincular { font-size: 12.5px; color: #8a6d00; margin-right: auto; align-self: center; }
+        .btn-gravar-lista:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128002;</span> {{ titulo_tela }}</h2>
+            </div>
+
+            <div class="form-container larga">
+
+                <div class="info-linha">
+                    <span>Propriedade: <b>{{ propriedade.nome if propriedade else '-' }}</b></span>
+                    <span>Data Leitura: <b>{{ data_leitura }}</b></span>
+                </div>
+
+                <div class="barra">
+                    <div class="campo">
+                        <label for="f-sexo">Sexo</label>
+                        <select id="f-sexo">
+                            <option value="">Todos</option>
+                            <option value="MACHO">Macho</option>
+                            <option value="FEMEA">Fêmea</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="f-eras">ERAS</label>
+                        <select id="f-eras">
+                            <option value="">Todas</option>
+                            {% for e in eras_opcoes %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="f-sit">Situação</label>
+                        <select id="f-sit">
+                            <option value="">Todos</option>
+                            <option value="P">Pendentes</option>
+                            <option value="G">Gravados</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="f-busca">Buscar (SISBOV ou Manejo)</label>
+                        <input type="text" id="f-busca" autocomplete="off" maxlength="15">
+                    </div>
+                    <button type="button" class="btn-sec" id="btn-marcar-todos">Marcar todos do filtro</button>
+                    <button type="button" class="btn-sec" id="btn-desmarcar">Desmarcar todos</button>
+                    <div class="contadores">
+                        <span>Já gravados: <b id="c-gravados">{{ qtde_gravados }}</b></span>
+                        <span>Na lista: <b id="c-visiveis">0</b></span>
+                        <span>Marcados: <b id="c-marcados">0</b></span>
+                    </div>
+                </div>
+
+                {% if cortado %}
+                <div class="aviso-corte">A lista mostra só os primeiros {{ limite }} animais. Use os filtros ou grave em partes.</div>
+                {% endif %}
+
+                <div class="caixa-tabela">
+                    <table class="lista">
+                        <thead>
+                            <tr><th class="chk"></th><th>SISBOV</th><th>Manejo</th><th>Sexo</th><th>ERAS</th><th>Raça</th><th>Situação</th></tr>
+                        </thead>
+                        <tbody id="corpo">
+                            {% for a in animais %}
+                            <tr data-sisbov="{{ a.sisbov }}" data-sexo="{{ a.sexo }}" data-eras="{{ a.eras }}" data-sit="{{ 'G' if a.gravado else 'P' }}" data-busca="{{ a.sisbov }} {{ a.manejo }}"{% if a.gravado %} class="gravada"{% endif %}>
+                                <td class="chk">{% if a.gravado and a.vinculado %}<span class="cad" title="Vinculado a uma DTA. Use o Desvincular para poder tirar.">&#128274;</span>{% elif a.gravado %}<input type="checkbox" class="marca-g" checked title="Gravado. Desmarque para desfazer a leitura.">{% else %}<input type="checkbox" class="marca">{% endif %}</td>
+                                <td>{{ a.sisbov }}</td>
+                                <td>{{ a.manejo }}</td>
+                                <td>{{ 'Macho' if a.sexo == 'MACHO' else ('Fêmea' if a.sexo == 'FEMEA' else '') }}</td>
+                                <td>{{ a.eras }}</td>
+                                <td>{{ a.raca }}</td>
+                                <td class="sit">{% if a.gravado %}&#9989; Lido em {{ a.lido_em }}{% else %}Pendente{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if not animais %}<div class="vazio-lista">Nenhum animal disponível nesta Propriedade.</div>{% endif %}
+                </div>
+
+                <div class="resultado" id="resultado"></div>
+
+                <div class="rodape-acoes">
+                    <a class="btn-sec" href="{{ url_selecao }}" style="text-decoration:none;">&#8592; Voltar</a>
+                    <span class="dica-vincular" id="dica-vincular"></span>
+                    {% if estado_vincular %}<button type="button" class="btn-vincular-lista" id="btn-vincular" disabled>Vincular &#224; DTA {{ estado_vincular.numero }}</button>{% endif %}
+                    <button type="button" class="btn-gravar-lista" id="btn-gravar" disabled>Gravar marcados</button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+    {% include 'produtor/modal_confirmacao.html' %}
+
+    <script>
+        // v1.2.1 - voltar do navegador nao mostra tela velha (bfcache): recarrega para ler os numeros de novo
+        window.addEventListener('pageshow', function (e) { if (e.persisted) { window.location.reload(); } });
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var URL_GRAVAR = {{ url_gravar|tojson }};
+        var URL_DESFAZER = {{ url_desfazer|tojson }};
+        var ID_PROPRIEDADE = {{ id_propriedade|string|tojson }};
+        var DATA_LEITURA = {{ data_leitura|tojson }};
+        var ID_GTA = {{ id_gta|tojson }};
+        var URL_VINCULAR_ESTADO = {{ url_vincular_estado|tojson }};
+        var ESTADO_VINCULAR = {{ estado_vincular|tojson }};
+
+        var linhas = Array.prototype.slice.call(document.querySelectorAll('#corpo tr'));
+        var fSexo = document.getElementById('f-sexo');
+        var fEras = document.getElementById('f-eras');
+        var fBusca = document.getElementById('f-busca');
+        var fSit = document.getElementById('f-sit');
+        var cVisiveis = document.getElementById('c-visiveis');
+        var cMarcados = document.getElementById('c-marcados');
+        var btnGravar = document.getElementById('btn-gravar');
+        var caixaResultado = document.getElementById('resultado');
+        var gravando = false;
+
+        function visivel(tr) { return tr.style.display !== 'none'; }
+
+        function contar() {
+            var vis = 0, marc = 0;
+            linhas.forEach(function(tr) {
+                if (visivel(tr)) vis++;
+                var mc = tr.querySelector('.marca');
+                if (mc && mc.checked) marc++;
+            });
+            cVisiveis.textContent = vis;
+            cMarcados.textContent = marc;
+            btnGravar.disabled = gravando || marc === 0;
+        }
+
+        function filtrar() {
+            var sx = fSexo.value, er = fEras.value, si = fSit.value, bu = fBusca.value.trim().toUpperCase();
+            linhas.forEach(function(tr) {
+                var ok = (!sx || tr.dataset.sexo === sx) &&
+                         (!er || tr.dataset.eras === er) &&
+                         (!si || tr.dataset.sit === si) &&
+                         (!bu || tr.dataset.busca.toUpperCase().indexOf(bu) !== -1);
+                tr.style.display = ok ? '' : 'none';
+            });
+            contar();
+        }
+
+        [fSexo, fEras, fSit].forEach(function(c) { c.addEventListener('change', filtrar); });
+        fBusca.addEventListener('input', function() { this.value = this.value.replace(/[^0-9A-Za-z]/g, ''); filtrar(); });
+
+        document.getElementById('corpo').addEventListener('change', function(ev) {
+            if (ev.target.classList.contains('marca')) {
+                ev.target.closest('tr').classList.toggle('marcada', ev.target.checked);
+                contar();
+            }
+        });
+        document.getElementById('btn-marcar-todos').addEventListener('click', function() {
+            linhas.forEach(function(tr) {
+                var mc = tr.querySelector('.marca');
+                if (mc && visivel(tr)) { mc.checked = true; tr.classList.add('marcada'); }
+            });
+            contar();
+        });
+        document.getElementById('btn-desmarcar').addEventListener('click', function() {
+            linhas.forEach(function(tr) { var mc = tr.querySelector('.marca'); if (mc) { mc.checked = false; } tr.classList.remove('marcada'); });
+            contar();
+            var gravadosVis = linhas.filter(function(tr) { return visivel(tr) && tr.querySelector('.marca-g'); })
+                                    .map(function(tr) { return tr.dataset.sisbov; });
+            if (gravadosVis.length) {
+                confirmarAcaoAssincrona(function() { desfazer(gravadosVis); },
+                    'Desfazer também a gravação de ' + gravadosVis.length + ' animal(is) já gravado(s)? Eles voltam a ficar pendentes.', 'Desfazer');
+            }
+        });
+
+        // v1.3.0 - Vincular a DTA: sempre visivel; habilita quando os lidos atendem a DTA (contagem exata por categoria)
+        var btnVincular = document.getElementById('btn-vincular');
+        var dicaVincular = document.getElementById('dica-vincular');
+        function pintarVincular(est) {
+            ESTADO_VINCULAR = est;
+            if (!btnVincular || !est) return;
+            btnVincular.disabled = !est.habilita;
+            dicaVincular.textContent = est.habilita ? '' : 'Para vincular: ' + est.dica + '.';
+        }
+        function atualizarVincular() {
+            if (!btnVincular) return;
+            fetch(URL_VINCULAR_ESTADO + '?id_propriedade=' + encodeURIComponent(ID_PROPRIEDADE) + '&data_leitura=' + encodeURIComponent(DATA_LEITURA) + '&id_gta=' + encodeURIComponent(ID_GTA), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(j) { if (j.ok) { pintarVincular(j.estado); } })
+                .catch(function() {});
+        }
+        if (btnVincular) {
+            btnVincular.addEventListener('click', function() {
+                if (!(ESTADO_VINCULAR && ESTADO_VINCULAR.habilita)) { return; }
+                // animais marcados e ainda nao gravados ficam de fora do vinculo (continuam pendentes)
+                var soltos = linhas.filter(function(tr) { var mc = tr.querySelector('.marca'); return tr.dataset.sit === 'P' && mc && mc.checked; }).length;
+                if (soltos > 0) {
+                    confirmarAcaoAssincrona(function() { window.location.href = ESTADO_VINCULAR.url; },
+                        'Há ' + soltos + ' animal(is) marcado(s) e não gravado(s). Eles não serão vinculados e continuam pendentes. Vincular mesmo assim?', 'Vincular');
+                    return;
+                }
+                window.location.href = ESTADO_VINCULAR.url;
+            });
+            pintarVincular(ESTADO_VINCULAR);
+        }
+
+        function desfazer(sisbovs) {
+            fetch(URL_DESFAZER, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: ID_PROPRIEDADE, sisbovs: sisbovs })
+            }).then(function(r) { return r.json().then(function(j) { return { ok: r.ok, j: j }; }); })
+            .then(function(res) {
+                if (!res.ok || res.j.erro) { mostrar('falha', '&#10060; ' + esc(res.j.erro || 'Erro ao desfazer.')); return; }
+                window.location.reload();
+            }).catch(function() { mostrar('falha', '&#10060; Falha de comunicação. Tente de novo.'); });
+        }
+
+        document.getElementById('corpo').addEventListener('change', function(ev) {
+            var c = ev.target;
+            if (!c.classList.contains('marca-g')) return;
+            var tr = c.closest('tr');
+            c.checked = true;   // so desmarca de verdade depois da confirmacao
+            confirmarAcaoAssincrona(function() { desfazer([tr.dataset.sisbov]); },
+                'Desfazer a gravação do animal ' + tr.dataset.sisbov + '? Ele volta a ficar pendente.', 'Desfazer');
+        });
+
+        function mostrar(classe, html) {
+            caixaResultado.className = 'resultado ' + classe;
+            caixaResultado.innerHTML = html;
+        }
+        function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        btnGravar.addEventListener('click', function() {
+            var marcados = linhas.filter(function(tr) { var mc = tr.querySelector('.marca'); return mc && mc.checked; })
+                                 .map(function(tr) { return tr.dataset.sisbov; });
+            if (!marcados.length || gravando) return;
+            confirmarAcaoAssincrona(function() { executarGravacao(marcados); },
+                'Gravar ' + marcados.length + ' animal(is) na Alteração de Posse de ' + DATA_LEITURA + '?', 'Gravar');
+        });
+
+        function executarGravacao(marcados) {
+            if (gravando) return;
+            gravando = true; contar();
+            fetch(URL_GRAVAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: ID_PROPRIEDADE, data_leitura: DATA_LEITURA, id_gta: ID_GTA, sisbovs: marcados })
+            }).then(function(r) { return r.json().then(function(j) { return { ok: r.ok, j: j }; }); })
+            .then(function(res) {
+                gravando = false;
+                if (!res.ok || res.j.erro) { mostrar('falha', '&#10060; ' + esc(res.j.erro || 'Erro ao gravar.')); contar(); return; }
+                var gravadosSet = {};
+                var falhasSet = {};
+                (res.j.falhas || []).forEach(function(f) { falhasSet[f.sisbov] = true; });
+                marcados.forEach(function(s) { if (!falhasSet[s]) gravadosSet[s] = true; });
+                var hoje = DATA_LEITURA;
+                var corpo = document.getElementById('corpo');
+                var primeiroPendente = linhas.filter(function(tr) { return tr.dataset.sit === 'P' && !gravadosSet[tr.dataset.sisbov]; })[0] || null;
+                linhas.forEach(function(tr) {
+                    if (!gravadosSet[tr.dataset.sisbov]) return;
+                    tr.dataset.sit = 'G';
+                    tr.classList.remove('marcada'); tr.classList.add('gravada');
+                    tr.querySelector('.chk').innerHTML = '<input type="checkbox" class="marca-g" checked title="Gravado. Desmarque para desfazer a leitura.">';
+                    tr.querySelector('.sit').innerHTML = '&#9989; Lido em ' + hoje;
+                    if (primeiroPendente) { corpo.insertBefore(tr, primeiroPendente); } else { corpo.appendChild(tr); }
+                });
+                linhas = Array.prototype.slice.call(corpo.querySelectorAll('tr'));
+                var cg = document.getElementById('c-gravados'); if (cg) { cg.textContent = linhas.filter(function(tr) { return tr.dataset.sit === 'G'; }).length; }
+                filtrar();
+                var html = '&#9989; <b>' + res.j.gravados + '</b> animal(is) gravado(s). Total da data: <b>' + res.j.total_gravados + '</b>.';
+                if (res.j.falhas && res.j.falhas.length) {
+                    html += '<br>&#9888;&#65039; <b>' + res.j.falhas.length + '</b> não gravado(s):<ul>' +
+                        res.j.falhas.map(function(f) { return '<li>' + esc(f.sisbov) + ' &#8212; ' + esc(f.motivo) + '</li>'; }).join('') + '</ul>';
+                }
+                mostrar(res.j.falhas && res.j.falhas.length ? 'falha' : 'ok', html);
+                contar();
+                atualizarVincular();
+            }).catch(function() { gravando = false; mostrar('falha', '&#10060; Falha de comunicação. Tente de novo.'); contar(); });
+        }
+
+        contar();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\posse_lista.html
+     ========================================================= -->

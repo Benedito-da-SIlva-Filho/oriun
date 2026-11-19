@@ -1,0 +1,109 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\criar_usuario_vinculo.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-08-03 17:18 -03
+-- ATUALIZADO EM: 2026-08-03 17:18 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Migracao do modelo de acesso do Produtor/Equipe.
+--     1) Adiciona a coluna usuarios.telefone (faltava, so
+--        existia email).
+--     2) Cria a tabela usuario_vinculo — substitui os campos
+--        fixos usuarios.cargo e usuarios.id_produtor (que nao
+--        suportavam um mesmo colaborador atendendo mais de um
+--        Produtor, nem Cargo variando por Propriedade dentro
+--        do mesmo Produtor). As colunas antigas NAO sao
+--        removidas nesta migracao (aposentadas so no codigo,
+--        mantidas fisicamente por precaucao).
+--     3) Cria a funcao e o trigger de atualizado_em para
+--        usuario_vinculo, no mesmo padrao ja usado em
+--        propriedade_produtor (1 funcao dedicada por tabela,
+--        NEW.atualizado_em = NOW()).
+--     4) Indices nas colunas de FK e no par (id_usuario,
+--        data_fim), que sera a busca mais frequente do login
+--        (vinculo ativo do usuario).
+--
+--     v1.0.0: Criacao do script.
+-- =========================================================
+
+-- ---------------------------------------------------------
+-- 1) Nova coluna usuarios.telefone
+-- ---------------------------------------------------------
+ALTER TABLE public.usuarios
+    ADD COLUMN telefone VARCHAR(20);
+
+
+-- ---------------------------------------------------------
+-- 2) Tabela usuario_vinculo
+-- ---------------------------------------------------------
+CREATE TABLE public.usuario_vinculo (
+    id                       SERIAL PRIMARY KEY,
+    id_usuario               INTEGER NOT NULL REFERENCES public.usuarios(id),
+    id_produtor              INTEGER NOT NULL REFERENCES public.produtores(id),
+    id_propriedade_produtor  INTEGER REFERENCES public.propriedade_produtor(id),
+    cargo                    VARCHAR(30) NOT NULL,
+    data_inicio              DATE NOT NULL,
+    data_fim                 DATE,
+    criado_em                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT ck_usuario_vinculo_cargo CHECK (
+        cargo IN (
+            'TITULAR',
+            'ADMINISTRADOR',
+            'ADMINISTRATIVO',
+            'CAMPEIRO',
+            'GERENTE_CAPATAZ',
+            'VETERINARIO_ZOOTECNISTA',
+            'AUXILIAR'
+        )
+    )
+);
+
+COMMENT ON TABLE public.usuario_vinculo IS
+    'Vinculo de acesso de um Usuario (perfil PRODUTOR) a um Produtor especifico. Define onde ele atua e qual Cargo (nivel de acesso) tem naquele vinculo. Perfis CONSISTE e CERTIFICADORA nao usam esta tabela.';
+
+
+-- ---------------------------------------------------------
+-- 3) Indices — colunas de FK e busca frequente (vinculo
+--    ativo do usuario, feita a cada login)
+-- ---------------------------------------------------------
+CREATE INDEX idx_usuario_vinculo_id_usuario
+    ON public.usuario_vinculo (id_usuario);
+
+CREATE INDEX idx_usuario_vinculo_id_produtor
+    ON public.usuario_vinculo (id_produtor);
+
+CREATE INDEX idx_usuario_vinculo_id_propriedade_produtor
+    ON public.usuario_vinculo (id_propriedade_produtor);
+
+CREATE INDEX idx_usuario_vinculo_usuario_ativo
+    ON public.usuario_vinculo (id_usuario, data_fim);
+
+
+-- ---------------------------------------------------------
+-- 4) Funcao + trigger de atualizado_em
+--    (mesmo padrao confirmado em
+--    trg_propriedade_produtor_atualizado_em)
+-- ---------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.trg_usuario_vinculo_atualizado_em()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$function$;
+
+CREATE TRIGGER set_atualizado_em_usuario_vinculo
+    BEFORE UPDATE ON public.usuario_vinculo
+    FOR EACH ROW
+    EXECUTE FUNCTION public.trg_usuario_vinculo_atualizado_em();
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\criar_usuario_vinculo.sql
+-- =========================================================

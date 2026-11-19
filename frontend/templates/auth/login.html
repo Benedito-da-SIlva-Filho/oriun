@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\auth
+     MODULO: templates\auth\login.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-21 10:01 -03
+     ATUALIZADO EM: 2026-10-15 08:20 -03
+     VERSAO: 1.4.0
+
+     DESCRICAO:
+         Tela de login do Orion.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Adicionado olhinho e esqueci minha senha.
+         v1.2.0: Identidade visual da Consiste aplicada.
+         v1.3.0: Sessao 034 (continuacao 5, 11/08/2026, 15:47 -03) -
+                 Adicionado autocomplete="new-password" no campo
+                 senha. Motivo: o form ja tinha autocomplete="off",
+                 mas o Chrome IGNORA esse valor de proposito em
+                 campos de login desde 2014 (decisao de seguranca/
+                 UX do proprio navegador, nao falha do nosso
+                 codigo) - autofill continuava preenchendo o campo
+                 mesmo com o JS de limpeza no window.onload.
+                 "new-password" e o valor que o Chrome de fato
+                 respeita na maioria dos casos, reduzindo bastante
+                 a sugestao/preenchimento automatico. NAO elimina
+                 senhas JA SALVAS no gerenciador do navegador -
+                 isso continua exigindo limpeza manual pelo usuario
+                 (chrome://settings/passwords) ou uso de aba
+                 anonima. Nenhum outro campo, estilo ou
+                 comportamento foi alterado.
+         v1.4.0: Sessao 097 (15/10/2026, 08:20 -03) - ACESSO FACIL:
+                 campos usuario e senha com autocapitalize e
+                 autocorrect desligados (o teclado do celular
+                 passava a primeira letra para maiuscula sozinho e
+                 o login/senha nao entravam). Combina com a regra
+                 nova de login e senha sem diferenca de maiuscula.
+                 Nenhum outro campo, estilo ou comportamento foi
+                 alterado.
+     ========================================================= -->
+<html lang="pt-BR" translate="no"></html>    
+<meta http-equiv="Content-Language" content="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV — Login</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Cabecalho Consiste */
+        .cabecalho {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .cabecalho img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        /* Container do formulario */
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            border-top: 4px solid #D4370A;
+        }
+
+        /* Titulo do sistema */
+        .titulo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .titulo h1 {
+            color: #D4370A;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .titulo p {
+            color: #333333;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        /* Campos do formulario */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333333;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333333;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #D4370A;
+        }
+
+        /* Campo senha com olhinho */
+        .campo-senha {
+            position: relative;
+        }
+
+        .campo-senha input {
+            padding-right: 45px;
+        }
+
+        .olhinho {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        /* Botao entrar */
+        .btn-entrar {
+            width: 100%;
+            padding: 14px;
+            background-color: #D4370A;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-entrar:hover {
+            background-color: #C0392B;
+        }
+
+        /* Link esqueci senha */
+        .esqueci-senha {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .esqueci-senha a {
+            color: #D4370A;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .esqueci-senha a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mensagem de erro */
+        .erro {
+            background-color: #ffe0e0;
+            color: #C0392B;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-left: 4px solid #D4370A;
+        }
+
+        /* Rodape */
+        .rodape {
+            text-align: center;
+            margin-top: 30px;
+            color: #999999;
+            font-size: 12px;
+        }
+
+        .rodape a {
+            color: #D4370A;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabecalho com logo da Consiste -->
+    <div class="cabecalho">
+        <img src="/static/img/Consiste_Cabec.png" alt="Consiste Informatica">
+    </div>
+
+    <div class="container">
+
+        <!-- Titulo do sistema -->
+        <div class="titulo">
+            <h1>🐄 Orion SISBOV</h1>
+            <p>Sistema de Rastreabilidade Bovina</p>
+        </div>
+
+        <!-- Mensagem de erro -->
+        {% if erro %}
+        <div class="erro">
+            {{ erro }}
+        </div>
+        {% endif %}
+
+        <!-- Formulario de login -->
+        <form method="POST" action="/login" autocomplete="off">
+
+            <!-- Campo usuario -->
+            <div class="form-group">
+                <label for="login">Usuário</label>
+                <input type="text"
+                       id="login"
+                       name="login"
+                       placeholder="Digite seu usuário"
+                       autocapitalize="off"
+                       autocorrect="off"
+                       spellcheck="false"
+                       required
+                       autofocus>
+            </div>
+
+            <!-- Campo senha com olhinho -->
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <div class="campo-senha">
+                    <input type="password"
+                           id="senha"
+                           name="senha"
+                           placeholder="Digite sua senha"
+                           required
+                           autocapitalize="off"
+                           autocorrect="off"
+                           spellcheck="false"
+                           autocomplete="new-password">
+                    <span class="olhinho" onclick="toggleSenha()">👁️</span>
+                </div>
+            </div>
+
+            <!-- Botao entrar -->
+            <button type="submit" class="btn-entrar">
+                Entrar
+            </button>
+
+        </form>
+
+        <!-- Link esqueci minha senha -->
+        <div class="esqueci-senha">
+            <a href="/esqueci-senha">Esqueci minha senha</a>
+        </div>
+
+        <!-- Rodape -->
+        <div class="rodape">
+            Orion SISBOV &copy; 2026 —
+            <a href="https://www.consisteti.com.br" target="_blank">
+                Consiste Informática
+            </a>
+        </div>
+
+    </div>
+
+    <!-- JavaScript — olhinho mostrar/ocultar senha -->
+    <script>
+        function toggleSenha() {
+            var campo = document.getElementById('senha');
+            if (campo.type === 'password') {
+                campo.type = 'text';
+            } else {
+                campo.type = 'password';
+            }
+        }
+
+        // Limpa os campos ao carregar a pagina
+        window.onload = function() {
+            document.getElementById('login').value = '';
+            document.getElementById('senha').value = '';
+        }
+    </script>
+
+    
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\auth\login.html
+     ========================================================= -->

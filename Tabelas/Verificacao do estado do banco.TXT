@@ -1,0 +1,83 @@
+-- =========================================================
+-- Verificacao do estado do banco - Sessao 034 continuacao 9
+-- Rodar cada bloco no pgAdmin Query Tool e conferir o resultado.
+-- =========================================================
+
+-- 1. Quantos Produtores existem, e quais tem acesso (login) ou nao
+SELECT
+    p.id,
+    p.nome,
+    p.cpf_cnpj,
+    p.ativo,
+    CASE WHEN uv.id IS NOT NULL THEN 'SIM' ELSE 'NAO' END AS tem_acesso,
+    u.login,
+    u.login_provisorio
+FROM public.produtores p
+LEFT JOIN public.usuario_vinculo uv
+    ON uv.id_produtor = p.id AND uv.data_fim IS NULL
+LEFT JOIN public.usuarios u
+    ON u.id = uv.id_usuario
+ORDER BY p.id;
+
+-- 2. Quantas Propriedades existem, e o status de cadastro_completo
+SELECT
+    id,
+    nome,
+    municipio,
+    uf,
+    cadastro_completo,
+    ativo
+FROM public.propriedades
+ORDER BY id;
+
+-- 3. Vinculos Propriedade <-> Produtor (confere se algum Produtor
+--    ficou com vinculo duplicado ou orfao)
+SELECT
+    pp.id AS id_vinculo,
+    pr.nome AS produtor,
+    prop.nome AS propriedade,
+    pp.data_inicio,
+    pp.data_fim
+FROM public.propriedade_produtor pp
+JOIN public.produtores pr ON pr.id = pp.id_produtor
+JOIN public.propriedades prop ON prop.id = pp.id_propriedade
+ORDER BY pr.nome, prop.nome;
+
+-- 4. Usuarios e vinculos (confere Cargo de cada um, incluindo a Catarina)
+SELECT
+    u.id,
+    u.nome,
+    u.login,
+    u.perfil,
+    u.ativo,
+    uv.cargo,
+    uv.data_inicio,
+    uv.data_fim
+FROM public.usuarios u
+LEFT JOIN public.usuario_vinculo uv ON uv.id_usuario = u.id
+ORDER BY u.id;
+
+-- 5. Visitantes da Vitrine - quem converteu e quem ainda esta pendente
+SELECT
+    id,
+    nome,
+    cpf_cnpj,
+    visitado_em,
+    convertido_em,
+    id_produtor_criado
+FROM public.vitrine_visitantes
+ORDER BY visitado_em DESC;
+
+-- 6. Contagem resumo geral
+SELECT
+    (SELECT COUNT(*) FROM public.produtores) AS total_produtores,
+    (SELECT COUNT(*) FROM public.propriedades) AS total_propriedades,
+    (SELECT COUNT(*) FROM public.propriedade_produtor) AS total_vinculos_propriedade_produtor,
+    (SELECT COUNT(*) FROM public.usuarios) AS total_usuarios,
+    (SELECT COUNT(*) FROM public.usuario_vinculo WHERE data_fim IS NULL) AS total_vinculos_acesso_ativos,
+    (SELECT COUNT(*) FROM public.vitrine_visitantes WHERE convertido_em IS NULL) AS visitantes_pendentes,
+    (SELECT COUNT(*) FROM public.vitrine_visitantes WHERE convertido_em IS NOT NULL) AS visitantes_convertidos;
+
+-- =========================================================
+-- FIM
+-- =========================================================

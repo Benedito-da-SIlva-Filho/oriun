@@ -1,0 +1,68 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: 7_alter_tb_2001_conferido_brete.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-01 18:30 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 084 - o brete (Brincagem com Leitor, Tipo Nascimento)
+--     passa a ver o Nascimento lancado pelo escritorio.
+--     Cria em tb_2001, em TODOS os schemas produtor_NNNNN:
+--       - conferido_brete BOOLEAN NOT NULL DEFAULT TRUE
+--         (todo animal que ja existe conta como conferido)
+--       - conferido_em    TIMESTAMP (quando o brete conferiu)
+--     Depois marca como PENDENTE de conferencia (FALSE) os animais
+--     do Nascimento lancado pelo escritorio em 28/09/2026
+--     (brincos INTERNO, ligados a uma Notificacao NAS).
+--     Pode rodar mais de uma vez sem estragar nada.
+-- =========================================================
+
+DO $$
+DECLARE
+    esquema text;
+BEGIN
+    FOR esquema IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema = esquema AND table_name = 'tb_2001') THEN
+
+            EXECUTE format('ALTER TABLE %I.tb_2001 ADD COLUMN IF NOT EXISTS conferido_brete BOOLEAN NOT NULL DEFAULT TRUE', esquema);
+            EXECUTE format('ALTER TABLE %I.tb_2001 ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP', esquema);
+
+            -- Nascimento do escritorio de 28/09/2026 ainda sem conferencia
+            -- (so quem ainda nao foi conferido: conferido_em vazio).
+            EXECUTE format(
+                'UPDATE %I.tb_2001 SET conferido_brete = FALSE '
+                'WHERE tipo_entrada = ''NASCTO-DESMAME'' '
+                'AND brincos = ''INTERNO'' '
+                'AND id_gta_entrada IS NOT NULL '
+                'AND data_brincagem = DATE ''2026-09-28'' '
+                'AND conferido_em IS NULL', esquema);
+        END IF;
+    END LOOP;
+END $$;
+
+-- Conferencia: quantos animais ficaram pendentes em cada schema
+DO $$
+DECLARE
+    esquema text;
+    qtde integer;
+BEGIN
+    FOR esquema IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema = esquema AND table_name = 'tb_2001') THEN
+            EXECUTE format('SELECT count(*) FROM %I.tb_2001 WHERE conferido_brete = FALSE', esquema) INTO qtde;
+            RAISE NOTICE '% -> pendentes de conferencia: %', esquema, qtde;
+        END IF;
+    END LOOP;
+END $$;
+-- =========================================================
+-- FIM DE ARQUIVO: 7_alter_tb_2001_conferido_brete.sql
+-- =========================================================

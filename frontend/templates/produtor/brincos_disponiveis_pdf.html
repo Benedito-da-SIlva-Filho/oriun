@@ -1,0 +1,233 @@
+<!--
+=========================================================
+PROJETO: Orion
+PASTA: C:\orion\frontend\templates\produtor
+MODULO: templates\produtor\brincos_disponiveis_pdf.html
+AUTOR: Benedito Silva Filho
+CRIADO EM: 2026-09-02 14:35 -03
+ATUALIZADO EM: 2026-09-02 14:53 -03
+VERSAO: 1.1.0
+
+DESCRICAO:
+    PDF de Brincos Disponiveis - cabecalho do relatorio 1x
+    (Produtor/Propriedade), depois 1 SECAO POR LOTE com saldo > 0,
+    cada secao no MESMO formato ja validado do PDF individual do
+    Relatorio N.Fiscais (mini-cabecalho + tabela Ind/Codigo +
+    subtotal). Fluxo CONTINUO (sem quebra de pagina forcada entre
+    secoes) e SEM total geral no fim - confirmado por Benedito
+    contra o relatorio real do GERAS (Sessao 044).
+
+    CSS/estrutura de tabela copiados de
+    brincos_relatorio_nfiscais_pdf.html v1.4.0 (ja testado em
+    producao: retrato, repeat="1", largura por %, rotulos curtos,
+    espacamento ESG) - PADRAO REUTILIZAVEL No2. Bloco por lote NAO
+    foi extraido em macro por decisao de tempo (prazo do dia,
+    Sessao 044) - risco avaliado como baixo (bloco pequeno,
+    autocontido); se um 3o relatorio precisar do mesmo bloco,
+    extrair para macro Jinja2 compartilhada nesse momento.
+
+    Variaveis esperadas do router:
+      cabecalho      - SimpleNamespace(produtor_nome,
+                       propriedade_nome)
+      secoes         - lista de SimpleNamespace(nota_fiscal,
+                       qtde_entrada, fornecedor_nome,
+                       responsavel_nome, linhas, total_disponivel)
+      data_impressao - string ja formatada
+
+v1.0.0: Criacao (Sessao 044, 02/09/2026, 14:35 -03).
+v1.1.0: Sessao 044 (02/09/2026, 14:53 -03) - Bug real de ESG
+    (mesma regra da Seção 89 da Referência): valores de
+    Fornecedor/Responsável (nomes compridos) quebravam em 2
+    linhas por falta de espaço, mesmo com os rotulos ja curtos.
+    Corrigido encolhendo a coluna de valor de N.Fiscal/Brincos
+    (12%->14%, so precisa de ~10 posicoes) e alargando a coluna
+    de valor de Fornecedor/Responsavel (38%->62%) - decisao de
+    Benedito.
+=========================================================
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 21cm 29.7cm;
+        margin: 1.2cm;
+    }
+    * { font-family: Helvetica, Arial, sans-serif; }
+    body { font-size: 9pt; }
+
+    .titulo-relatorio {
+        text-align: center;
+        font-size: 12pt;
+        font-weight: bold;
+        color: #D4370A;
+        margin-bottom: 3pt;
+    }
+
+    table.cabecalho-dados {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2pt;
+    }
+    table.cabecalho-dados td {
+        border: none;
+        padding: 0.5pt 4pt;
+        font-size: 9pt;
+    }
+    table.cabecalho-dados td.rotulo {
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .titulo-relacao {
+        text-align: center;
+        font-size: 9.5pt;
+        font-weight: bold;
+        background: #FBE9E4;
+        border: 1px solid #D4370A;
+        padding: 2pt;
+        margin: 6pt 0 3pt 0;
+    }
+
+    table.brincos {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2pt;
+    }
+    table.brincos th {
+        background: #D4370A;
+        color: #FFFFFF;
+        border: 1px solid #A82C08;
+        padding: 2pt 4pt;
+        font-size: 8pt;
+        text-align: center;
+    }
+    table.brincos td {
+        border: 1px solid #CCCCCC;
+        padding: 1.5pt 4pt;
+        font-size: 8pt;
+    }
+    table.brincos td.ind { text-align: right; }
+    table.brincos td.codigo { text-align: left; }
+    table.brincos tr:nth-child(even) td { background: #FBF0EC; }
+
+    table.totais {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 4pt;
+        margin-bottom: 6pt;
+    }
+    table.totais td {
+        border: none;
+        padding: 3pt 4pt;
+        font-size: 9pt;
+        font-weight: bold;
+    }
+    table.totais td.total-nf { text-align: left; width: 25%; }
+    table.totais td.total-disp { text-align: left; width: 35%; }
+    table.totais td.impressao-rodape {
+        text-align: right;
+        width: 40%;
+        font-weight: normal;
+        font-size: 8pt;
+        color: #555555;
+    }
+
+    .sem-lotes {
+        text-align: center;
+        padding: 20pt;
+        font-size: 10pt;
+        color: #777777;
+    }
+</style>
+</head>
+<body>
+
+    <div class="titulo-relatorio">BRINCOS DISPONÍVEIS</div>
+
+    <table class="cabecalho-dados">
+        <tr>
+            <td class="rotulo" style="width: 12%;">Produtor:</td>
+            <td style="width: 88%;">{{ cabecalho.produtor_nome if cabecalho else '-' }}</td>
+        </tr>
+        <tr>
+            <td class="rotulo">Propriedade:</td>
+            <td>{{ cabecalho.propriedade_nome if cabecalho else '-' }}</td>
+        </tr>
+    </table>
+
+    {% if secoes %}
+        {% for secao in secoes %}
+        <div class="titulo-relacao">RELAÇÃO DE BRINCOS - [ {{ secao.total_disponivel }} ] DISPONIVEIS</div>
+
+        <table class="cabecalho-dados">
+            <tr>
+                <td class="rotulo" style="width: 12%;">N.Fiscal:</td>
+                <td style="width: 14%;">{{ secao.nota_fiscal }}</td>
+                <td class="rotulo" style="width: 12%;">Fornecedor:</td>
+                <td style="width: 62%;">{{ secao.fornecedor_nome }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Brincos:</td>
+                <td>{{ secao.qtde_entrada }}</td>
+                <td class="rotulo">Responsável:</td>
+                <td>{{ secao.responsavel_nome }}</td>
+            </tr>
+        </table>
+
+        <table class="brincos" repeat="1">
+            <thead>
+                <tr>
+                    <th style="width: 6%;">Ind</th>
+                    <th style="width: 19%;">Código</th>
+                    <th style="width: 6%;">Ind</th>
+                    <th style="width: 19%;">Código</th>
+                    <th style="width: 6%;">Ind</th>
+                    <th style="width: 19%;">Código</th>
+                    <th style="width: 6%;">Ind</th>
+                    <th style="width: 19%;">Código</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for linha in secao.linhas %}
+                <tr>
+                    {% for ind, codigo in linha %}
+                    <td class="ind">{{ ind }}</td>
+                    <td class="codigo">{{ codigo }}</td>
+                    {% endfor %}
+                    {% for _ in range(4 - linha|length) %}
+                    <td class="ind">&nbsp;</td>
+                    <td class="codigo">&nbsp;</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <table class="totais">
+            <tr>
+                <td class="total-nf">Total N.Fiscal: {{ secao.qtde_entrada }}</td>
+                <td class="total-disp">Total Disponivel: {{ secao.total_disponivel }}</td>
+                <td class="impressao-rodape">{{ '' if not loop.last else 'Impressão: ' + data_impressao }}</td>
+            </tr>
+        </table>
+        {% endfor %}
+    {% else %}
+        <div class="sem-lotes">Nenhum lote com brincos disponíveis para esta Propriedade.</div>
+        <table class="totais">
+            <tr>
+                <td class="total-nf">&nbsp;</td>
+                <td class="total-disp">&nbsp;</td>
+                <td class="impressao-rodape">Impressão: {{ data_impressao }}</td>
+            </tr>
+        </table>
+    {% endif %}
+
+</body>
+</html>
+<!--
+=========================================================
+FIM DE ARQUIVO: templates\produtor\brincos_disponiveis_pdf.html
+=========================================================
+-->

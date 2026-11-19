@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\comunicado_entrada_sucesso.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-14 17:10 -03
+     ATUALIZADO EM: 2026-10-13 10:50 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Tela de sucesso apos POST /produtor/comunicado-entrada/
+         gerar - mostra os numeros de Comunicado gerados nesta
+         operacao. SEM botao para "Impressão Comunicado" ainda -
+         esse card do Hub de Entrada continua sem rota construida
+         (modulo separado, futuro). Por ora, so o botao de volta ao
+         Hub.
+
+     v1.0.0: Criacao do modulo (Sessao 052).
+     v1.1.0: Sessao 091 (08/10/2026, 20:30 -03) - pedido de Benedito: depois de gerar
+         o comunicado o usuario precisa IMPRIMIR, entao o botao deixa de voltar
+         ao Hub de Entrada e passa a voltar ao Hub Comunicados de Entrada
+         (onde ficam Impressao e Reimpressao). Textos ajustados. Nenhuma outra
+         mudanca.
+     v1.2.0: Sessao 095 (13/10/2026, 10:50 -03) - AVISO DE CONCLUSAO MAIS CLARO: topo e rodape
+         trocados pelas pecas-mestras (com Voltar, Home e faixa Fazenda em uso, como as demais
+         telas), faixa verde de sucesso no alto e botao direto para a Impressao Comunicado
+         (proximo passo do fluxo). O botao de voltar ao Hub Comunicados continua.
+         REVERSAO: devolver .bak_antes_avisos_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Comunicado Gerado</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; }
+
+        .card-sucesso { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 32px; max-width: 560px; margin-top: 40px; text-align: center; }
+        .icone-sucesso { font-size: 44px; margin-bottom: 12px; }
+        .card-sucesso h2 { font-size: 19px; color: #333333; margin-bottom: 16px; }
+        .lista-numeros { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+        .numero-badge { background: #FBE9E4; color: #D4370A; font-weight: bold; font-size: 15px; padding: 8px 16px; border-radius: 6px; }
+        .aviso-impressao { font-size: 12px; color: #999999; margin-bottom: 20px; }
+        .btn-voltar { background: #D4370A; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-voltar:hover { background: #b52d08; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        /* ---- v1.2.0 ---- */
+        .faixa-sucesso { background: #e8f5e9; border-left: 6px solid #1b7a2b; color: #1b5e20; font-weight: bold; font-size: 14.5px; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; text-align: left; }
+        .acoes-sucesso { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn-secundario { background: #ffffff; color: #D4370A; border: 2px solid #D4370A; padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-secundario:hover { background: #FBE9E4; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/hub/entrada-comunicados' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+        <div class="conteudo">
+            <div class="card-sucesso">
+                <div class="faixa-sucesso">&#9989; Processo conclu&iacute;do com sucesso &#8212; os dados j&aacute; foram gravados.</div>
+                <div class="icone-sucesso">&#9989;</div>
+                <h2>
+                    {{ numeros_gerados|length }} Comunicado{{ 's' if numeros_gerados|length != 1 else '' }}
+                    de Entrada gerado{{ 's' if numeros_gerados|length != 1 else '' }} com sucesso
+                </h2>
+                <div class="lista-numeros">
+                    {% for numero in numeros_gerados %}
+                    <span class="numero-badge">Nº {{ '%06d'|format(numero) }}</span>
+                    {% endfor %}
+                </div>
+                <div class="aviso-impressao">
+                    A impressão do documento fica disponível na tela "Impressão Comunicado" do Hub Comunicados de Entrada.
+                </div>
+                <div class="acoes-sucesso">
+                    <a href="/produtor/impressao-comunicado/iniciar" class="btn-voltar">&#128424;&#65039; Ir para Impress&atilde;o Comunicado</a>
+                    <a href="/produtor/hub/entrada-comunicados" class="btn-secundario">Voltar ao Hub Comunicados de Entrada</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\comunicado_entrada_sucesso.html
+     ========================================================= -->

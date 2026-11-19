@@ -1,0 +1,101 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\14c_conferir_produtor_00011.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-10 16:14 -03
+-- ATUALIZADO EM: 2026-10-10 16:14 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Sessao 093 - Conferencia do produtor de teste (id 11 = produtor_00011)
+--   contra o produtor_00004. So le, nao altera nada. JA ESTA com os
+--   numeros certos: nao precisa trocar nada. Rode cada bloco separado.
+--   Diferente do 14b: aqui cada diferenca aparece em UMA linha, com os
+--   dois lados lado a lado (_04 = produtor_00004, _11 = produtor_00011).
+-- =========================================================
+
+-- ---------- C0) O produtor 11 tem o schema esperado? ----------
+-- ESPERADO: 1 linha, schema_nome = produtor_00011
+SELECT id, nome, schema_nome FROM produtores WHERE id = 11;
+
+-- ---------- C1) Numero de tabelas ----------
+-- ESPERADO: 33 em cada
+SELECT table_schema, count(*)
+FROM information_schema.tables
+WHERE table_schema IN ('produtor_00004', 'produtor_00011')
+GROUP BY 1 ORDER BY 1;
+
+-- ---------- C2) Versao do banco e racas do produtor 11 ----------
+-- ESPERADO: versao = 2; racas = 108 (igual ao produtor_00004)
+SELECT (SELECT versao FROM produtor_00011.tb_versao_schema) AS versao,
+       (SELECT count(*) FROM produtor_00011.tb_4005_racas) AS racas;
+
+-- ---------- C3) COLUNAS diferentes (tipo, tamanho, nulo, padrao) ----------
+-- ESPERADO: nenhuma linha. Cada linha = uma diferenca a corrigir.
+WITH a AS (
+    SELECT table_name, column_name, data_type, character_maximum_length AS tam, is_nullable,
+           regexp_replace(coalesce(column_default, ''), 'produtor_[0-9]+\.', '', 'g') AS padrao
+    FROM information_schema.columns WHERE table_schema = 'produtor_00004'),
+b AS (
+    SELECT table_name, column_name, data_type, character_maximum_length AS tam, is_nullable,
+           regexp_replace(coalesce(column_default, ''), 'produtor_[0-9]+\.', '', 'g') AS padrao
+    FROM information_schema.columns WHERE table_schema = 'produtor_00011')
+SELECT coalesce(a.table_name, b.table_name) AS tabela,
+       coalesce(a.column_name, b.column_name) AS coluna,
+       CASE WHEN a.column_name IS NULL THEN 'SO NO 00011'
+            WHEN b.column_name IS NULL THEN 'SO NO 00004'
+            ELSE 'DIFERENTE' END AS situacao,
+       a.data_type AS tipo_04, b.data_type AS tipo_11,
+       a.tam AS tam_04, b.tam AS tam_11,
+       a.is_nullable AS nulo_04, b.is_nullable AS nulo_11,
+       a.padrao AS padrao_04, b.padrao AS padrao_11
+FROM a FULL JOIN b ON a.table_name = b.table_name AND a.column_name = b.column_name
+WHERE (a.data_type, a.tam, a.is_nullable, a.padrao) IS DISTINCT FROM (b.data_type, b.tam, b.is_nullable, b.padrao)
+ORDER BY 1, 2;
+
+-- ---------- C4) TRAVAS diferentes (chave, unico, FK, CHECK) ----------
+-- ESPERADO: nenhuma linha
+WITH a AS (
+    SELECT c.relname AS tabela, con.conname AS trava,
+           regexp_replace(pg_get_constraintdef(con.oid), 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'produtor_00004'),
+b AS (
+    SELECT c.relname AS tabela, con.conname AS trava,
+           regexp_replace(pg_get_constraintdef(con.oid), 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'produtor_00011')
+SELECT coalesce(a.tabela, b.tabela) AS tabela,
+       coalesce(a.trava, b.trava) AS trava,
+       CASE WHEN a.trava IS NULL THEN 'SO NO 00011'
+            WHEN b.trava IS NULL THEN 'SO NO 00004'
+            ELSE 'DIFERENTE' END AS situacao,
+       a.definicao AS definicao_04, b.definicao AS definicao_11
+FROM a FULL JOIN b ON a.tabela = b.tabela AND a.trava = b.trava
+WHERE a.definicao IS DISTINCT FROM b.definicao
+ORDER BY 1, 2;
+
+-- ---------- C5) INDICES diferentes ----------
+-- ESPERADO: nenhuma linha
+WITH a AS (
+    SELECT tablename AS tabela, indexname AS indice,
+           regexp_replace(indexdef, 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_indexes WHERE schemaname = 'produtor_00004'),
+b AS (
+    SELECT tablename AS tabela, indexname AS indice,
+           regexp_replace(indexdef, 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_indexes WHERE schemaname = 'produtor_00011')
+SELECT coalesce(a.tabela, b.tabela) AS tabela,
+       coalesce(a.indice, b.indice) AS indice,
+       CASE WHEN a.indice IS NULL THEN 'SO NO 00011'
+            WHEN b.indice IS NULL THEN 'SO NO 00004'
+            ELSE 'DIFERENTE' END AS situacao,
+       a.definicao AS definicao_04, b.definicao AS definicao_11
+FROM a FULL JOIN b ON a.tabela = b.tabela AND a.indice = b.indice
+WHERE a.definicao IS DISTINCT FROM b.definicao
+ORDER BY 1, 2;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\14c_conferir_produtor_00011.sql
+-- =========================================================

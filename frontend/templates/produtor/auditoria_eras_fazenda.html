@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\auditoria_eras_fazenda.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-07 12:05 -03
+     ATUALIZADO EM: 2026-10-07 12:05 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Tela de UMA fazenda com codigo ERAS: situacao atual da
+         auditoria, formulario para REGISTRAR uma vistoria (ou
+         CORRIGIR uma ja registrada) e o historico completo. Nada
+         e apagado: a correcao fica registrada no log de alteracoes.
+         Campos obrigatorios: data da vistoria, veredito da
+         Certificadora (CONFORME ou NAO CONFORME), nome do
+         vistoriador/auditor e proxima vistoria. Observacao do
+         auditor e opcional. Quando a vistoria corrigida tem 60 dias
+         ou mais, a tela mostra o alerta e so grava depois do botao
+         de confirmacao. Topo, menu e rodape copiados do
+         parceiro_lista.html (Regra de Ouro #5).
+
+         Variaveis do router (auditoria_eras.py): fazenda, situacao,
+         historico, form, editar_id, data_em_correcao, aviso_60,
+         erro, mensagem_ok, origem, voltar, hoje_iso e as de
+         sempre.
+
+         v1.0.0: Criacao do modulo (Sessao 089, 07/10/2026, 12:05 -03).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Auditorias ERAS &#8212; {{ fazenda.nome }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; }
+        .pagina-sub { font-size: 13px; color: #777777; margin-top: 2px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap; }
+        .chip-ok { background: #e4f4ea; color: #1b7a43; }
+        .chip-atencao { background: #fff3cd; color: #8a6100; }
+        .chip-urgente { background: #ffebee; color: #c62828; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .painel-situacao { background: #ffffff; border: 1px solid #e0e0e0; border-left: 6px solid #546e7a; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 14px; color: #333333; }
+        .painel-situacao.sit-atencao { border-left-color: #e0a100; }
+        .painel-situacao.sit-urgente { border-left-color: #c62828; }
+        .painel-situacao.sit-ok { border-left-color: #1b7a43; }
+        .rotulo-sit { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: #888888; }
+
+        .msg-ok { background: #e4f4ea; border-left: 4px solid #1b7a43; padding: 12px 16px; border-radius: 6px; font-size: 14px; color: #1b5e20; margin-bottom: 16px; }
+        .msg-erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 14px; color: #c62828; margin-bottom: 16px; }
+        .msg-aviso { background: #fff3cd; border-left: 4px solid #e0a100; padding: 14px 16px; border-radius: 6px; font-size: 14px; color: #6d4c00; margin-bottom: 16px; }
+        .msg-aviso strong { display: block; margin-bottom: 4px; }
+
+        .cartao { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .cartao-titulo { padding: 12px 18px; font-size: 15px; font-weight: bold; color: #333333; background: #FBE9E4; border-bottom: 1px solid #e0e0e0; }
+        .cartao-corpo { padding: 18px; }
+
+        .grade { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .campo { display: flex; flex-direction: column; gap: 5px; }
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; }
+        .col-6 { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .campo label { font-size: 12.5px; font-weight: bold; color: #555555; }
+        .campo input[type="text"], .campo input[type="date"], .campo textarea { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; font-family: Arial, sans-serif; width: 100%; }
+        .campo textarea { min-height: 70px; resize: vertical; }
+        .campo input:focus, .campo textarea:focus { outline: 2px solid #D4370A33; border-color: #D4370A; }
+        .opcoes-veredito { display: flex; gap: 10px; flex-wrap: wrap; }
+        .opcao-veredito { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; cursor: pointer; background: #ffffff; }
+        .opcao-veredito input { accent-color: #D4370A; }
+        .dica { font-size: 12px; color: #888888; }
+
+        .botoes { display: flex; gap: 10px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+        .btn-salvar { padding: 10px 22px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #B22F09; }
+        .btn-salvar:disabled { background: #bbbbbb; cursor: default; }
+        .btn-cancelar { padding: 10px 18px; border: 1px solid #888888; border-radius: 6px; background: #ffffff; color: #666666; font-size: 14px; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .tabela { width: 100%; border-collapse: collapse; }
+        .tabela th { text-align: left; padding: 10px 14px; font-size: 12px; color: #888888; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #e8e8e8; background: #fafafa; }
+        .tabela td { padding: 11px 14px; font-size: 13.5px; border-bottom: 1px solid #f0f0f0; color: #333333; vertical-align: top; }
+        .tabela tr:last-child td { border-bottom: none; }
+        .tabela tr.em-correcao td { background: #FFF8E1; }
+        .pequeno { display: block; font-size: 12px; color: #888888; margin-top: 2px; }
+        .btn-corrigir { display: inline-block; padding: 5px 12px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; text-decoration: none; white-space: nowrap; }
+        .btn-corrigir:hover { background: #D4370A; color: #ffffff; }
+        .vazio { text-align: center; padding: 26px; color: #999999; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div>
+                    <div class="pagina-titulo">&#128221; Auditorias ERAS &#8212; {{ fazenda.nome }}</div>
+                    <div class="pagina-sub">Código ERAS {{ fazenda.codigo_eras }}{% if fazenda.uf %} &#183; {{ fazenda.uf }}{% endif %}</div>
+                </div>
+                <a href="{{ voltar }}" class="btn-nav">&#8592; Voltar</a>
+            </div>
+
+            <!-- Situacao atual da auditoria desta fazenda -->
+            {% set cod = situacao.codigo %}
+            <div class="painel-situacao {{ 'sit-ok' if cod == 'EM_DIA' else ('sit-atencao' if cod in ('ATENCAO', 'SEM_REGISTRO') else 'sit-urgente') }}">
+                <span class="rotulo-sit">Situação</span>
+                {% if cod == 'EM_DIA' %}
+                <span class="chip chip-ok">Em dia &#10004;</span>
+                {% elif cod in ('ATENCAO', 'SEM_REGISTRO') %}
+                <span class="chip chip-atencao">{{ situacao.texto }}</span>
+                {% else %}
+                <span class="chip chip-urgente">{{ situacao.texto }}</span>
+                {% endif %}
+                {% if historico %}
+                <span>Última vistoria: <strong>{{ historico[0].data_vistoria }}</strong>
+                    <span class="chip {{ 'chip-urgente' if historico[0].nao_conforme else 'chip-ok' }}">{{ historico[0].veredito_rotulo }}</span>
+                </span>
+                <span>Próxima: <strong>{{ historico[0].proxima_data }}</strong></span>
+                {% endif %}
+            </div>
+
+            {% if mensagem_ok %}
+            <div class="msg-ok">&#10004; {{ mensagem_ok }}</div>
+            {% endif %}
+            {% if erro %}
+            <div class="msg-erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <!-- Formulario: registrar vistoria nova ou corrigir uma existente -->
+            <div class="cartao" id="formulario">
+                <div class="cartao-titulo">
+                    {% if editar_id %}Corrigir a vistoria de {{ data_em_correcao }}{% else %}Registrar vistoria{% endif %}
+                </div>
+                <div class="cartao-corpo">
+
+                    {% if aviso_60 %}
+                    <div class="msg-aviso">
+                        <strong>&#9888;&#65039; Atenção: esta vistoria tem 60 dias ou mais.</strong>
+                        Alterar pode comprometer a propriedade. Confira os dados abaixo e, se estiverem corretos, clique em Confirmar alteração.
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('auditoria_eras.salvar', id_propriedade=fazenda.id_propriedade) }}" id="form-vistoria">
+                        <input type="hidden" name="origem" value="{{ origem }}">
+                        {% if editar_id %}<input type="hidden" name="id_auditoria" value="{{ editar_id }}">{% endif %}
+                        {% if aviso_60 %}<input type="hidden" name="confirmar_60" value="1">{% endif %}
+
+                        <div class="grade">
+                            <div class="campo col-3">
+                                <label for="data_vistoria">Data da vistoria *</label>
+                                <input type="date" id="data_vistoria" name="data_vistoria" value="{{ form.data_vistoria }}" max="{{ hoje_iso }}" required>
+                            </div>
+                            <div class="campo col-6">
+                                <label>Veredito da Certificadora *</label>
+                                <div class="opcoes-veredito">
+                                    <label class="opcao-veredito"><input type="radio" name="veredito" value="CONFORME" {{ 'checked' if form.veredito == 'CONFORME' else '' }} required> CONFORME</label>
+                                    <label class="opcao-veredito"><input type="radio" name="veredito" value="NAO_CONFORME" {{ 'checked' if form.veredito == 'NAO_CONFORME' else '' }} required> NÃO CONFORME</label>
+                                </div>
+                            </div>
+                            <div class="campo col-3">
+                                <label for="proxima_data">Próxima vistoria *</label>
+                                <input type="date" id="proxima_data" name="proxima_data" value="{{ form.proxima_data }}" required>
+                                <span class="dica">Data sugerida pela Certificadora.</span>
+                            </div>
+                            <div class="campo col-12">
+                                <label for="vistoriador">Nome do vistoriador/auditor *</label>
+                                <input type="text" id="vistoriador" name="vistoriador" value="{{ form.vistoriador }}" maxlength="100" required>
+                            </div>
+                            <div class="campo col-12">
+                                <label for="observacao">Observações do auditor</label>
+                                <textarea id="observacao" name="observacao" maxlength="1000">{{ form.observacao }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="botoes">
+                            <button type="submit" class="btn-salvar" id="btn-salvar">{% if aviso_60 %}Confirmar alteração{% elif editar_id %}Salvar correção{% else %}Salvar vistoria{% endif %}</button>
+                            {% if editar_id %}
+                            <a href="{{ url_for('auditoria_eras.fazenda', id_propriedade=fazenda.id_propriedade, origem=origem) }}" class="btn-cancelar">Cancelar correção</a>
+                            {% endif %}
+                            <span class="dica">As informações só são gravadas ao clicar em salvar.</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Historico completo (nada e apagado) -->
+            <div class="cartao">
+                <div class="cartao-titulo">Histórico de vistorias</div>
+                {% if historico %}
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Veredito</th>
+                            <th>Vistoriador/auditor</th>
+                            <th>Próxima</th>
+                            <th>Observações</th>
+                            <th>Registrado por</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in historico %}
+                        <tr class="{{ 'em-correcao' if editar_id == h.id else '' }}">
+                            <td><strong>{{ h.data_vistoria }}</strong></td>
+                            <td><span class="chip {{ 'chip-urgente' if h.nao_conforme else 'chip-ok' }}">{{ h.veredito_rotulo }}</span></td>
+                            <td>{{ h.vistoriador }}</td>
+                            <td>{{ h.proxima_data }}</td>
+                            <td>{{ h.observacao or '—' }}</td>
+                            <td>{{ h.registrado_por }}<span class="pequeno">{{ h.registrado_em }}{% if h.corrigido_em %} &#183; corrigida em {{ h.corrigido_em }}{% endif %}</span></td>
+                            <td><a href="{{ url_for('auditoria_eras.fazenda', id_propriedade=fazenda.id_propriedade, origem=origem, editar=h.id) }}#formulario" class="btn-corrigir">Corrigir</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="vazio">Nenhuma vistoria registrada para esta fazenda. Registre a primeira acima.</div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+        // Evita gravar duas vezes se a pessoa clicar de novo no botao.
+        document.getElementById('form-vistoria').addEventListener('submit', function () {
+            var botao = document.getElementById('btn-salvar');
+            if (botao) { botao.disabled = true; }
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\auditoria_eras_fazenda.html
+     ========================================================= -->

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\produtor_relatorio_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-06 20:46 -03
+     ATUALIZADO EM: 2026-07-07 12:54 -03
+     VERSAO: 1.7.0
+
+     DESCRICAO:
+         Template do relatorio em PDF do Produtor, renderizado
+         pelo xhtml2pdf (chamado em produtores.py, rota
+         relatorio_pdf()). Mostra os dados cadastrais do Produtor
+         e a lista de Propriedades ATIVAS vinculadas (vinculo sem
+         data_fim).
+
+         DECISAO DE DESIGN (Sessao 011.2, confirmada com Benedito
+         apos ver mockup real): o cabecalho mostra a logo do
+         PRODUTOR (Marca/Criador, campo marca_criador) no canto
+         superior esquerdo - NAO a logo da Consiste. Se o Produtor
+         nao tiver logo cadastrada, o espaco fica vazio (sem
+         substituto). A identidade da Consiste permanece so no
+         rodape (texto), sem imagem duplicada em nenhum outro
+         lugar do relatorio.
+
+         IMPORTANTE: xhtml2pdf usa um motor de renderizacao
+         limitado (baseado em reportlab) - NAO suporta flexbox
+         nem CSS grid. Layout feito com <table> e CSS simples
+         (CSS 2.1), diferente do padrao usado nas telas normais
+         do sistema (que usam grid). A logo do Produtor so aparece
+         porque a rota relatorio_pdf() usa um link_callback (ver
+         produtores.py) que converte o caminho "/static/..." em
+         caminho real de disco - sem isso, o xhtml2pdf nao
+         consegue carregar nenhuma imagem local.
+
+         LICAO APRENDIDA (Sessao 011.2): o motor reportlab NAO
+         respeita de forma confiavel larguras de coluna em
+         porcentagem (%) em tabelas. Toda largura de coluna deste
+         arquivo usa <colgroup> com medida FIXA em cm, e toda
+         celula de tabela tem "border: none" explicito.
+
+         v1.0.0: Criacao do modulo (Sessao 011.1).
+         v1.1.0: Sessao 011.2 - Primeira tentativa de padrao
+             visual (cabecalho com 3 colunas em %, caixa nos
+             Dados Cadastrais, zebra striping). Bug: logo da
+             Consiste pulou de lado quando a celula da logo do
+             Produtor ficou vazia.
+         v1.2.0: Sessao 011.2 - Corrigido o cabecalho: tabela de
+             2 colunas com largura FIXA em cm, logo da Consiste
+             garantida do lado esquerdo. Logo do Produtor removida
+             do cabecalho temporariamente.
+         v1.3.0: Sessao 011.2 - Corrigida a tabela de Dados
+             Cadastrais: largura fixa em cm na coluna de rotulos e
+             "border: none" explicito. Logo do Produtor trazida de
+             volta, no canto superior direito da caixa de Dados
+             Cadastrais.
+         v1.4.0: Sessao 011.2 - Linhas zebradas (fundo laranja
+             claro #FBE9E4) e mais respiro nas celulas da tabela
+             de Dados Cadastrais, a pedido de Benedito (referencia
+             visual de mockup).
+         v1.5.0: Sessao 011.2 - REDESIGN DO CABECALHO, confirmado
+             com Benedito apos analise de mockup: a logo que fica
+             no cabecalho, a esquerda, agora e a do PRODUTOR
+             (marca_criador) - nao mais a da Consiste. Removida a
+             caixinha de logo que existia dentro de "Dados
+             Cadastrais" (v1.3.0/v1.4.0) - a logo agora existe em
+             um unico lugar, o cabecalho. Se o Produtor nao tiver
+             logo cadastrada, o espaco no cabecalho fica vazio,
+             sem substituto.
+         v1.6.0: Sessao 011.2 - Reduzida a altura das linhas da
+             tabela de Dados Cadastrais: padding vertical de cada
+             celula de 7px para 4px, deixando as linhas mais
+             compactas, a pedido de Benedito.
+         v1.7.0: Sessao 011.2 - Tabela de Propriedades Vinculadas
+             alinhada ao mesmo padrao visual da tabela de Dados
+             Cadastrais: zebra striping trocada de cinza (#f8f9fa)
+             para o laranja claro da marca (#FBE9E4), e altura de
+             linha reduzida (padding de 8px para 4px).
+     ========================================================= -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            color: #333333;
+        }
+
+        /* ---- Cabecalho: logo do PRODUTOR + titulo ----
+           Largura FIXA em cm (nao em %) - o motor reportlab nao
+           respeita % de forma confiavel, principalmente com
+           celulas vazias. Com colgroup + table-layout: fixed,
+           a largura da coluna da logo fica garantida. */
+        .cabecalho-relatorio {
+            border-bottom: 3px solid #D4370A;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        table.tabela-cabecalho {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.tabela-cabecalho td {
+            vertical-align: middle;
+            padding: 0;
+            border: none;
+        }
+        .celula-logo-cabecalho {
+            text-align: left;
+        }
+        .celula-titulo {
+            text-align: left;
+            padding-left: 14px;
+        }
+        .celula-titulo h1 {
+            font-size: 17pt;
+            color: #D4370A;
+            margin: 0 0 4px 0;
+        }
+        .celula-titulo .subtitulo {
+            font-size: 9.5pt;
+            color: #777777;
+        }
+
+        .secao-titulo {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #D4370A;
+            border-bottom: 1px solid #D4370A;
+            padding-bottom: 4px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* ---- Caixa ao redor dos Dados Cadastrais ---- */
+        .caixa-dados {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #fafafa;
+            padding: 10px 14px;
+        }
+
+        table.dados-produtor {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.dados-produtor td {
+            border: none;
+            padding: 4px 10px;
+            font-size: 10.5pt;
+            line-height: 1.3;
+            vertical-align: top;
+        }
+        table.dados-produtor td.rotulo {
+            width: 4.5cm;
+            font-weight: bold;
+            color: #555555;
+        }
+        table.dados-produtor tr.linha-par td {
+            background-color: #FBE9E4;
+        }
+
+        /* ---- Tabela de Propriedades, com linhas zebradas ---- */
+        table.propriedades {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        table.propriedades th {
+            background-color: #D4370A;
+            color: #ffffff;
+            text-align: left;
+            padding: 4px 10px;
+            font-size: 10pt;
+            border: none;
+        }
+        table.propriedades td {
+            padding: 4px 10px;
+            font-size: 10pt;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        table.propriedades tr.linha-par td {
+            background-color: #FBE9E4;
+        }
+
+        .sem-propriedades {
+            font-size: 10.5pt;
+            color: #999999;
+            font-style: italic;
+            padding: 10px 0;
+        }
+        .rodape-relatorio {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #cccccc;
+            font-size: 9pt;
+            color: #999999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho-relatorio">
+        <table class="tabela-cabecalho">
+            <colgroup>
+                <col style="width: 4.5cm;">
+                <col style="width: 12.5cm;">
+            </colgroup>
+            <tr>
+                <td class="celula-logo-cabecalho">
+                    {% if produtor.marca_criador %}
+                    <img src="{{ url_for('static', filename=produtor.marca_criador) }}" width="110">
+                    {% endif %}
+                </td>
+                <td class="celula-titulo">
+                    <h1>Relatório de Produtor</h1>
+                    <div class="subtitulo">Orion SISBOV — Emitido em {{ data_emissao }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="secao-titulo">Dados Cadastrais</div>
+    <div class="caixa-dados">
+        <table class="dados-produtor">
+            <tr class="linha-par">
+                <td class="rotulo">Nome:</td>
+                <td>{{ produtor.nome }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Razão Social:</td>
+                <td>{{ produtor.razao_social }}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Tipo de Pessoa:</td>
+                <td>{{ 'Física' if produtor.tipo_pessoa == 'FISICA' else 'Jurídica' }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">{{ 'CPF:' if produtor.tipo_pessoa == 'FISICA' else 'CNPJ:' }}</td>
+                <td>{{ produtor.cpf_cnpj }}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Email:</td>
+                <td>{{ produtor.email }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Telefone:</td>
+                <td>{{ produtor.telefone }}{% if produtor.telefone2 %} / {{ produtor.telefone2 }}{% endif %}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Endereço:</td>
+                <td>
+                    {{ produtor.logradouro or '' }}{% if produtor.numero %}, {{ produtor.numero }}{% endif %}
+                    {% if produtor.complemento %} - {{ produtor.complemento }}{% endif %}
+                    {% if produtor.bairro %} - {{ produtor.bairro }}{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="rotulo">Município/UF:</td>
+                <td>{{ produtor.municipio }} / {{ produtor.uf }}{% if produtor.cep %} — CEP {{ produtor.cep }}{% endif %}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Status:</td>
+                <td>{{ 'Ativo' if produtor.ativo else 'Inativo' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="secao-titulo">Propriedades Vinculadas (Ativas)</div>
+
+    {% if propriedades_ativas %}
+    <table class="propriedades">
+        <thead>
+            <tr>
+                <th>Propriedade</th>
+                <th>Município/UF</th>
+                <th>Vinculado desde</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in propriedades_ativas %}
+            <tr {% if loop.index0 % 2 == 0 %}class="linha-par"{% endif %}>
+                <td>{{ item.propriedade.nome }}</td>
+                <td>{{ item.propriedade.municipio }} / {{ item.propriedade.uf }}</td>
+                <td>{{ item.data_inicio.strftime('%d/%m/%Y') if item.data_inicio else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="sem-propriedades">Nenhuma Propriedade ativa vinculada a este Produtor no momento.</div>
+    {% endif %}
+
+    <div class="rodape-relatorio">
+        Orion SISBOV &copy; 2026 &#8212; Consiste Informática — Documento gerado automaticamente
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\produtor_relatorio_pdf.html
+     ========================================================= -->

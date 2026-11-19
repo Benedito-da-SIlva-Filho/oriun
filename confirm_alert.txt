@@ -1,0 +1,21 @@
+﻿C:\orion\frontend\templates\consiste\produtor_cadastro.html:852: alert('Escolha um arquivo (PNG ou JPG) antes de clicar em Atualizar.');
+C:\orion\frontend\templates\consiste\propriedade_cadastro.html:969: alert('Selecione o motivo da desativação (Voluntária ou Compulsória).');
+C:\orion\frontend\templates\produtor\brincagem_consulta_alterar.html:90: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\brincagem_consulta_lista.html:40: window.confirm() nativo substituido pelo componente
+C:\orion\frontend\templates\produtor\brincagem_consulta_lista.html:97: no lugar do alert() do navegador. Nenhuma outra mudanca.
+C:\orion\frontend\templates\produtor\brincos_cancelamento_nova.html:64: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\brincos_cancelamento_resultado.html:71: window.confirm() (popup feio/generico do navegador) pelo
+C:\orion\frontend\templates\produtor\brincos_entrada_cadastro.html:92: aviso de "dados nao salvos" via window.confirm() - nao
+C:\orion\frontend\templates\produtor\brincos_entrada_cadastro.html:127: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\gta_consulta_editar.html:100: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\gta_manual_cadastro.html:145: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\modal_confirmacao.html:13: navegador (window.confirm()), que Benedito achou "estranho"
+C:\orion\frontend\templates\produtor\modal_confirmacao.html:30: onsubmit="return confirm('Mensagem...')"
+C:\orion\frontend\templates\produtor\modal_confirmacao.html:88: PADRAO 3 - AVISO so com o botao OK (troca o alert() do
+C:\orion\frontend\templates\produtor\modal_confirmacao.html:211: // alert() do navegador. aoFechar (opcional) roda depois do OK.
+C:\orion\frontend\templates\produtor\operacoes_recentes_lista.html:33: window.confirm() pelo novo componente produtor/
+C:\orion\frontend\templates\produtor\parceiro_cadastro_manual.html:151: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\pia.html:60: no lugar do alert() do navegador. Incluida a peca modal_confirmacao.html. Nenhuma outra mudanca.
+C:\orion\frontend\templates\produtor\usuario_cadastro.html:62: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\vincular_gta_conferencia.html:108: confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+C:\orion\frontend\templates\produtor\vincular_gta_selecionar.html:50: no lugar do alert() do navegador. Incluida a peca modal_confirmacao.html. Nenhuma outra mudanca.

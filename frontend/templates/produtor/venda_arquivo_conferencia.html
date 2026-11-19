@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\venda_arquivo_conferencia.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-01 12:20 -03
+     ATUALIZADO EM: 2026-11-01 17:40 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Tela da VENDA (Leitor, Bastao e Arquivo): copia de transferencia_arquivo_conferencia.html com tipo VENDA (comprador vem da GTA de Venda, sempre OUTRO Produtor),
+         textos "Venda" e cores em VERDE. Router: backend/routers/venda_leitura.py / venda_arquivo.py.
+
+     v1.0.0: Criacao (Sessao 111, 01/11/2026). O historico anterior desta tela e o de transferencia_arquivo_conferencia.html.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Venda por Arquivo</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e8f5e9; color: #2e7d32; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .btn-acao.principal { background: #D4370A; color: #ffffff; }
+        .banner-ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
+        .selo-gta { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; background: #e8f5e9; color: #2e7d32; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e8f5e9; color: #1b5e20; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+    
+        .banner-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13.5px; font-weight: bold; }
+        .selo-impresso { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e8f5e9; color: #1b7a2b; }
+        .selo-aberto { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #fff8e1; color: #8a6d00; }
+
+        .caixa-arq { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa-arq label { display: block; font-size: 12px; color: #888; margin: 14px 0 4px; }
+        .caixa-arq input[type=date], .caixa-arq input[type=file] { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: #fff; }
+        .erro-faixa { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13.5px; font-weight: bold; max-width: 640px; }
+        .btn-principal { margin-top: 18px; padding: 10px 24px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .resumo { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+        .resumo .cx { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 10px 18px; }
+        .resumo .cx .n { font-size: 22px; font-weight: bold; color: #333; }
+        .resumo .cx .t { font-size: 12px; color: #888; }
+        .resumo .cx.bom .n { color: #1b7a2b; }
+        .resumo .cx.ruim .n { color: #c62828; }
+        .tit-bloco { font-size: 15px; font-weight: bold; margin: 18px 0 8px; color: #333; }
+        .motivo { color: #c62828; font-size: 12.5px; }
+        .aviso-txt { color: #8a6d00; font-size: 12.5px; }
+        .barra-confirma { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+        .confirmacao-revisao { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: bold; color: #ffffff; background: #D4370A; border: 3px solid #7a1f04; border-radius: 8px; padding: 12px 20px; cursor: pointer; }
+        .confirmacao-revisao input { width: 24px; height: 24px; accent-color: #7a1f04; }
+        .aviso-resp { display: flex; gap: 10px; align-items: flex-start; background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; cursor: pointer; max-width: 760px; }
+        .aviso-resp input { width: 18px; height: 18px; margin-top: 2px; }
+        .aviso-resp { max-width: 1240px; align-items: center; gap: 14px; font-size: 15px; line-height: 1.35; padding: 12px 18px; border: 2px solid #7a1f04; border-radius: 8px; }
+        .aviso-resp input { width: 22px; height: 22px; margin-top: 0; flex-shrink: 0; accent-color: #ffffff; }
+</style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128196;</span> Venda por Arquivo &#8212; Pr&eacute;via</div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }}</div>
+
+            <div style="font-size:13.5px;color:#555;margin-bottom:12px">Arquivo <strong>{{ nome_arquivo }}</strong> &#8212; Data Leitura <strong>{{ data_leitura }}</strong>. Nada foi gravado ainda.</div>
+            <div class="resumo">
+                <div class="cx bom"><div class="n">{{ entram|length }}</div><div class="t">entram na Venda</div></div>
+                <div class="cx ruim"><div class="n">{{ recusados|length }}</div><div class="t">ficam de fora</div></div>
+                {% if qtd_sem_peso %}<div class="cx"><div class="n">{{ qtd_sem_peso }}</div><div class="t">sem peso anterior</div></div>{% endif %}
+                {% if repetidos %}<div class="cx"><div class="n">{{ repetidos }}</div><div class="t">repetidos no arquivo</div></div>{% endif %}
+                {% if ignorados %}<div class="cx"><div class="n">{{ ignorados }}</div><div class="t">palavras ignoradas</div></div>{% endif %}
+            </div>
+
+            {% if recusados %}
+            <div class="erro-faixa" style="max-width:none">&#9888; {{ recusados|length }} brinco(s) do arquivo N&Atilde;O entram na Venda:
+                {% for r in recusados[:10] %}<div style="font-family:monospace;margin-top:4px">{{ r.sisbov }} &#8212; <span style="font-weight:normal">{{ r.motivo }}</span></div>{% endfor %}
+                {% if recusados|length > 10 %}<div style="margin-top:4px">e mais {{ recusados|length - 10 }} (lista completa abaixo).</div>{% endif %}
+            </div>
+            <div class="tit-bloco">Ficam de fora</div>
+            <div class="tabela-container">
+                <table class="tabela-gtas">
+                    <thead><tr><th>Brinco</th><th>Motivo</th></tr></thead>
+                    <tbody>
+                        {% for r in recusados %}
+                        <tr><td class="numero-gta">{{ r.sisbov }}</td><td class="motivo">{{ r.motivo }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if entram %}
+            <div class="tit-bloco">Entram na Venda</div>
+            <div class="tabela-container">
+                <table class="tabela-gtas">
+                    <thead><tr><th>SISBOV</th><th>Manejo</th><th>Sexo</th><th>Idade (na leitura)</th><th>Peso anterior (kg)</th></tr></thead>
+                    <tbody>
+                        {% for e in entram %}
+                        <tr>
+                            <td class="numero-gta">{{ e.sisbov }}</td>
+                            <td>{{ e.manejo }}</td>
+                            <td>{{ e.sexo }}</td>
+                            <td>{{ e.faixa }}</td>
+                            <td>{% if e.peso %}{{ e.peso }}{% else %}<span class="aviso-txt">sem peso</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="post" action="{{ url_gravar }}" id="form-gravar">
+                <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                <input type="hidden" name="data" value="{{ data_iso }}">
+                <input type="hidden" name="sisbovs" value="{{ sisbovs }}">
+                <input type="hidden" name="recusados" value="{{ recusados_json }}">
+                <div class="barra-confirma">
+                    <label class="confirmacao-revisao"><input type="checkbox" name="confirmo" value="1" id="chk-confirmo"> Revisei os dados e confirmo.</label>
+                    <a class="btn-nav" href="{{ url_voltar }}">Cancelar</a>
+                    <button type="submit" class="btn-principal" id="btn-gravar" style="margin-top:0" disabled data-total="{{ entram|length }}">Gravar {{ entram|length }} animal(is)</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="tabela-container"><div class="sem-resultados">Nenhum animal do arquivo pode entrar na Venda.</div></div>
+            <div class="barra-confirma"><a class="btn-nav" href="{{ url_voltar }}">Voltar</a></div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        (function () {
+            var chk = document.getElementById('chk-confirmo'), btn = document.getElementById('btn-gravar');
+            if (!chk || !btn) { return; }
+            chk.addEventListener('change', function () { btn.disabled = !chk.checked; });
+            document.getElementById('form-gravar').addEventListener('submit', function () { btn.disabled = true; });
+        })();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\venda_arquivo_conferencia.html
+     ========================================================= -->

@@ -1,0 +1,113 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- PASTA:        C:\orion\Tabelas\
+-- MODULO:       Tabelas\renumerar_nas_campo_novo_s094.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-10-12 19:25 -03
+-- ATUALIZADO EM: 2026-10-12 19:25 -03
+-- VERSAO:       1.0.0
+--
+-- DESCRICAO:
+--     UNICA VEZ (dados de TESTE): renumera a NAS0000006 da FAZENDA CAMPO NOVO
+--     (produtor_00004, id_propriedade 4, tb_4001_gta id 20, 10 animais) para
+--     NAS0000001, porque a numeracao da NAS agora e POR PROPRIEDADE.
+--     Acerta: tb_4001_gta, tb_2017_movimentacoes.gta_entrada,
+--     tb_3008_brincos_saida.gta, tb_7017.saida_gta, tb_7002_pia.numero_pia
+--     (6 -> 1) e o texto no Log (tb_log_operacoes / tb_log_operacoes_itens).
+--     NAO mexe em tb_blk_8002_eventos (cadeia de hashes do blockchain).
+--
+--     SEGURO: transacao unica; faz BACKUP das linhas (tabelas
+--     bkp_s094_nas_*); cada passo confere a quantidade de linhas e, se
+--     nao bater, PARA e desfaz tudo (nada e gravado). So rode UMA vez.
+--
+--     REVERSAO: restaurar das tabelas bkp_s094_nas_* (mesmos ids) ou
+--     rodar o inverso (NAS0000001 -> NAS0000006) nas mesmas linhas.
+--
+--     v1.0.0: Criacao (Sessao 094, 12/10/2026, 19:25 -03).
+-- =========================================================
+
+BEGIN;
+
+-- 1) BACKUP das linhas que serao alteradas
+CREATE TABLE produtor_00004.bkp_s094_nas_tb_4001 AS
+  SELECT * FROM produtor_00004.tb_4001_gta WHERE id = 20;
+CREATE TABLE produtor_00004.bkp_s094_nas_tb_2017 AS
+  SELECT * FROM produtor_00004.tb_2017_movimentacoes WHERE id_propriedade = 4 AND gta_entrada = 'NAS0000006';
+CREATE TABLE produtor_00004.bkp_s094_nas_tb_3008 AS
+  SELECT * FROM produtor_00004.tb_3008_brincos_saida WHERE id_propriedade = 4 AND gta = 'NAS0000006';
+CREATE TABLE produtor_00004.bkp_s094_nas_tb_7017 AS
+  SELECT * FROM produtor_00004.tb_7017_entrada_brincos_rfid WHERE id_propriedade = 4 AND saida_gta = 'NAS0000006';
+CREATE TABLE produtor_00004.bkp_s094_nas_tb_7002 AS
+  SELECT * FROM produtor_00004.tb_7002_pia WHERE id_gta = 20;
+CREATE TABLE produtor_00004.bkp_s094_nas_log AS
+  SELECT * FROM produtor_00004.tb_log_operacoes WHERE id_propriedade = 4 AND descricao LIKE '%NAS0000006%';
+CREATE TABLE produtor_00004.bkp_s094_nas_log_itens AS
+  SELECT * FROM produtor_00004.tb_log_operacoes_itens
+  WHERE id_operacao IN (SELECT id FROM produtor_00004.tb_log_operacoes WHERE id_propriedade = 4)
+    AND dados_depois::text LIKE '%NAS0000006%';
+
+-- 2) TRAVAS + ALTERACOES (cada passo confere a quantidade esperada)
+DO $$
+DECLARE n integer;
+BEGIN
+  -- a NAS certa: Campo Novo, id 20, ainda NAS0000006
+  IF (SELECT count(*) FROM produtor_00004.tb_4001_gta
+        WHERE id = 20 AND id_propriedade = 4 AND serie_gta = 'NAS'
+          AND numero_gta_completo = 'NAS0000006') <> 1 THEN
+    RAISE EXCEPTION 'NAS id 20 nao confere - abortado';
+  END IF;
+
+  -- a Campo Novo nao pode ja ter NAS0000001
+  IF EXISTS (SELECT 1 FROM produtor_00004.tb_4001_gta
+              WHERE id_propriedade = 4 AND serie_gta = 'NAS' AND numero_gta_sequencial = '0000001') THEN
+    RAISE EXCEPTION 'Campo Novo ja tem NAS0000001 - abortado';
+  END IF;
+
+  -- PIA numero 1 ja usado na Campo Novo por OUTRA coisa? (colisao de numero)
+  IF EXISTS (SELECT 1 FROM produtor_00004.tb_7002_pia
+              WHERE id_propriedade = 4 AND numero_pia = 1 AND id_gta <> 20) THEN
+    RAISE EXCEPTION 'Campo Novo ja tem PIA numero 1 de outra origem - abortado (avise o Claude)';
+  END IF;
+
+  UPDATE produtor_00004.tb_4001_gta
+     SET numero_gta_sequencial = '0000001', numero_gta_completo = 'NAS0000001'
+   WHERE id = 20;
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 1  THEN RAISE EXCEPTION 'tb_4001_gta: % linhas (esperava 1)', n; END IF;
+
+  UPDATE produtor_00004.tb_2017_movimentacoes SET gta_entrada = 'NAS0000001'
+   WHERE id_propriedade = 4 AND gta_entrada = 'NAS0000006';
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 10 THEN RAISE EXCEPTION 'tb_2017: % linhas (esperava 10)', n; END IF;
+
+  UPDATE produtor_00004.tb_3008_brincos_saida SET gta = 'NAS0000001'
+   WHERE id_propriedade = 4 AND gta = 'NAS0000006';
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 10 THEN RAISE EXCEPTION 'tb_3008: % linhas (esperava 10)', n; END IF;
+
+  UPDATE produtor_00004.tb_7017_entrada_brincos_rfid SET saida_gta = 'NAS0000001'
+   WHERE id_propriedade = 4 AND saida_gta = 'NAS0000006';
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 10 THEN RAISE EXCEPTION 'tb_7017: % linhas (esperava 10)', n; END IF;
+
+  UPDATE produtor_00004.tb_7002_pia SET numero_pia = 1 WHERE id_gta = 20 AND numero_pia = 6;
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 10 THEN RAISE EXCEPTION 'tb_7002: % linhas (esperava 10)', n; END IF;
+
+  UPDATE produtor_00004.tb_log_operacoes
+     SET descricao = replace(descricao, 'NAS0000006', 'NAS0000001')
+   WHERE id_propriedade = 4 AND descricao LIKE '%NAS0000006%';
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 3 THEN RAISE EXCEPTION 'tb_log_operacoes: % linhas (esperava 3)', n; END IF;
+
+  UPDATE produtor_00004.tb_log_operacoes_itens
+     SET dados_depois = replace(dados_depois::text, 'NAS0000006', 'NAS0000001')::jsonb
+   WHERE id_operacao IN (SELECT id FROM produtor_00004.tb_log_operacoes WHERE id_propriedade = 4)
+     AND dados_depois::text LIKE '%NAS0000006%';
+  GET DIAGNOSTICS n = ROW_COUNT;  IF n <> 33 THEN RAISE EXCEPTION 'tb_log_operacoes_itens: % linhas (esperava 33)', n; END IF;
+END $$;
+
+-- 3) CONFERENCIA (antes do COMMIT): Campo Novo = NAS0000001; Campo Grande intacta (0000001..0000005)
+SELECT id, id_propriedade, numero_gta_completo, qtde_animais
+FROM produtor_00004.tb_4001_gta WHERE serie_gta = 'NAS'
+ORDER BY id_propriedade, numero_gta_sequencial;
+
+COMMIT;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\renumerar_nas_campo_novo_s094.sql
+-- =========================================================

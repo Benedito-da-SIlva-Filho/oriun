@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\proprietario_vinculado.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-06 18:27 -03
+     ATUALIZADO EM: 2026-08-13 19:10 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Tela de confirmacao exibida apos vincular (ou cadastrar
+         e ja vincular) um Proprietario a uma Propriedade,
+         chamada a partir de proprietarios.py (rota salvar()).
+         Oferece duas acoes: "Voltar para a Propriedade" (volta
+         para /propriedades/editar/<id>, ja mostrando o vinculo
+         novo na lista) ou "Ir para Home".
+
+         v1.0.0: Criacao do modulo (Sessao 011.1).
+         v1.1.0: Sessao 033 - Teste real do wizard de onboarding
+             (P-040) revelou que esta tela nunca recebeu a mesma
+             correcao ja aplicada em propriedade_cadastro.html
+             v1.12.0, produtor_cadastro.html v2.0.0 e
+             produtor_vinculado.html v1.1.0: o perfil PRODUTOR
+             chegava aqui vendo o menu lateral INTEIRO da CONSISTE
+             (Certificadoras, Usuarios Consiste, Protocolos,
+             Propriedades, Proprietarios, Produtores, Consultas) -
+             acesso visual a rotas que ele nao pode usar. Corrigido,
+             espelhando exatamente o padrao ja usado em
+             produtor_vinculado.html v1.1.0: botao hamburguer e
+             menu lateral agora so aparecem quando usuario_perfil
+             == 'CONSISTE'; botao "Home" deixa de ser hardcoded
+             para "/consiste/home" e passa a apontar para
+             "/produtor/home" quando o perfil for PRODUTOR.
+         v1.2.0: Sessao 034 (continuacao 9, 13/08/2026, 19:10 -03) -
+             Cracha "PRODUTOR" removido do topo para este perfil
+             (mesma decisao de produtor_home.html v1.1.0 - ver
+             changelog la para o motivo completo).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Proprietário Vinculado</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include consiste_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; align-items: center; justify-content: center; }
+
+        /* ---- Cartao de confirmacao ---- */
+        .cartao-sucesso { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 48px; max-width: 520px; width: 100%; text-align: center; }
+        .icone-sucesso { font-size: 56px; margin-bottom: 16px; }
+        .cartao-sucesso h2 { font-size: 20px; color: #2e7d32; margin-bottom: 12px; }
+        .cartao-sucesso p { font-size: 14px; color: #555555; line-height: 1.6; margin-bottom: 6px; }
+        .cartao-sucesso p strong { color: #333333; }
+        .botoes-confirmacao { display: flex; gap: 12px; justify-content: center; margin-top: 28px; }
+        .btn-voltar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-voltar:hover { background: #C0392B; }
+        .btn-home { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-home:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            {% if usuario_perfil == 'CONSISTE' %}
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            {% endif %}
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            {% if usuario_perfil != 'PRODUTOR' %}
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            {% endif %}
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — exclusivo da plataforma Consiste
+             (Sessao 033: corrigido para nao vazar mais para o
+             perfil PRODUTOR, mesmo padrao ja usado em
+             produtor_vinculado.html v1.1.0). -->
+        {% if usuario_perfil == 'CONSISTE' %}
+        {% include 'consiste/consiste_menu.html' %}
+        {% endif %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="cartao-sucesso">
+                <div class="icone-sucesso">&#9989;</div>
+                <h2>Proprietário vinculado com sucesso!</h2>
+                <p><strong>{{ proprietario.nome }}</strong></p>
+                <p>foi vinculado à Propriedade</p>
+                <p><strong>{{ propriedade.nome }}</strong></p>
+
+                <div class="botoes-confirmacao">
+                    <a href="{{ url_for('propriedades.editar', id=propriedade.id) }}" class="btn-voltar">&#8592; Voltar para a Propriedade</a>
+                    <a href="{{ '/produtor/home' if usuario_perfil == 'PRODUTOR' else '/consiste/home' }}" class="btn-home">Home</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\proprietario_vinculado.html
+     ========================================================= -->

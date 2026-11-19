@@ -1,0 +1,51 @@
+-- -*- coding: utf-8 -*-
+-- PROJETO: Orion SISBOV
+-- PASTA: database/migrations
+-- MODULO: Criacao da tabela tb_1021_fabricantes_brincos (Fornecedores/Fabricantes de Brincos, ref. GERAS 1021)
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 13/07/2026 17:35 -03
+-- ATUALIZADO EM: 13/07/2026 17:35 -03
+-- VERSAO: 1.0
+--
+-- CHANGELOG:
+-- v1.0 - 13/07/2026 17:35 -03 - Criacao inicial. Cadastro de Fabricantes/Fornecedores de Brincos,
+--        espelhando a lista oficial de fabricantes credenciados junto ao MAPA/SISBOV (GERAS tabela 1021).
+--        Campo CNPJ removido por decisao de negocio (nao necessario). Campo 'ativo' adicionado
+--        (nao existia no GERAS) para sinalizar fabricantes que constam no cadastro oficial do MAPA
+--        mas nao atuam mais no mercado, sem quebrar referencias historicas de brincos ja cadastrados.
+--        Pre-requisito para tb_3007_brincos_entrada (FK id_fabricante).
+
+CREATE TABLE tb_1021_fabricantes_brincos (
+    id              SERIAL PRIMARY KEY,
+    nome            VARCHAR(50)  NOT NULL,
+    logo            VARCHAR(100),
+    endereco        VARCHAR(50),
+    complemento     VARCHAR(50),
+    bairro          VARCHAR(40),
+    cidade          VARCHAR(40),
+    uf              VARCHAR(2),
+    cep             VARCHAR(8),
+    ativo           BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Indice de apoio para busca por nome (tela de cadastro/consulta)
+CREATE INDEX idx_tb_1021_fabricantes_brincos_nome
+    ON tb_1021_fabricantes_brincos (nome);
+
+-- Trigger dedicado para atualizado_em (padrao: trg_<tablename>_atualizado_em)
+CREATE OR REPLACE FUNCTION trg_tb_1021_fabricantes_brincos_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_1021_fabricantes_brincos_atualizado_em
+    BEFORE UPDATE ON tb_1021_fabricantes_brincos
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_tb_1021_fabricantes_brincos_atualizado_em();
+
+-- FIM DE ARQUIVO

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\parceiro_novo.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-13 19:10 -03
+     ATUALIZADO EM: 2026-11-12 19:20 -03
+     VERSAO: 1.6.0
+
+     DESCRICAO:
+         Cadastro avulso de Parceiro/Fornecedor (botao "+ Novo
+         Parceiro" da tela Parceiros). Produtor e Administrativo
+         dele. Cria 1 Parceiro + 1 Propriedade. O CPF/CNPJ e o
+         primeiro campo (aviso na hora se ja existe). O Municipio
+         e escolhido na tb_1023_municipios: escolhe a UF, digita 3
+         letras do municipio e escolhe na lista - o codigo, o nome e a UF oficiais vao para o cadastro e
+         aparecem nas telas e impressoes de Parceiros.
+         v1.5.0: Sessao 108 (29/10/2026, 20:00 -03) - Dica sob o Codigo do Estabelecimento (OESA). REVERSAO: .bak_antes_s108_oesa_geral.
+         v1.0.0: Criacao (Sessao 095, 13/10/2026, 19:10 -03).
+         v1.1.0: Sessao 095 (19:05 -03) - UF PRIMEIRO: escolhe a UF e depois digita o municipio
+                 (lista so daquela UF). O codigo do municipio e preenchido sozinho (nao digita).
+                 REVERSAO: .bak_antes_uf_primeiro_s095.
+         v1.2.0: Sessao 095 (19:30 -03) - Regiao do Brasil, Mesorregiao e Microrregiao (IBGE) aparecem sozinhas
+                 ao escolher o municipio; a Mesorregiao vai para o campo Regiao do Parceiro. REVERSAO: .bak_antes_regioes_s095.
+         v1.3.0: Sessao 095 (19:40 -03) - Mesorregiao travada; so libera para digitar quando o municipio vem sem Mesorregiao. REVERSAO: .bak_antes_meso_travada_s095.
+         v1.4.0: Sessao 108 (29/10/2026, 19:45 -03) - Rotulo 'Codigo MAPA' passa a 'Código do Estabelecimento (OESA)' e o campo sem sugestoes do navegador (autocomplete=nope). REVERSAO: .bak_antes_s108_rotulo_mapa.
+         v1.6.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Novo Parceiro</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+        .btn-primario { padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; border: 1px solid #D4370A; background: #D4370A; color: #ffffff; }
+        .btn-primario:hover { background: #B22F09; }
+        .btn-primario:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .cartao { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 24px; max-width: 980px; }
+        .cartao h2 { font-size: 15px; color: #D4370A; border-bottom: 2px solid #D4370A; padding-bottom: 8px; margin-bottom: 18px; }
+        .linha { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .campo { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 160px; position: relative; }
+        .campo.largo { flex: 3; min-width: 260px; }
+        .campo.estreito { flex: 0 0 150px; min-width: 130px; }
+        .campo label { font-size: 13px; font-weight: bold; color: #333333; }
+        .campo input { padding: 9px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; }
+        .campo input:focus { outline: none; border-color: #D4370A; }
+        .campo select { padding: 9px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; background: #ffffff; }
+        .campo select:focus { outline: none; border-color: #D4370A; }
+        .campo input[readonly] { background: #eeeeee; color: #555555; }
+        .upper { text-transform: uppercase; }
+        .centro { text-align: center; }
+        .dica { font-size: 12px; color: #888888; }
+
+        .erro-form { background: #FBE9E4; border-left: 6px solid #D4370A; color: #7a2a10; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 18px; }
+        .aviso-doc { display: none; background: #fff8e1; border-left: 6px solid #f9a825; color: #8a6d00; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 4px; }
+        .aviso-doc.visivel { display: block; }
+
+        .lista-municipios { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #ffffff; border: 1px solid #D4370A; border-radius: 6px; max-height: 240px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .lista-municipios.visivel { display: block; }
+        .item-municipio { padding: 8px 12px; font-size: 13.5px; cursor: pointer; border-bottom: 1px solid #f3f3f3; }
+        .item-municipio:hover { background: #FBE9E4; }
+        .item-municipio small { color: #888888; margin-left: 6px; }
+        .sem-municipio { padding: 8px 12px; font-size: 13px; color: #999999; font-style: italic; }
+
+        .botoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/parceiros' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo">Novo Parceiro / Fornecedor</div>
+                <a href="/produtor/parceiros" class="btn-nav">&#8592; Voltar</a>
+            </div>
+
+            <form method="POST" action="{{ url_for('parceiros_fornecedores.novo_salvar') }}" class="cartao" id="form-novo" autocomplete="off">
+                <h2>Dados do Parceiro</h2>
+
+                {% if erro %}
+                <div class="erro-form">&#9888;&#65039; {{ erro }}</div>
+                {% endif %}
+
+                <div class="linha">
+                    <div class="campo">
+                        <label for="cpf_cnpj">CPF / CNPJ *</label>
+                        <input type="text" id="cpf_cnpj" name="cpf_cnpj" maxlength="18" required value="{{ dados.cpf_cnpj }}" placeholder="Somente letras e números">
+                        <div class="aviso-doc" id="aviso-doc"></div>
+                    </div>
+                    <div class="campo largo">
+                        <label for="nome">Nome / Razão Social *</label>
+                        <input type="text" id="nome" name="nome" class="upper" maxlength="150" required value="{{ dados.nome }}">
+                    </div>
+                </div>
+
+                <div class="linha">
+                    <div class="campo largo">
+                        <label for="estabelecimento">Estabelecimento (nome da Fazenda) *</label>
+                        <input type="text" id="estabelecimento" name="estabelecimento" class="upper" maxlength="150" required value="{{ dados.estabelecimento }}">
+                    </div>
+                    <div class="campo">
+                        <label for="insc_estadual">Insc. Estadual</label>
+                        <input type="text" id="insc_estadual" name="insc_estadual" class="upper" maxlength="20" value="{{ dados.insc_estadual }}">
+                    </div>
+                    <div class="campo">
+                        <label for="codigo_mapa">Código do Estabelecimento (OESA)</label>
+                        <input type="text" id="codigo_mapa" name="codigo_mapa" maxlength="20" autocomplete="nope" value="{{ dados.codigo_mapa }}">
+                        <div style="font-size:12px;color:#777;margin-top:4px;">11 dígitos (Estabelecimento) ou 15 (Código MAPA / Exploração Pecuária)</div>
+                    </div>
+                </div>
+
+                <div class="linha">
+                    <div class="campo estreito">
+                        <label for="uf">UF *</label>
+                        <select id="uf" name="uf" required>
+                            <option value="">--</option>
+                            <option value="AC"{% if dados.uf == 'AC' %} selected{% endif %}>AC</option>
+                            <option value="AL"{% if dados.uf == 'AL' %} selected{% endif %}>AL</option>
+                            <option value="AP"{% if dados.uf == 'AP' %} selected{% endif %}>AP</option>
+                            <option value="AM"{% if dados.uf == 'AM' %} selected{% endif %}>AM</option>
+                            <option value="BA"{% if dados.uf == 'BA' %} selected{% endif %}>BA</option>
+                            <option value="CE"{% if dados.uf == 'CE' %} selected{% endif %}>CE</option>
+                            <option value="DF"{% if dados.uf == 'DF' %} selected{% endif %}>DF</option>
+                            <option value="ES"{% if dados.uf == 'ES' %} selected{% endif %}>ES</option>
+                            <option value="GO"{% if dados.uf == 'GO' %} selected{% endif %}>GO</option>
+                            <option value="MA"{% if dados.uf == 'MA' %} selected{% endif %}>MA</option>
+                            <option value="MT"{% if dados.uf == 'MT' %} selected{% endif %}>MT</option>
+                            <option value="MS"{% if dados.uf == 'MS' %} selected{% endif %}>MS</option>
+                            <option value="MG"{% if dados.uf == 'MG' %} selected{% endif %}>MG</option>
+                            <option value="PA"{% if dados.uf == 'PA' %} selected{% endif %}>PA</option>
+                            <option value="PB"{% if dados.uf == 'PB' %} selected{% endif %}>PB</option>
+                            <option value="PR"{% if dados.uf == 'PR' %} selected{% endif %}>PR</option>
+                            <option value="PE"{% if dados.uf == 'PE' %} selected{% endif %}>PE</option>
+                            <option value="PI"{% if dados.uf == 'PI' %} selected{% endif %}>PI</option>
+                            <option value="RJ"{% if dados.uf == 'RJ' %} selected{% endif %}>RJ</option>
+                            <option value="RN"{% if dados.uf == 'RN' %} selected{% endif %}>RN</option>
+                            <option value="RS"{% if dados.uf == 'RS' %} selected{% endif %}>RS</option>
+                            <option value="RO"{% if dados.uf == 'RO' %} selected{% endif %}>RO</option>
+                            <option value="RR"{% if dados.uf == 'RR' %} selected{% endif %}>RR</option>
+                            <option value="SC"{% if dados.uf == 'SC' %} selected{% endif %}>SC</option>
+                            <option value="SP"{% if dados.uf == 'SP' %} selected{% endif %}>SP</option>
+                            <option value="SE"{% if dados.uf == 'SE' %} selected{% endif %}>SE</option>
+                            <option value="TO"{% if dados.uf == 'TO' %} selected{% endif %}>TO</option>
+                        </select>
+                    </div>
+                    <div class="campo largo">
+                        <label for="municipio_busca">Município *</label>
+                        <input type="text" id="municipio_busca" class="upper" maxlength="50" value="{{ dados.municipio_nome }}" placeholder="Escolha a UF e digite 3 letras do município">
+                        <div class="lista-municipios" id="lista-municipios"></div>
+                    </div>
+                    <div class="campo estreito">
+                        <label for="municipio_codigo">Cód. Município</label>
+                        <input type="text" id="municipio_codigo" name="municipio_codigo" class="centro" readonly value="{{ dados.municipio_codigo }}" placeholder="automático">
+                    </div>
+                    <input type="hidden" id="municipio_nome" name="municipio_nome" value="{{ dados.municipio_nome }}">
+                </div>
+
+                <div class="linha">
+                    <div class="campo">
+                        <label for="regiao_brasil">Região do Brasil</label>
+                        <input type="text" id="regiao_brasil" readonly placeholder="automático">
+                    </div>
+                    <div class="campo largo">
+                        <label for="regiao">Mesorregião</label>
+                        <input type="text" id="regiao" name="regiao" class="upper" maxlength="50" value="{{ dados.regiao }}" placeholder="automático"{% if not dados.regiao_livre %} readonly{% endif %}>
+                    </div>
+                    <div class="campo largo">
+                        <label for="microrregiao">Microrregião</label>
+                        <input type="text" id="microrregiao" readonly placeholder="automático">
+                    </div>
+                </div>
+
+                <div class="botoes">
+                    <a href="/produtor/parceiros" class="btn-nav">Cancelar</a>
+                    <button type="submit" class="btn-primario" id="btn-salvar">Salvar Parceiro</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        (function () {
+            var campoDoc    = document.getElementById('cpf_cnpj');
+            var avisoDoc    = document.getElementById('aviso-doc');
+            var campoBusca  = document.getElementById('municipio_busca');
+            var campoCodigo = document.getElementById('municipio_codigo');
+            var campoNome   = document.getElementById('municipio_nome');
+            var campoUf     = document.getElementById('uf');   // select
+            var lista       = document.getElementById('lista-municipios');
+            var form        = document.getElementById('form-novo');
+            var temporizador = null;
+
+            function soDigitos(t) { return (t || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase(); }   // CNPJ alfanumerico: mantem letras
+
+            // ---- CPF/CNPJ: avisa na hora se o Parceiro ja existe ----
+            campoDoc.addEventListener('input', function () {
+                campoDoc.value = soDigitos(campoDoc.value).slice(0, 14);
+                avisoDoc.classList.remove('visivel');
+            });
+            campoDoc.addEventListener('blur', function () {
+                var doc = soDigitos(campoDoc.value);
+                if (doc.length !== 11 && doc.length !== 14) { return; }
+                fetch('/api/busca-parceiro?documento=' + encodeURIComponent(doc))
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d && d.encontrado) {
+                            avisoDoc.textContent = '\u26A0\uFE0F J\u00E1 existe um Parceiro com este CPF/CNPJ: ' + d.parceiro.nome;
+                            avisoDoc.classList.add('visivel');
+                        }
+                    })
+                    .catch(function () { /* sem aviso: o servidor confere de novo ao salvar */ });
+            });
+
+            // ---- Municipio: escolha por nome (lista) ou por codigo ----
+            function escolher(m) {
+                campoBusca.value = m.nome;
+                campoNome.value  = m.nome;
+                campoCodigo.value = m.codigo_ibge;
+                document.getElementById('regiao_brasil').value = m.regiao_brasil || '';
+                var campoRegiao = document.getElementById('regiao');
+                campoRegiao.value = (m.mesorregiao || '').toUpperCase();
+                // travada quando o IBGE informa; livre so se o municipio veio sem Mesorregiao
+                campoRegiao.readOnly = !!m.mesorregiao;
+                campoRegiao.placeholder = m.mesorregiao ? 'autom\u00E1tico' : 'sem mesorregi\u00E3o no IBGE - digite';
+                document.getElementById('microrregiao').value = m.microrregiao || '';
+                lista.classList.remove('visivel');
+            }
+
+            function limparEscolha() {
+                campoNome.value = '';
+                campoCodigo.value = '';
+                document.getElementById('regiao_brasil').value = '';
+                document.getElementById('regiao').value = '';
+                document.getElementById('regiao').readOnly = true;
+                document.getElementById('microrregiao').value = '';
+            }
+
+            function mostrarLista(itens) {
+                while (lista.firstChild) { lista.removeChild(lista.firstChild); }
+                if (!itens.length) {
+                    var vazio = document.createElement('div');
+                    vazio.className = 'sem-municipio';
+                    vazio.textContent = 'Nenhum munic\u00EDpio encontrado.';
+                    lista.appendChild(vazio);
+                } else {
+                    itens.forEach(function (m) {
+                        var item = document.createElement('div');
+                        item.className = 'item-municipio';
+                        item.appendChild(document.createTextNode(m.nome + ' / ' + m.uf));
+                        var cod = document.createElement('small');
+                        cod.textContent = m.codigo_ibge;
+                        item.appendChild(cod);
+                        item.addEventListener('mousedown', function (e) { e.preventDefault(); escolher(m); });
+                        lista.appendChild(item);
+                    });
+                }
+                lista.classList.add('visivel');
+            }
+
+            campoBusca.addEventListener('input', function () {
+                limparEscolha();
+                var termo = campoBusca.value.trim();
+                clearTimeout(temporizador);
+                if (!campoUf.value) { campoUf.focus(); lista.classList.remove('visivel'); return; }
+                if (termo.length < 3) { lista.classList.remove('visivel'); return; }
+                temporizador = setTimeout(function () {
+                    fetch('/api/busca-municipio?termo=' + encodeURIComponent(termo) + '&uf=' + encodeURIComponent(campoUf.value))
+                        .then(function (r) { return r.json(); })
+                        .then(mostrarLista)
+                        .catch(function () { lista.classList.remove('visivel'); });
+                }, 250);
+            });
+            campoBusca.addEventListener('blur', function () {
+                setTimeout(function () { lista.classList.remove('visivel'); }, 150);
+            });
+
+            // trocar a UF zera o municipio escolhido
+            campoUf.addEventListener('change', function () {
+                campoBusca.value = '';
+                limparEscolha();
+                lista.classList.remove('visivel');
+                if (campoUf.value) { campoBusca.focus(); }
+            });
+
+            // ---- trava de clique repetido no Salvar ----
+            form.addEventListener('submit', function (e) {
+                if (!campoNome.value || !campoCodigo.value) {
+                    e.preventDefault();
+                    campoBusca.focus();
+                    campoBusca.placeholder = campoUf.value ? 'Escolha o munic\u00EDpio na lista' : 'Escolha a UF primeiro';
+                    return;
+                }
+                document.getElementById('btn-salvar').disabled = true;
+            });
+        })();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\parceiro_novo.html
+     ========================================================= -->

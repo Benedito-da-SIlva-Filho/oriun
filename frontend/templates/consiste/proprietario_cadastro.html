@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\proprietario_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-06 14:11 -03
+     ATUALIZADO EM: 2026-11-12 19:20 -03
+     VERSAO: 2.6.0
+
+     DESCRICAO:
+         Formulario de cadastro e edicao de Proprietario.
+         Ate a v2.0.0, exclusivo da plataforma Consiste (perfil
+         CONSISTE). A partir da v2.1.0, tambem acessado pelo
+         perfil PRODUTOR para cadastrar/vincular um Proprietario a
+         sua propria Propriedade, e a partir da v2.3.0 tambem para
+         EDITAR (contato/endereco) um Proprietario ja vinculado.
+
+         Regras de negocio aplicadas:
+         - NAO EXISTE MAIS cadastro avulso. Esta tela SEMPRE abre
+           no contexto de uma Propriedade especifica (id_propriedade
+           + nome_propriedade recebidos do router), EXCETO quando
+           usada para edicao avulsa CONSISTE via
+           /proprietarios/editar/<id> sem id_propriedade.
+         - Quando ha contexto de Propriedade, o nome da Propriedade
+           aparece em destaque no topo da tela.
+         - Ao sair do campo CPF/CNPJ (evento blur), SEMPRE dispara
+           busca automatica via /api/busca-cpf-cnpj - so no
+           CADASTRO NOVO (nao dispara em edicao, id presente).
+         - Se encontrar um Proprietario com aquele CPF/CNPJ (no
+           cadastro novo): campos preenchidos e TRAVADOS, botao
+           vira "Vincular", so cria o vinculo.
+         - Se nao encontrar: campos liberados, cria Proprietario E
+           vinculo juntos.
+         - Tipo de Pessoa (FISICA/JURIDICA) definido primeiro,
+           altera o comportamento dos campos seguintes.
+         - CPF/CNPJ: mascara visual conforme Tipo de Pessoa (JS),
+           banco recebe somente digitos, limpo tambem no submit.
+         - maxlength batendo com o tamanho real da coluna no
+           banco, validado de novo no servidor.
+         - UPPERCASE via JS em campos com classe "upper", EXCETO
+           email.
+         - UF: dropdown fechado com as 27 opcoes.
+
+         v1.0.0: Criacao do modulo, espelhando propriedade_cadastro.html.
+         v1.1.0: Corrigido rotulo CPF/CNPJ neutro; Razao Social/Nome
+             mesmo tamanho; removida Localizacao Geografica.
+         v2.0.0: Sessao 011.1 - Fim do cadastro avulso. Adicionado
+             contexto de Propriedade (banner com nome em destaque).
+             Adicionada busca automatica por CPF/CNPJ (SEMPRE, com
+             ou sem contexto), travando campos quando encontrado.
+             Botao de acao dinamico ("Cadastrar" / "Vincular" /
+             "Salvar Alteracoes"). Campos hidden id_propriedade e
+             id_existente adicionados para o servidor decidir o
+             fluxo correto em salvar().
+         v2.1.0: Sessao 032 - P-040: perfil PRODUTOR passou a poder
+             acessar esta tela (sempre com contexto de Propriedade,
+             nunca edicao avulsa - proprietarios.py v2.4.0). Menu
+             lateral, botao hamburguer, botao "Voltar" (topo) e
+             botao "Cancelar" agora so aparecem quando
+             usuario_perfil == 'CONSISTE'.
+         v2.2.0: Sessao 033 - Corrigido bug do "None" literal em 6
+             campos opcionais (logradouro, numero, complemento,
+             bairro, cep, telefone2) quando o Proprietario existe
+             com esses campos NULL no banco - mesmo bug ja corrigido
+             em propriedade_cadastro.html v1.13.0 e
+             produtor_cadastro.html v2.2.0.
+         v2.3.0: Sessao 033 - Benedito pediu para trocar o
+             Ativar/Inativar (que ficava na lista de
+             propriedade_cadastro.html) por um link "Editar", e
+             notou que a tela do Produtor (e por espelhamento, esta
+             tela) nao tinha opcao "Voltar" para o perfil PRODUTOR.
+             Corrigido: (1) botao "Voltar" (topo) agora tambem
+             aparece para PRODUTOR quando ha contexto de Propriedade
+             (id_propriedade), voltando para propriedades.editar();
+             (2) novo bloco "Vinculo com esta Propriedade" (status +
+             botao Ativar/Inativar, chamando a MESMA rota
+             toggle_vinculo() de sempre) - so aparece quando
+             id_vinculo foi informado pelo router (proprietarios.py
+             v2.6.0); (3) quando o novo contexto travar_documento vem
+             True (PRODUTOR editando um Proprietario ja vinculado),
+             os campos Tipo de Pessoa e CPF/CNPJ ficam travados -
+             PRODUTOR so edita contato/endereco (o servidor ja
+             ignora esses dois campos vindos do formulario nesse
+             caso, esta trava aqui e so a camada visual).
+         v2.4.0: Sessao 034 - P-042: replicado o aviso de
+             "alteracoes nao salvas" (beforeunload + modal de
+             confirmacao) que ja existia em produtor_cadastro.html
+             v2.1.0. Adicionados: bloco HTML do modal
+             (#overlay-confirmacao-saida), CSS correspondente
+             (.overlay-confirmacao, .modal-confirmacao*,
+             .btn-sair-sem-salvar), flag formularioModificado
+             (input/change no form, resetada no submit) e
+             beforeunload. A funcao interceptarSaida() foi adaptada
+             (nao e uma copia literal) para suportar os DOIS tipos
+             de botao "Voltar" que existem no sistema: link com
+             href real (perfil PRODUTOR, produtor_cadastro.html) E
+             botao onclick="history.back()" sem href (perfil
+             CONSISTE, exclusivo desta tela) - controlado pela nova
+             flag usarHistoryBack. Nenhum campo, rota ou logica de
+             servidor foi alterado.
+         v2.5.0: Sessao 034 (continuacao 9, 13/08/2026, 19:10 -03) -
+         v2.6.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+             Cracha "PRODUTOR" removido do topo para este perfil
+             (mesma decisao de produtor_home.html v1.1.0 - ver
+             changelog la para o motivo completo).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'Editar' if proprietario else 'Novo' }} Proprietário</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+        .banner-propriedade { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 14px; color: #333333; display: flex; align-items: center; gap: 10px; }
+        .banner-propriedade strong { color: #D4370A; font-size: 15px; }
+        .aviso-encontrado { display: none; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #2e7d32; }
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 900px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-8  { grid-column: span 8; }
+        .col-6  { grid-column: span 6; }
+        .col-4  { grid-column: span 4; }
+        .col-3  { grid-column: span 3; }
+        .col-2  { grid-column: span 2; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input[readonly], .form-group select:disabled { background: #f5f5f5; color: #777777; }
+        .form-group small { font-size: 11px; color: #888888; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .status-ativo { color: #2e7d32; font-weight: bold; font-size: 12px; }
+        .status-inativo { color: #c62828; font-weight: bold; font-size: 12px; }
+        .btn-toggle-vinculo { background: none; border: none; color: #666666; font-size: 12px; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+        .btn-toggle-vinculo:hover { color: #333333; }
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+        .overlay-confirmacao { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-confirmacao { background: #ffffff; border-radius: 10px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+        .modal-confirmacao-titulo { font-size: 16px; font-weight: bold; color: #D4370A; margin-bottom: 10px; }
+        .modal-confirmacao-texto { font-size: 14px; color: #333333; margin-bottom: 22px; line-height: 1.5; }
+        .modal-confirmacao-botoes { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-sair-sem-salvar { padding: 10px 20px; background: #c62828; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-sair-sem-salvar:hover { background: #a02020; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            {% if usuario_perfil == 'CONSISTE' %}
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            {% endif %}
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            {% if usuario_perfil != 'PRODUTOR' %}
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            {% endif %}
+            {% if usuario_perfil == 'CONSISTE' %}
+            <button onclick="history.back()" class="btn-voltar-topo">&#8592; Voltar</button>
+            {% elif id_propriedade %}
+            <a href="{{ url_for('propriedades.editar', id=id_propriedade) }}" class="btn-voltar-topo">&#8592; Voltar</a>
+            {% endif %}
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% if usuario_perfil == 'CONSISTE' %}
+        {% include 'consiste/consiste_menu.html' %}
+        {% endif %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128100; {{ 'Editar' if proprietario else 'Novo' }} Proprietário</h2>
+            </div>
+
+            {% if nome_propriedade %}
+            <div class="banner-propriedade">
+                &#127806; Vinculando este Proprietário à Propriedade: <strong>{{ nome_propriedade }}</strong>
+            </div>
+            {% endif %}
+
+            {% if id_vinculo %}
+            <div class="banner-propriedade" style="justify-content: space-between;">
+                <span>
+                    Vínculo com esta Propriedade:
+                    {% if vinculo_ativo %}<span class="status-ativo">&#9679; Ativo</span>{% else %}<span class="status-inativo">&#9679; Inativo</span>{% endif %}
+                </span>
+                <form method="POST" action="{{ url_for('proprietarios.toggle_vinculo', id_vinculo=id_vinculo) }}" style="display:inline;">
+                    <button type="submit" class="btn-toggle-vinculo">{{ 'Inativar' if vinculo_ativo else 'Ativar' }}</button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="aviso-encontrado" id="aviso-encontrado">
+                &#9989; CPF/CNPJ já cadastrado — dados carregados abaixo. Os campos foram travados para evitar alterar o cadastro existente.
+            </div>
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('proprietarios.salvar') }}" id="form-proprietario" autocomplete="off">
+                    <input type="hidden" name="id" id="campo-id" value="{{ proprietario.id if proprietario else '' }}">
+                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade if id_propriedade else '' }}">
+                    <input type="hidden" name="id_existente" id="campo-id-existente" value="">
+
+                    <div class="form-secao">Dados do Proprietário</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-4">
+                            <label>Tipo de Pessoa *</label>
+                            <select name="tipo_pessoa" id="campo-tipo-pessoa" required autocomplete="off" {{ 'disabled' if travar_documento else '' }}>
+                                <option value="">Selecione...</option>
+                                {% for tipo in tipos_pessoa %}
+                                <option value="{{ tipo }}" {{ 'selected' if proprietario and proprietario.tipo_pessoa == tipo else '' }}>
+                                    {{ 'Física' if tipo == 'FISICA' else 'Jurídica' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Visibilidade *</label>
+                            <select name="visibilidade" id="campo-visibilidade" required autocomplete="off">
+                                <option value="">Selecione...</option>
+                                {% for vis in visibilidades %}
+                                <option value="{{ vis }}" {{ 'selected' if proprietario and proprietario.visibilidade == vis else '' }}>
+                                    {{ 'Público' if vis == 'PUBLICO' else 'Privado' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label id="label-cpf-cnpj">CPF/CNPJ *</label>
+                            <input type="text" id="campo-cpf-cnpj" name="cpf_cnpj" required maxlength="18" autocomplete="off"
+                                {{ 'readonly' if travar_documento else '' }}
+                                value="{{ proprietario.cpf_cnpj if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label id="label-razao-social">Razão Social *</label>
+                            <input type="text" id="campo-razao-social" name="razao_social" required maxlength="150" class="upper" autocomplete="off"
+                                value="{{ proprietario.razao_social if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label id="label-nome">Nome Fantasia</label>
+                            <input type="text" id="campo-nome" name="nome" maxlength="150" class="upper" autocomplete="off"
+                                value="{{ proprietario.nome if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <small id="ajuda-nome">O campo Nome é preenchido automaticamente a partir da Razão Social. Edite se o Nome Fantasia for diferente.</small>
+                        </div>
+
+                    </div>
+
+                    <div class="form-secao">Endereço</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-8">
+                            <label>Logradouro</label>
+                            <input type="text" id="campo-logradouro" name="logradouro" maxlength="200" class="upper" autocomplete="off"
+                                value="{{ (proprietario.logradouro or '') if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label>Número</label>
+                            <input type="text" id="campo-numero" name="numero" maxlength="10" class="upper" autocomplete="off"
+                                value="{{ (proprietario.numero or '') if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label>UF *</label>
+                            <select name="uf" id="campo-uf" required autocomplete="off">
+                                <option value="">--</option>
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if proprietario and proprietario.uf == sigla else '' }}>
+                                    {{ sigla }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Complemento</label>
+                            <input type="text" id="campo-complemento" name="complemento" maxlength="100" class="upper" autocomplete="off"
+                                value="{{ (proprietario.complemento or '') if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Bairro</label>
+                            <input type="text" id="campo-bairro" name="bairro" maxlength="100" class="upper" autocomplete="off"
+                                value="{{ (proprietario.bairro or '') if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-8">
+                            <label>Município *</label>
+                            <input type="text" id="campo-municipio" name="municipio" required maxlength="100" class="upper" autocomplete="off"
+                                value="{{ proprietario.municipio if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>CEP</label>
+                            <input type="text" id="campo-cep" name="cep" maxlength="9" autocomplete="off"
+                                value="{{ (proprietario.cep or '') if proprietario else '' }}"
+                                placeholder="00000-000">
+                        </div>
+
+                    </div>
+
+                    <div class="form-secao">Contato</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-6">
+                            <label>Email *</label>
+                            <input type="email" id="campo-email" name="email" required maxlength="150" autocomplete="off"
+                                value="{{ proprietario.email if proprietario else '' }}">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Telefone *</label>
+                            <input type="text" id="campo-telefone" name="telefone" required maxlength="15" autocomplete="off"
+                                value="{{ proprietario.telefone if proprietario else '' }}"
+                                placeholder="(00) 00000-0000">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Telefone 2</label>
+                            <input type="text" id="campo-telefone2" name="telefone2" maxlength="15" autocomplete="off"
+                                value="{{ (proprietario.telefone2 or '') if proprietario else '' }}"
+                                placeholder="(00) 00000-0000">
+                        </div>
+
+                    </div>
+
+                    <div class="form-botoes">
+                        {% if usuario_perfil == 'CONSISTE' %}
+                        <a href="{{ url_for('proprietarios.lista') }}" class="btn-cancelar">Cancelar</a>
+                        {% endif %}
+                        <button type="submit" class="btn-salvar" id="botao-salvar">
+                            {{ 'Salvar Alterações' if proprietario else 'Cadastrar' }}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay-confirmacao" id="overlay-confirmacao-saida">
+        <div class="modal-confirmacao">
+            <div class="modal-confirmacao-titulo">Alterações não salvas</div>
+            <div class="modal-confirmacao-texto">Você tem alterações neste cadastro que ainda não foram salvas. Se sair agora, elas serão perdidas.</div>
+            <div class="modal-confirmacao-botoes">
+                <button type="button" id="botao-continuar-editando" class="btn-cancelar">Continuar editando</button>
+                <button type="button" id="botao-sair-sem-salvar" class="btn-sair-sem-salvar">Sair sem salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+
+        document.querySelectorAll('.upper').forEach(function(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+
+        function aplicarMascaraTelefone(campo) {
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 11);
+                var formatado = digitos;
+
+                if (digitos.length > 10) {
+                    formatado = digitos.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+                } else if (digitos.length > 6) {
+                    formatado = digitos.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                } else if (digitos.length > 2) {
+                    formatado = digitos.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                } else if (digitos.length > 0) {
+                    formatado = digitos.replace(/^(\d{0,2})/, '($1');
+                }
+
+                this.value = formatado.trim();
+            });
+        }
+        aplicarMascaraTelefone(document.getElementById('campo-telefone'));
+        aplicarMascaraTelefone(document.getElementById('campo-telefone2'));
+
+        var campoCep = document.getElementById('campo-cep');
+        campoCep.addEventListener('input', function() {
+            var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+            var formatado = digitos;
+            if (digitos.length > 5) {
+                formatado = digitos.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+            }
+            this.value = formatado.trim();
+        });
+
+        var campoTipoPessoa = document.getElementById('campo-tipo-pessoa');
+        var campoVisibilidade = document.getElementById('campo-visibilidade');
+        var campoUf = document.getElementById('campo-uf');
+        var campoCpfCnpj = document.getElementById('campo-cpf-cnpj');
+        var campoIdExistente = document.getElementById('campo-id-existente');
+        var campoId = document.getElementById('campo-id');
+        var avisoEncontrado = document.getElementById('aviso-encontrado');
+        var botaoSalvar = document.getElementById('botao-salvar');
+        var textoOriginalBotao = botaoSalvar.textContent.trim();
+
+        var estaEditandoExistente = !!campoId.value;
+
+        campoCpfCnpj.addEventListener('input', function() {
+            var digitos = this.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();   // CNPJ alfanumerico
+            var formatado = digitos;
+
+            if (campoTipoPessoa.value === 'FISICA') {
+                digitos = digitos.replace(/\D/g, '').slice(0, 11);
+                formatado = digitos.replace(/^(\d{3})(\d{0,3})(\d{0,3})(\d{0,2})/, function(m, p1, p2, p3, p4) {
+                    var r = p1;
+                    if (p2) r += '.' + p2;
+                    if (p3) r += '.' + p3;
+                    if (p4) r += '-' + p4;
+                    return r;
+                });
+            } else {
+                digitos = digitos.slice(0, 14);
+                formatado = digitos.replace(/^([0-9A-Z]{2})([0-9A-Z]{0,3})([0-9A-Z]{0,3})([0-9A-Z]{0,4})([0-9A-Z]{0,2})/, function(m, p1, p2, p3, p4, p5) {
+                    var r = p1;
+                    if (p2) r += '.' + p2;
+                    if (p3) r += '.' + p3;
+                    if (p4) r += '/' + p4;
+                    if (p5) r += '-' + p5;
+                    return r;
+                });
+            }
+
+            this.value = formatado;
+
+            if (campoIdExistente.value) {
+                destravarFormulario();
+            }
+        });
+
+        campoCpfCnpj.addEventListener('blur', function() {
+            if (estaEditandoExistente) {
+                return;
+            }
+
+            var digitos = this.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            var tamanhoEsperado = (campoTipoPessoa.value === 'FISICA') ? 11 : 14;
+
+            if (digitos.length !== tamanhoEsperado) {
+                return;
+            }
+
+            fetch('/api/busca-cpf-cnpj?documento=' + digitos)
+                .then(function(resposta) { return resposta.json(); })
+                .then(function(dados) {
+                    if (dados.proprietario) {
+                        preencherComEncontrado(dados.proprietario);
+                    }
+                })
+                .catch(function(erro) {
+                    console.error('Erro ao buscar CPF/CNPJ:', erro);
+                });
+        });
+
+        function preencherComEncontrado(proprietarioEncontrado) {
+            campoIdExistente.value = proprietarioEncontrado.id;
+
+            campoTipoPessoa.value = proprietarioEncontrado.tipo_pessoa;
+            campoVisibilidade.value = proprietarioEncontrado.visibilidade;
+            document.getElementById('campo-razao-social').value = proprietarioEncontrado.razao_social;
+            document.getElementById('campo-nome').value = proprietarioEncontrado.nome;
+            document.getElementById('campo-email').value = proprietarioEncontrado.email;
+            document.getElementById('campo-telefone').value = proprietarioEncontrado.telefone || '';
+            document.getElementById('campo-telefone2').value = proprietarioEncontrado.telefone2 || '';
+            document.getElementById('campo-logradouro').value = proprietarioEncontrado.logradouro || '';
+            document.getElementById('campo-numero').value = proprietarioEncontrado.numero || '';
+            document.getElementById('campo-complemento').value = proprietarioEncontrado.complemento || '';
+            document.getElementById('campo-bairro').value = proprietarioEncontrado.bairro || '';
+            document.getElementById('campo-cep').value = proprietarioEncontrado.cep || '';
+            document.getElementById('campo-municipio').value = proprietarioEncontrado.municipio || '';
+            campoUf.value = proprietarioEncontrado.uf;
+
+            atualizarRotulosTipoPessoa();
+            travarFormulario();
+
+            avisoEncontrado.style.display = 'block';
+            botaoSalvar.textContent = campoId.value ? textoOriginalBotao : 'Vincular';
+        }
+
+        var CAMPOS_TEXTO_IDS = [
+            'campo-razao-social', 'campo-nome', 'campo-email',
+            'campo-telefone', 'campo-telefone2', 'campo-logradouro',
+            'campo-numero', 'campo-complemento', 'campo-bairro',
+            'campo-cep', 'campo-municipio'
+        ];
+        var SELECTS_TRAVAVEIS = [campoTipoPessoa, campoVisibilidade, campoUf];
+
+        function travarFormulario() {
+            CAMPOS_TEXTO_IDS.forEach(function(idCampo) {
+                document.getElementById(idCampo).setAttribute('readonly', 'readonly');
+            });
+            SELECTS_TRAVAVEIS.forEach(function(select) {
+                if (!select.nextElementSibling || select.nextElementSibling.tagName !== 'INPUT') {
+                    var hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = select.name;
+                    hidden.value = select.value;
+                    hidden.className = 'hidden-select-' + select.id;
+                    select.insertAdjacentElement('afterend', hidden);
+                }
+                select.removeAttribute('name');
+                select.disabled = true;
+            });
+        }
+
+        function destravarFormulario() {
+            CAMPOS_TEXTO_IDS.forEach(function(idCampo) {
+                document.getElementById(idCampo).removeAttribute('readonly');
+            });
+            SELECTS_TRAVAVEIS.forEach(function(select) {
+                select.disabled = false;
+                var mapaName = {
+                    'campo-tipo-pessoa': 'tipo_pessoa',
+                    'campo-visibilidade': 'visibilidade',
+                    'campo-uf': 'uf'
+                };
+                select.setAttribute('name', mapaName[select.id]);
+                var hiddenExistente = document.querySelector('.hidden-select-' + select.id);
+                if (hiddenExistente) {
+                    hiddenExistente.remove();
+                }
+            });
+            campoIdExistente.value = '';
+            avisoEncontrado.style.display = 'none';
+            botaoSalvar.textContent = textoOriginalBotao;
+        }
+
+        var campoRazaoSocial = document.getElementById('campo-razao-social');
+        var campoNome = document.getElementById('campo-nome');
+        var labelRazaoSocial = document.getElementById('label-razao-social');
+        var labelNome = document.getElementById('label-nome');
+        var labelCpfCnpj = document.getElementById('label-cpf-cnpj');
+        var ajudaNome = document.getElementById('ajuda-nome');
+        var nomeEditadoManualmente = false;
+
+        campoNome.addEventListener('input', function() {
+            nomeEditadoManualmente = true;
+        });
+
+        campoRazaoSocial.addEventListener('input', function() {
+            if (!nomeEditadoManualmente || campoTipoPessoa.value === 'FISICA') {
+                campoNome.value = campoRazaoSocial.value;
+            }
+        });
+
+        function atualizarRotulosTipoPessoa() {
+            if (campoTipoPessoa.value === 'FISICA') {
+                labelRazaoSocial.textContent = 'Nome do Proprietário *';
+                labelNome.textContent = 'Nome (igual ao acima)';
+                labelCpfCnpj.textContent = 'CPF *';
+                campoCpfCnpj.setAttribute('maxlength', '14');
+                ajudaNome.style.display = 'none';
+                if (!campoIdExistente.value) {
+                    campoNome.value = campoRazaoSocial.value;
+                }
+                campoNome.setAttribute('readonly', 'readonly');
+            } else if (campoTipoPessoa.value === 'JURIDICA') {
+                labelRazaoSocial.textContent = 'Razão Social *';
+                labelNome.textContent = 'Nome Fantasia';
+                labelCpfCnpj.textContent = 'CNPJ *';
+                campoCpfCnpj.setAttribute('maxlength', '18');
+                ajudaNome.style.display = 'block';
+                if (!campoIdExistente.value) {
+                    campoNome.removeAttribute('readonly');
+                }
+            } else {
+                labelRazaoSocial.textContent = 'Razão Social *';
+                labelNome.textContent = 'Nome Fantasia';
+                labelCpfCnpj.textContent = 'CPF/CNPJ *';
+                campoCpfCnpj.setAttribute('maxlength', '18');
+                ajudaNome.style.display = 'block';
+                if (!campoIdExistente.value) {
+                    campoNome.removeAttribute('readonly');
+                }
+            }
+        }
+        campoTipoPessoa.addEventListener('change', atualizarRotulosTipoPessoa);
+        atualizarRotulosTipoPessoa();
+
+        document.getElementById('form-proprietario').addEventListener('submit', function() {
+            ['campo-telefone', 'campo-telefone2', 'campo-cep', 'campo-cpf-cnpj'].forEach(function(idCampo) {
+                var campo = document.getElementById(idCampo);
+                if (campo) {
+                    campo.value = (idCampo === 'campo-cpf-cnpj') ? campo.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase() : campo.value.replace(/\D/g, '');
+                }
+            });
+
+            formularioModificado = false;
+        });
+
+        // --- P-042: aviso de alteracoes nao salvas (Sessao 034) ---
+
+        var formularioModificado = false;
+
+        document.getElementById('form-proprietario').addEventListener('input', function() {
+            formularioModificado = true;
+        });
+        document.getElementById('form-proprietario').addEventListener('change', function() {
+            formularioModificado = true;
+        });
+
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioModificado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+
+        var overlayConfirmacaoSaida = document.getElementById('overlay-confirmacao-saida');
+        var botaoContinuarEditando = document.getElementById('botao-continuar-editando');
+        var botaoSairSemSalvar = document.getElementById('botao-sair-sem-salvar');
+        var linkDestinoPendente = null;
+        var usarHistoryBack = false;
+
+        // Adaptada (nao e copia literal de produtor_cadastro.html):
+        // aceita tanto <a href="..."> (perfil PRODUTOR) quanto
+        // <button onclick="history.back()"> sem href (perfil CONSISTE,
+        // exclusivo desta tela).
+        function interceptarSaida(elemento) {
+            if (!elemento) {
+                return;
+            }
+            elemento.addEventListener('click', function(evento) {
+                if (formularioModificado) {
+                    evento.preventDefault();
+                    var href = elemento.getAttribute('href');
+                    linkDestinoPendente = href || null;
+                    usarHistoryBack = !href;
+                    overlayConfirmacaoSaida.style.display = 'flex';
+                }
+            });
+        }
+
+        interceptarSaida(document.querySelector('.btn-voltar-topo'));
+        interceptarSaida(document.querySelector('.btn-cancelar'));
+
+        botaoContinuarEditando.addEventListener('click', function() {
+            overlayConfirmacaoSaida.style.display = 'none';
+            linkDestinoPendente = null;
+            usarHistoryBack = false;
+        });
+
+        botaoSairSemSalvar.addEventListener('click', function() {
+            formularioModificado = false;
+            if (usarHistoryBack) {
+                history.back();
+            } else if (linkDestinoPendente) {
+                window.location.href = linkDestinoPendente;
+            }
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\proprietario_cadastro.html
+     ========================================================= -->

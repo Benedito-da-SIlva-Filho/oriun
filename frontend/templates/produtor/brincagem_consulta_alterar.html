@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincagem_consulta_alterar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-20 12:30 -03
+     ATUALIZADO EM: 2026-09-30 14:35 -03
+     VERSAO: 1.6.0
+
+     DESCRICAO:
+         Formulario de Alteracao de um registro de
+         tb_5001_brincagem (Sessao 062, pedido de Benedito).
+         Visual base copiado de gta_manual_cadastro.html (Regra
+         de Ouro #5 / Checklist Pre-Codigo item 1).
+
+         SISBOV aparece SO PARA EXIBICAO (travado, nao editavel -
+         "se quiser trocar, exclui e usa o brinco de novo",
+         Benedito, Sessao 062). Todos os outros campos sao
+         editaveis. A Data de Brincagem vem com o valor original e
+         so muda se o usuario editar. Ao salvar, o servidor
+         (brincagem_consulta.py rota alterar()) recalcula a faixa
+         de idade pelo Nro Meses e grava no Log de Operacoes -
+         nada disso e feito aqui, so formulario/validacao de tela.
+
+         NRO MESES + IDADE EM MESES (v1.4.0): o Nro Meses vem
+         calculado pelo servidor. Ao lado, a caixa "Idade em
+         Meses" mostra a faixa oficial (tb_4006) em que o numero
+         cai - SO conferencia visual, para pegar erro de
+         digitacao (ex.: queria 11 e digitou 21). Fora de todas
+         as faixas: caixa vermelha e Salvar bloqueado.
+
+     v1.0.0: Criacao do modulo (Sessao 062, 20/09/2026, 12:30 -03).
+     v1.1.0: Sessao 066 (20/09/2026, 15:00 -03) - Aviso corrigido:
+         a Data de Brincagem NAO muda mais ao salvar (ver
+         brincagem_consulta.py v2.2.0).
+     v1.2.0: Sessao 067 (20/09/2026, 15:00 -03) - Campo Data
+         Brincagem adicionado ao formulario (editavel, pedido de
+         Benedito) - vem preenchido com o valor original.
+     v1.3.0: Sessao 076 (21/09/2026, 17:21 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar definido
+         via um comando de atribuicao antes do include - mesmo
+         destino de sempre (lista da Consulta Brincagem).
+     v1.4.0: Sessao 079 (24/09/2026, 07:55 -03) - Campo Nro Meses
+         (NOVO, obrigatorio) + caixa "Idade em Meses" com a faixa
+         ao lado (acompanha brincagem_consulta.py v2.8.0).
+         Mudancas:
+           - Linha 2 do formulario reorganizada: Sexo | Nro Meses
+             | Idade em Meses | Nascimento. Linha 3: Peso | Lote.
+             Classes novas de grade: col-2, col-3, col-8.
+           - JS: bloco "NRO MESES" - so aceita digitos (max. 2),
+             mostra a faixa na hora e recalcula o Nascimento
+             (Data Brincagem - meses x 30 dias, MESMA conta do
+             brincagem_leitor_leitura.html). Nascimento continua
+             editavel na mao.
+           - Salvar bloqueado (botao e submit) enquanto a faixa
+             estiver vermelha ou o Nro Meses vazio.
+           - As faixas chegam do servidor pela variavel
+             faixas_idade, convertida para JSON pelo filtro
+             tojson do Jinja.
+           - Protecao: funcoes de mascara/peso nao quebram mais
+             quando a tela abre so com a mensagem de erro (sem
+             formulario).
+     v1.5.0: Sessao 083 (30/09/2026, 12:00 -03) - pedidos de
+         Benedito depois do teste do 3A (acompanha
+         brincagem_consulta.py v2.11.0):
+           - NOVO bloco "Tipo de Entrada" (so leitura, colorido:
+             azul Compra / verde Nascimento), abaixo do SISBOV - o
+             usuario sabe em que tipo de animal esta mexendo.
+           - NASCIMENTO: Data Brincagem TRAVADA (somente leitura) e
+             aviso novo "Animal de Nascimento: a Data de Brincagem
+             nao pode ser alterada. Se estiver errada, exclua e leia
+             de novo." - o aviso antigo ("so muda se voce editar")
+             convidava a trocar uma data que o servidor recusa. A
+             trava no servidor continua (decisao de Benedito: por
+             hora NAO muda de data). COMPRA: aviso antigo mantido.
+           - COMPRA: Data mais de 10 dias no futuro pede
+             confirmacao (janela modal_confirmacao.html, Padrao 2)
+             antes de salvar - nao bloqueia (regra de Benedito,
+             Sessao 083). Constante DIAS_AVISO_DATA_FUTURA = 10, a
+             mesma da Tela 02 do Leitor.
+           - Incluida a peca modal_confirmacao.html (sem alterar a
+             peca).
+     v1.6.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). (Era o "Sair do site?" da print de Benedito.)
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Alterar Brincagem</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 720px; }
+        .form-secao { font-size: 16px; font-weight: bold; color: #D4370A; margin: 16px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-8  { grid-column: span 8; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 10px 11px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+
+        /* v1.4.0 - caixa "Idade em Meses" (so exibicao, espelho do Nro Meses) */
+        .faixa-idade { padding: 10px 11px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; font-weight: bold; background: #f0f0f0; color: #888888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .faixa-idade.ok   { background: #E3F2FD; border-color: #1565C0; color: #1565C0; }
+        .faixa-idade.erro { background: #ffebee; border-color: #c62828; color: #c62828; }
+
+        .bloco-sisbov { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .bloco-sisbov .rotulo { font-size: 12px; color: #888888; }
+        .bloco-sisbov .valor { font-size: 20px; font-weight: bold; color: #333333; }
+
+        /* v1.5.0 - bloco Tipo de Entrada (so leitura) */
+        .bloco-tipo { border-radius: 8px; padding: 10px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 2px solid; }
+        .bloco-tipo .rotulo { font-size: 12px; font-weight: bold; }
+        .bloco-tipo .valor { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .bloco-tipo.compra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .bloco-tipo.nascimento { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+
+        .aviso-data { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 8px 14px; font-size: 12.5px; color: #7a1f04; margin-bottom: 16px; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 14px 18px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 22px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 26px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_for('brincagem_consulta.lista', id_propriedade=id_propriedade) %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#9999;&#65039;</span> Alterar Brincagem</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if registro %}
+            <div class="form-container">
+
+                <div class="bloco-sisbov">
+                    <span class="rotulo">SISBOV (não editável)</span>
+                    <span class="valor">{{ registro.sisbov }}</span>
+                </div>
+
+                <div class="bloco-tipo {{ 'nascimento' if registro.tipo_entrada == 'NASCIMENTO' else 'compra' }}">
+                    <span class="rotulo">Tipo de Entrada (não editável)</span>
+                    <span class="valor">{{ tipo_entrada_descricao|upper }}</span>
+                </div>
+
+                {% if registro.tipo_entrada == 'NASCIMENTO' %}
+                <div class="aviso-data">&#128274; Animal de Nascimento: a Data de Brincagem não pode ser alterada. Se estiver errada, exclua e leia de novo.</div>
+                {% else %}
+                <div class="aviso-data">&#8505;&#65039; A Data de Brincagem abaixo vem preenchida com a original — só muda se você editar.</div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('brincagem_consulta.alterar', id_brincagem=registro.id, id_propriedade=id_propriedade) }}" id="form-alterar">
+
+                    <div class="form-secao">Dados do Animal</div>
+                    <div class="form-grid">
+
+                        <!-- Linha 1: Data Brincagem | Especie | Raca -->
+                        <div class="form-group col-4">
+                            <label>Data Brincagem *</label>
+                            <input type="text" name="data_brincagem" id="data_brincagem" required maxlength="10" autocomplete="off"
+                                value="{{ registro.data_brincagem.strftime('%d/%m/%Y') if registro.data_brincagem else '' }}"
+                                {{ 'readonly' if registro.tipo_entrada == 'NASCIMENTO' else '' }}>
+                        </div>
+                        <div class="form-group col-4">
+                            <label>Espécie *</label>
+                            <select name="id_especie" required>
+                                {% for esp in especies %}
+                                <option value="{{ esp.id }}" {{ 'selected' if esp.id == registro.id_especie else '' }}>{{ esp.descricao }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-4">
+                            <label>Raça *</label>
+                            <select name="id_raca" required>
+                                {% for raca in racas %}
+                                <option value="{{ raca.id }}" {{ 'selected' if raca.id == registro.id_raca else '' }}>{{ raca.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Linha 2 (v1.4.0): Sexo | Nro Meses | Idade em Meses | Nascimento -->
+                        <div class="form-group col-3">
+                            <label>Sexo *</label>
+                            <select name="sexo" required>
+                                <option value="MACHO" {{ 'selected' if registro.sexo == 'MACHO' else '' }}>Macho</option>
+                                <option value="FEMEA" {{ 'selected' if registro.sexo == 'FEMEA' else '' }}>Fêmea</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-2">
+                            <label>Nro Meses *</label>
+                            <input type="text" name="nro_meses" id="nro_meses" required maxlength="2" inputmode="numeric" autocomplete="off"
+                                value="{{ nro_meses }}">
+                        </div>
+                        <div class="form-group col-3">
+                            <label>Idade em Meses</label>
+                            <div class="faixa-idade" id="faixa-idade">&#8212;</div>
+                        </div>
+                        <div class="form-group col-4">
+                            <label>Nascimento *</label>
+                            <input type="text" name="nascimento" id="nascimento" required maxlength="10" autocomplete="off"
+                                value="{{ registro.nascimento.strftime('%d/%m/%Y') if registro.nascimento else '' }}">
+                        </div>
+
+                        <!-- Linha 3: Peso | Lote -->
+                        <div class="form-group col-4">
+                            <label>Peso (kg) — máx. 1000</label>
+                            <input type="text" name="peso" id="peso" autocomplete="off"
+                                value="{{ '%.2f' % registro.peso if registro.peso is not none else '' }}">
+                        </div>
+                        <div class="form-group col-8">
+                            <label>Lote</label>
+                            <input type="text" name="lote" class="upper" autocomplete="off" value="{{ registro.lote or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="{{ url_for('brincagem_consulta.lista', id_propriedade=id_propriedade) }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-salvar">Salvar Alteração</button>
+                    </div>
+
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // ---- v1.5.0 - Tipo do animal (COMPRA / NASCIMENTO) e a
+        // regra da Data no futuro (mesma da Tela 02 do Leitor) ----
+        var tipoRegistro = {{ (registro.tipo_entrada if registro else '')|tojson }};
+        var DIAS_AVISO_DATA_FUTURA = 10;
+
+        // Devolve true se a data dd/mm/aaaa passa de hoje + 10 dias.
+        function dataPassaDoLimite(texto) {
+            var partes = (texto || '').split('/');
+            if (partes.length !== 3 || partes[2].length !== 4) return false;
+            var data = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+            if (isNaN(data.getTime())) return false;
+            var limite = new Date();
+            limite.setHours(0, 0, 0, 0);
+            limite.setDate(limite.getDate() + DIAS_AVISO_DATA_FUTURA);
+            return data > limite;
+        }
+
+        // ---- Faixas oficiais de idade (tb_4006), vindas do servidor ----
+        var faixasIdade = {{ faixas_idade|tojson }};
+        var DIAS_POR_MES = 30;   // mesma aproximacao do Leitor/servidor
+
+        // ---- Uppercase automatico (Lote) ----
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        // ---- Mascara de data (Nascimento e Data Brincagem) ----
+        // v1.4.0 - ignora campo ausente (tela aberta so com o erro).
+        function aplicarMascaraData(campo) {
+            if (!campo) return;
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                var formatado = digitos;
+                if (digitos.length > 4) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                } else if (digitos.length > 2) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                }
+                this.value = formatado;
+            });
+        }
+        aplicarMascaraData(document.getElementById('nascimento'));
+        aplicarMascaraData(document.getElementById('data_brincagem'));
+
+        // ---- Peso: trava em 1000kg ----
+        var campoPeso = document.getElementById('peso');
+        if (campoPeso) {
+            campoPeso.addEventListener('input', function() {
+                var valor = parseFloat(this.value.replace(',', '.'));
+                if (!isNaN(valor) && valor > 1000) {
+                    this.value = '1000';
+                }
+            });
+        }
+
+        // ---- Helpers de data dd/mm/aaaa <-> Date (copia do Leitor) ----
+        function parseDataBR(str) {
+            var partes = (str || '').split('/');
+            if (partes.length !== 3) return null;
+            var d = parseInt(partes[0], 10), m = parseInt(partes[1], 10) - 1, y = parseInt(partes[2], 10);
+            var data = new Date(y, m, d);
+            return isNaN(data.getTime()) ? null : data;
+        }
+        function formatarDataBR(data) {
+            var dd = String(data.getDate()).padStart(2, '0');
+            var mm = String(data.getMonth() + 1).padStart(2, '0');
+            return dd + '/' + mm + '/' + data.getFullYear();
+        }
+
+        // ==========================================================
+        // v1.4.0 - NRO MESES
+        //   - so digitos, no maximo 2;
+        //   - mostra na caixa "Idade em Meses" a faixa em que o
+        //     numero cai (meses x 30 dias entre dias_min e dias_max);
+        //   - recalcula o Nascimento = Data Brincagem - meses x 30
+        //     (mesma conta do Leitor). Nascimento segue editavel.
+        //   - faixa vermelha ou vazia = Salvar bloqueado.
+        // ==========================================================
+        var campoNroMeses   = document.getElementById('nro_meses');
+        var caixaFaixa      = document.getElementById('faixa-idade');
+        var campoNascimento = document.getElementById('nascimento');
+        var campoDataBrinc  = document.getElementById('data_brincagem');
+        var btnSalvar       = document.getElementById('btn-salvar');
+        var faixaValida     = false;
+
+        function localizarFaixa(meses) {
+            var dias = meses * DIAS_POR_MES;
+            for (var i = 0; i < faixasIdade.length; i++) {
+                if (dias >= faixasIdade[i].dias_min && dias <= faixasIdade[i].dias_max) {
+                    return faixasIdade[i];
+                }
+            }
+            return null;
+        }
+
+        function atualizarFaixa() {
+            if (!campoNroMeses) return;
+            caixaFaixa.classList.remove('ok', 'erro');
+            var texto = campoNroMeses.value;
+
+            if (texto === '') {
+                caixaFaixa.textContent = '\u2014';
+                faixaValida = false;
+            } else {
+                var faixa = localizarFaixa(parseInt(texto, 10));
+                if (faixa) {
+                    caixaFaixa.textContent = faixa.descricao;
+                    caixaFaixa.classList.add('ok');
+                    faixaValida = true;
+                } else {
+                    caixaFaixa.textContent = 'Fora das faixas';
+                    caixaFaixa.classList.add('erro');
+                    faixaValida = false;
+                }
+            }
+            btnSalvar.disabled = !faixaValida;
+        }
+
+        if (campoNroMeses) {
+            campoNroMeses.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 2);
+                atualizarFaixa();
+
+                var meses = parseInt(this.value, 10);
+                var base = parseDataBR(campoDataBrinc.value);
+                if (!isNaN(meses) && base) {
+                    var nascimento = new Date(base);
+                    nascimento.setDate(nascimento.getDate() - (meses * DIAS_POR_MES));
+                    campoNascimento.value = formatarDataBR(nascimento);
+                }
+            });
+            atualizarFaixa();   // estado inicial, com o valor vindo do servidor
+        }
+
+        // ---- Aviso de alteracoes nao salvas + trava do Salvar ----
+        var formularioAlterado = false;
+        var formAlterar = document.getElementById('form-alterar');
+        if (formAlterar) {
+            formAlterar.addEventListener('input', function() { formularioAlterado = true; });
+            window.addEventListener('beforeunload', function(evento) {
+                if (formularioAlterado) {
+                    evento.preventDefault();
+                    evento.returnValue = '';
+                }
+            });
+            formAlterar.addEventListener('submit', function(evento) {
+                if (!faixaValida) {          // v1.4.0 - nunca envia com faixa errada
+                    evento.preventDefault();
+                    campoNroMeses.focus();
+                    return;
+                }
+                // v1.5.0 - Compra: Data mais de 10 dias no futuro pede
+                // confirmacao antes de salvar (nao bloqueia).
+                if (tipoRegistro !== 'NASCIMENTO' && dataPassaDoLimite(campoDataBrinc.value)) {
+                    evento.preventDefault();
+                    confirmarAcaoAssincrona(
+                        function() {
+                            formularioAlterado = false;
+                            formAlterar.submit();
+                        },
+                        'A Data de Brincagem ' + campoDataBrinc.value + ' está mais de ' + DIAS_AVISO_DATA_FUTURA + ' dias no futuro. Ela está correta?',
+                        'Sim, está correta'
+                    );
+                    return;
+                }
+                formularioAlterado = false;
+            });
+        }
+
+        // v1.6.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return formularioAlterado; },
+                function() { formularioAlterado = false; }
+            );
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincagem_consulta_alterar.html
+     ========================================================= -->

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates
+     MODULO: templates\home.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-21 12:34 -03
+     ATUALIZADO EM: 2026-06-25 11:28 -03
+     VERSAO: 1.5.0
+
+     DESCRICAO:
+         Painel inicial do Orion (HOME).
+         Menu lateral dinamico por perfil.
+         White Label por Certificadora.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Menu lateral recolhivel + White Label.
+         v1.2.0: Corrigido White Label — cor via style inline.
+         v1.3.0: Corrigido div topo fechando prematuramente.
+         v1.4.0: Botao Voltar no topo. Corrigido html tag e meta.
+         v1.5.0: Corrigido link Usuarios no menu Certificadora.
+                 /usuarios alterado para /cert-usuarios.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV — Home</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .topo {
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+
+        .badge-perfil {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+        }
+
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        .btn-voltar-topo {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar {
+            background: #ffffff;
+            border-right: 1px solid #e0e0e0;
+            width: 220px;
+            transition: width 0.2s;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+
+        .menu-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            text-decoration: none;
+            color: #333333;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover { background-color: #f5f5f5; }
+
+        .menu-item.ativo {
+            background-color: #FBE9E4;
+            border-left-color: #D4370A;
+            color: #D4370A;
+            font-weight: bold;
+        }
+
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+
+        .menu-secao {
+            font-size: 11px;
+            color: #999999;
+            padding: 8px 16px 4px;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 4px;
+        }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; }
+        .card-icone { font-size: 26px; }
+        .card h3 { font-size: 13px; color: #666666; margin: 8px 0 4px; font-weight: normal; }
+        .card .numero { font-size: 26px; font-weight: bold; color: #333333; }
+
+        .acesso-rapido { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; }
+        .acesso-rapido h2 { font-size: 14px; font-weight: bold; color: #333333; margin-bottom: 12px; }
+        .botoes-rapidos { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .btn-rapido {
+            padding: 8px 16px;
+            background: #ffffff;
+            border: 1px solid #D4370A;
+            color: #D4370A;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-rapido:hover { background: #D4370A; color: #ffffff; }
+
+        .rodape {
+            text-align: center;
+            padding: 10px;
+            color: #999999;
+            font-size: 11px;
+            background: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: #D4370A;">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <button onclick="history.back()" class="btn-voltar-topo">&#8592; Voltar</button>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <div class="sidebar" id="sidebar">
+
+            <a href="/home" class="menu-item ativo">
+                <span class="menu-icone">&#127968;</span>
+                <span class="menu-texto">Home</span>
+            </a>
+
+            {% if usuario_perfil == 'CONSISTE' %}
+            <div class="menu-secao">ADMINISTRACAO</div>
+            <a href="/certificadoras" class="menu-item">
+                <span class="menu-icone">&#127970;</span>
+                <span class="menu-texto">Certificadoras</span>
+            </a>
+            <a href="/propriedades" class="menu-item">
+                <span class="menu-icone">&#127806;</span>
+                <span class="menu-texto">Propriedades</span>
+            </a>
+            <a href="/produtores" class="menu-item">
+                <span class="menu-icone">&#128104;&#8205;&#127806;</span>
+                <span class="menu-texto">Produtores</span>
+            </a>
+            <a href="/usuarios" class="menu-item">
+                <span class="menu-icone">&#128101;</span>
+                <span class="menu-texto">Usuarios Consiste</span>
+            </a>
+            {% endif %}
+
+            {% if usuario_perfil == 'CERTIFICADORA' %}
+            <div class="menu-secao">GESTAO</div>
+            <a href="/propriedades" class="menu-item">
+                <span class="menu-icone">&#127806;</span>
+                <span class="menu-texto">Propriedades</span>
+            </a>
+            <a href="/produtores" class="menu-item">
+                <span class="menu-icone">&#128104;&#8205;&#127806;</span>
+                <span class="menu-texto">Produtores</span>
+            </a>
+            <a href="/cert-usuarios" class="menu-item">
+                <span class="menu-icone">&#128101;</span>
+                <span class="menu-texto">Usuarios</span>
+            </a>
+            <div class="menu-secao">VALIDACAO</div>
+            <a href="/comunicados" class="menu-item">
+                <span class="menu-icone">&#128203;</span>
+                <span class="menu-texto">Comunicados</span>
+            </a>
+            <a href="/inspecao" class="menu-item">
+                <span class="menu-icone">&#128269;</span>
+                <span class="menu-texto">Inspecao</span>
+            </a>
+            {% endif %}
+
+            {% if usuario_perfil == 'PRODUTOR' %}
+            <div class="menu-secao">GESTAO</div>
+            <a href="/usuarios-fazenda" class="menu-item">
+                <span class="menu-icone">&#128101;</span>
+                <span class="menu-texto">Usuarios da Fazenda</span>
+            </a>
+            <a href="/minha-propriedade" class="menu-item">
+                <span class="menu-icone">&#128065;&#65039;</span>
+                <span class="menu-texto">Minha Propriedade</span>
+            </a>
+            {% endif %}
+
+            {% if usuario_perfil == 'FAZENDA' %}
+            <div class="menu-secao">OPERACAO</div>
+            <a href="/brincos" class="menu-item"><span class="menu-icone">&#127991;&#65039;</span><span class="menu-texto">Brincos</span></a>
+            <a href="/entrada" class="menu-item"><span class="menu-icone">&#128229;</span><span class="menu-texto">Entrada</span></a>
+            <a href="/saidas" class="menu-item"><span class="menu-icone">&#128228;</span><span class="menu-texto">Saidas</span></a>
+            <a href="/pesos" class="menu-item"><span class="menu-icone">&#9878;&#65039;</span><span class="menu-texto">Pesos</span></a>
+            <a href="/inventario" class="menu-item"><span class="menu-icone">&#128230;</span><span class="menu-texto">Inventario</span></a>
+            <a href="/eventos" class="menu-item"><span class="menu-icone">&#128137;</span><span class="menu-texto">Eventos</span></a>
+            <a href="/formularios" class="menu-item"><span class="menu-icone">&#128203;</span><span class="menu-texto">Formularios</span></a>
+            <a href="/inspecao" class="menu-item"><span class="menu-icone">&#128269;</span><span class="menu-texto">Inspecao</span></a>
+            <a href="/consistencia" class="menu-item"><span class="menu-icone">&#9989;</span><span class="menu-texto">Consistencia</span></a>
+            <a href="/utilitarios" class="menu-item"><span class="menu-icone">&#128295;</span><span class="menu-texto">Utilitarios</span></a>
+            {% endif %}
+
+        </div>
+
+        <div class="conteudo">
+
+            <div class="cards">
+                {% if usuario_perfil == 'CONSISTE' %}
+                <div class="card"><div class="card-icone">&#127970;</div><h3>Certificadoras</h3><div class="numero">4</div></div>
+                <div class="card"><div class="card-icone">&#127806;</div><h3>Propriedades</h3><div class="numero">10</div></div>
+                <div class="card"><div class="card-icone">&#128104;&#8205;&#127806;</div><h3>Produtores</h3><div class="numero">10</div></div>
+                <div class="card"><div class="card-icone">&#128004;</div><h3>Animais</h3><div class="numero">1.716</div></div>
+                {% endif %}
+                {% if usuario_perfil == 'CERTIFICADORA' %}
+                <div class="card"><div class="card-icone">&#127806;</div><h3>Propriedades</h3><div class="numero">8</div></div>
+                <div class="card"><div class="card-icone">&#128104;&#8205;&#127806;</div><h3>Produtores</h3><div class="numero">8</div></div>
+                <div class="card"><div class="card-icone">&#128203;</div><h3>Pendentes</h3><div class="numero" style="color:#D4370A;">3</div></div>
+                {% endif %}
+                {% if usuario_perfil == 'FAZENDA' %}
+                <div class="card"><div class="card-icone">&#128229;</div><h3>Entradas</h3><div class="numero">12</div></div>
+                <div class="card"><div class="card-icone">&#128228;</div><h3>Saidas</h3><div class="numero">5</div></div>
+                <div class="card"><div class="card-icone">&#128004;</div><h3>Animais</h3><div class="numero">342</div></div>
+                {% endif %}
+            </div>
+
+            <div class="acesso-rapido">
+                <h2>Acesso rapido</h2>
+                <div class="botoes-rapidos">
+                    {% if usuario_perfil == 'CONSISTE' %}
+                    <a href="/certificadoras/nova" class="btn-rapido">Nova Certificadora</a>
+                    <a href="/produtores/novo" class="btn-rapido">Novo Produtor</a>
+                    <a href="/usuarios/novo" class="btn-rapido">Novo Usuario</a>
+                    {% endif %}
+                    {% if usuario_perfil == 'CERTIFICADORA' %}
+                    <a href="/comunicados/pendentes" class="btn-rapido">Ver Pendentes</a>
+                    <a href="/produtores/novo" class="btn-rapido">Novo Produtor</a>
+                    {% endif %}
+                    {% if usuario_perfil == 'PRODUTOR' %}
+                    <a href="/usuarios-fazenda/novo" class="btn-rapido">Novo Usuario</a>
+                    {% endif %}
+                    {% if usuario_perfil == 'FAZENDA' %}
+                    <a href="/entrada" class="btn-rapido">Lancar Entrada</a>
+                    <a href="/pesos" class="btn-rapido">Registrar Peso</a>
+                    <a href="/brincos" class="btn-rapido">Consultar Brincos</a>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informatica</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\home.html
+     ========================================================= -->

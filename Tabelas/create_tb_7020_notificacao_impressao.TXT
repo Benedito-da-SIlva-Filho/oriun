@@ -1,0 +1,43 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: 8_create_tb_7020_notificacao_impressao.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-02 09:00 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 084 - cria, em TODOS os schemas produtor_NNNNN, a tabela
+--     tb_7020_notificacao_impressao (Notificacao de Nascimento ja
+--     IMPRESSA). Pode rodar mais de uma vez sem estragar nada.
+--     Notificacoes (NAS) criadas ANTES deste script ficam como "nao
+--     impressas" - nada e marcado automaticamente.
+-- =========================================================
+
+DO $$
+DECLARE
+    esquema text;
+BEGIN
+    FOR esquema IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema = esquema AND table_name = 'tb_4001_gta') THEN
+
+            EXECUTE format(
+                'CREATE TABLE IF NOT EXISTS %I.tb_7020_notificacao_impressao ('
+                '    id             SERIAL PRIMARY KEY,'
+                '    id_gta         INTEGER   NOT NULL UNIQUE REFERENCES %I.tb_4001_gta(id),'
+                '    data_impressao DATE      NOT NULL,'
+                '    id_usuario     INTEGER   NOT NULL,'
+                '    impresso_em    TIMESTAMP NOT NULL DEFAULT now()'
+                ')', esquema, esquema);
+
+            RAISE NOTICE '% -> tb_7020_notificacao_impressao OK', esquema;
+        END IF;
+    END LOOP;
+END $$;
+-- =========================================================
+-- FIM DE ARQUIVO: 8_create_tb_7020_notificacao_impressao.sql
+-- =========================================================

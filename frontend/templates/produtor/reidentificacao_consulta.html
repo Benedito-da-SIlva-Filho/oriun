@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\reidentificacao_consulta.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-11 13:20 -03
+     ATUALIZADO EM: 2026-11-13 18:20 -03
+     VERSAO: 2.6.0
+     v2.6.0: Sessao 123 (2026-11-13 18:20 -03) - AUDITORIA ETAPA 6 (Regra #15): aviso de download padrao no Reimprimir PDF (o Gerar Notificacao fica com o aviso de espera proprio, Regra #65). So tela. REVERSAO: .bak_antes_etapa6.
+     v1.0.0: Sessao 121 (11/11/2026) - Consulta da Reidentificação: pedidos da Propriedade com situação (Aberto / Notificação gerada / Enviado), itens do pedido, Notificação (PDF) e Marcar como enviado. Router: backend/routers/reidentificacao_consulta.py.
+     v2.4.0: Sessao 121 (2026-11-11 19:50 -03) - Ao clicar em Gerar Notificacao abre o modal padrao 'Gerar a Notificacao com N animal(is)?' (confirmacao final, para ninguem dizer que foi sem querer / no automatico). O check continua obrigatorio.
+     v2.5.0: Sessao 121 (2026-11-11 20:30 -03) - Botoes Reimprimir PDF e Marcar como enviado direto na linha de cada Notificacao (antes so apareciam depois de 'Ver animais'). Por que: o usuario nao achava. Reversao: .bak_antes_s121_botoeslinha.
+     v2.3.0: Sessao 121 (2026-11-11 19:10 -03) - Aviso de espera padrao (aviso_aguarde.html, Regra #65) em Excluir animal, Gerar Notificacao e Marcar como enviado: o usuario ve 'Aguarde' e nao clica de novo. Gerar baixa o PDF por fetch e recarrega a pagina so quando termina.
+     v2.2.0: Sessao 121 (2026-11-11 18:40 -03) - Saiu a dica 'exclua de baixo para cima': o animal pendente se exclui em qualquer ordem (o PIA so e gravado ao gerar a Notificacao).
+     v2.1.0: Sessao 121 (2026-11-11 18:10 -03) - A frase de conferência virou a caixa laranja de confirmação (check): o botão Gerar Notificação só habilita com o check marcado; o check volta desmarcado sempre que a página carrega (lista mudou). Por que: regra do Orion para validação, só a plataforma erra se a mensagem não bloquear.
+     v2.0.0: Sessao 121 (2026-11-11 18:30 -03) - Modelo PENDENTES: bloco 'Pendentes de Notificação' (todos os animais lançados e ainda sem número, cada um com ✖ para excluir, e o botão Gerar Notificação que pega todos) e bloco 'Notificações geradas' (Reimprimir PDF, Marcar como enviado, Ver animais). Por que: decisão do Benedito, o número só nasce ao gerar.
+     v1.1.1: Sessao 121 (11/11/2026, 14:05 -03) - Confirmação de exclusão e de 'Marcar como enviado' usam o modal padrão do Orion (modal_confirmacao.html, Padrão 1) em vez do aviso do navegador. Por que: regra do Orion.
+     v1.1.0: Sessao 121 (11/11/2026, 14:45 -03) - Botão ✖ Excluir animal (só enquanto a Notificação não foi gerada), frase de conferência ao lado de Gerar Notificação (PDF), link 'Abrir' vira 'Ver animais' e a linha do pedido fica clicável. Por que: o usuário confere os animais antes de gerar e precisa corrigir erros.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Consulta da Reidentificação</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 780px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-3  { grid-column: span 3; }   /* v1.4.0 */
+        .col-4  { grid-column: span 4; }
+        .col-5  { grid-column: span 5; }   /* v1.4.0 */
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .campo-destaque input, .campo-destaque select { font-size: 17px; font-weight: bold; }
+
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 8px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+        .aviso-construcao { background: #fff8e1; border-left: 6px solid #f9a825; padding: 14px 18px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #8a6d00; margin-top: 12px; display: none; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+
+        /* v1.5.0 - brincagens em aberto do Tipo escolhido */
+        .bloco-abertas { margin-top: 14px; background: #fff8e1; border: 1px solid #f9a825; border-radius: 8px; padding: 10px 14px; display: none; }
+        .bloco-abertas .titulo-abertas { font-size: 13px; font-weight: bold; color: #8a6d00; margin-bottom: 8px; }
+        .bloco-abertas .aberta-vazia { font-size: 13px; color: #8a8a8a; }
+        .item-aberta { display: flex; align-items: baseline; gap: 14px; width: 100%; text-align: left; background: #ffffff; border: 1px solid #e0c36a; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; cursor: pointer; font-family: Arial, sans-serif; }
+        .item-aberta:hover { background: #fffdf0; border-color: #D4370A; }
+        .item-aberta.escolhida { background: #e8f5e9; border-color: #2e7d32; }
+        .item-aberta .aberta-data { font-size: 16px; font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .item-aberta .aberta-rotulo { font-size: 13px; color: #555555; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        .form-botoes { justify-content: flex-end; align-items: center; }
+        .bloco-abertas { display: block; }
+        .item-aberta { font-family: Arial, sans-serif; font-size: 13px; }
+        /* ---- Inconformes dos Pesos (Sessao 114) ---- */
+        .tabela-inconf { width: 100%; border-collapse: collapse; background: #ffffff; font-size: 13px; }
+        .tabela-inconf th { text-align: left; background: #FBE9E4; color: #7a1f04; padding: 8px 10px; border-bottom: 2px solid #D4370A; white-space: nowrap; }
+        .tabela-inconf td { padding: 7px 10px; border-bottom: 1px solid #ececec; vertical-align: top; }
+        .tabela-inconf td.motivo { color: #c62828; font-weight: bold; }
+        .tabela-inconf td.num { white-space: nowrap; font-weight: bold; }
+        .vazio-inconf { color: #888888; padding: 18px 0; font-size: 14px; }
+        .filtro-linha { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .filtro-linha .form-group { width: 200px; }
+        .btn-filtro { padding: 9px 20px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-filtro:hover { background: #C0392B; }
+        .link-limpar { font-size: 13px; color: #555555; }
+        .nota-inconf { font-size: 12px; color: #888888; margin-top: 8px; }
+        /* ---- Consulta e Conferidos dos Pesos (Sessao 114) ---- */
+        .tabela-consulta { width: 100%; border-collapse: collapse; background: #ffffff; font-size: 13px; }
+        .tabela-consulta th { text-align: center; background: #FBE9E4; color: #7a1f04; padding: 8px 8px; border-bottom: 2px solid #D4370A; white-space: nowrap; }
+        .tabela-consulta td { padding: 6px 8px; border-bottom: 1px solid #ececec; text-align: center; white-space: nowrap; }
+        .tabela-consulta td.sisbov { font-weight: bold; font-family: Consolas, monospace; font-size: 14px; }
+        .tabela-consulta td.dir { text-align: right; }
+        .tabela-consulta td.destaque { font-weight: bold; }
+        .tabela-consulta td.elemento { color: #c62828; font-weight: bold; }
+        .tabela-eras { border-collapse: collapse; background: #ffffff; font-size: 13.5px; margin-top: 6px; }
+        .tabela-eras th { background: #FBE9E4; color: #7a1f04; padding: 8px 18px; border-bottom: 2px solid #D4370A; }
+        .tabela-eras td { padding: 7px 18px; border-bottom: 1px solid #ececec; text-align: center; }
+        .tabela-eras tr.total td { font-weight: bold; background: #f7f7f7; }
+        .rolagem { overflow-x: auto; }
+        .faixa-botoes { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+        .btn-pdf { display: inline-block; padding: 9px 20px; background: #ffffff; color: #D4370A; border: 2px solid #D4370A; border-radius: 6px; font-size: 14px; font-weight: bold; text-decoration: none; }
+        .btn-pdf:hover { background: #FBE9E4; }
+        .lista-recentes { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .lista-recentes a { background: #fff8e1; border: 1px solid #e0c36a; border-radius: 6px; padding: 8px 14px; text-decoration: none; color: #7a1f04; font-size: 13.5px; }
+        .lista-recentes a:hover { border-color: #D4370A; background: #fffdf0; }
+        .lista-recentes b { font-size: 15px; }
+        .rotulo-recentes { font-size: 12.5px; color: #888888; margin-top: 16px; }
+
+        .selo { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .selo.ABERTO { background: #ffebee; color: #c62828; }
+        .selo.GERADA { background: #fff8e1; color: #8a6d00; }
+        .selo.ENVIADO { background: #e8f5e9; color: #2e7d32; }
+        .tabela-consulta tr.escolhido td { background: #fff8e1; }
+        .tabela-consulta td.antigo { color: #c62828; font-weight: bold; font-family: Consolas, monospace; font-size: 14px; }
+        .tabela-consulta td.novo { color: #1565C0; font-weight: bold; font-family: Consolas, monospace; font-size: 14px; }
+        .dias-estourado { color: #c62828; font-weight: bold; }
+        .ok-faixa { background: #e8f5e9; border-left: 6px solid #2e7d32; padding: 14px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; color: #2e7d32; margin-bottom: 16px; }
+        .faixa-botoes form { display: inline; }
+        button.btn-pdf { background: #ffffff; cursor: pointer; font-family: Arial, sans-serif; }
+        button.btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-enviar { padding: 9px 20px; background: #2e7d32; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-enviar:hover { background: #1b5e20; }
+        .btn-enviar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .tabela-consulta tr.linha-pedido { cursor: pointer; }
+        .tabela-consulta tr.linha-pedido:hover td { background: #fffdf0; }
+        .btn-excluir { background: none; border: 1px solid #c62828; color: #c62828; border-radius: 4px; cursor: pointer; font-size: 13px; padding: 2px 8px; font-weight: bold; }
+        .btn-excluir:hover { background: #ffebee; }
+        .caixa-revisei { display: flex; align-items: flex-start; gap: 10px; background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 12px 16px; margin-top: 12px; max-width: 760px; cursor: pointer; font-size: 14px; font-weight: bold; color: #7a1f04; }
+        .caixa-revisei input { width: 20px; height: 20px; margin-top: 1px; accent-color: #D4370A; flex-shrink: 0; cursor: pointer; }
+        .acoes-linha { white-space: nowrap; }
+        .form-linha { display: inline-block; margin: 0 6px 0 0; }
+        .btn-mini { padding: 5px 10px !important; font-size: 12px !important; border-radius: 5px; }
+        .btn-pdf:disabled { opacity: 0.45; cursor: not-allowed; }
+        .frase-conferencia { font-size: 13px; color: #8a6d00; font-weight: bold; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128203;</span> Consulta da Reidentificação</h2>
+            </div>
+
+            {% if erro %}<div class="erro">&#10060; {{ erro }}</div>{% endif %}
+            {% if aviso %}<div class="ok-faixa">&#9989; {{ aviso }}</div>{% endif %}
+
+            <div class="form-container" style="max-width: 1400px;">
+                <div class="form-secao">{{ propriedade.nome if propriedade else '-' }}</div>
+
+                <div class="form-secao" style="margin-top: 8px;">Pendentes de Notificação{% if pendentes %} &#8212; {{ pendentes|length }} animal(is){% endif %}</div>
+                {% if pendentes %}
+                <div class="rolagem">
+                <table class="tabela-consulta">
+                    <thead><tr><th>Seq.</th><th>Data</th><th>SISBOV perdido (saída)</th><th>SISBOV novo (entrada)</th><th>Manejo perdido</th><th>Manejo novo</th><th>RFID</th><th>Sexo</th><th>Motivo</th><th></th></tr></thead>
+                    <tbody>
+                        {% for a in pendentes %}
+                        <tr>
+                            <td>{{ '%04d' % a.seq }}</td>
+                            <td>{{ a.data }}</td>
+                            <td class="antigo">{{ a.sisbov_antigo }}</td>
+                            <td class="novo">{{ a.sisbov_novo }}</td>
+                            <td>{{ a.manejo_antigo }}</td>
+                            <td>{{ a.manejo_novo }}</td>
+                            <td class="sisbov">{{ a.rfid }}</td>
+                            <td>{{ a.sexo }}</td>
+                            <td>{{ a.motivo }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('reidentificacao_consulta.consulta_excluir_animal') }}" onsubmit="return acaoComAguarde(this, 'Excluir o animal {{ a.sisbov_antigo }}? O brinco perdido volta ao rebanho e o brinco novo volta ao estoque.', 'Excluir', 'Excluindo o animal...');">
+                                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                                    <input type="hidden" name="item" value="{{ a.id }}">
+                                    <button type="submit" class="btn-excluir" title="Excluir este animal">&#10006;</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                <div class="nota-inconf">Mais antigo em {{ pend_antiga }} &#8212; <span class="{{ 'dias-estourado' if pend_estourado else '' }}">{{ pend_dias }} dia(s) em aberto</span> (prazo para avisar a Certificadora: {{ prazo_dias }} dias).</div>
+                <form method="POST" id="form-gerar" action="{{ url_for('reidentificacao_consulta.consulta_gerar') }}" autocomplete="off" data-qtde="{{ pendentes|length }}">
+                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                    <label class="caixa-revisei"><input type="checkbox" name="confirmo" value="1" id="chk-confirmo" autocomplete="off"><span>Conferi os animais acima. Depois de gerada a Notificação, eles não poderão mais ser excluídos.</span></label>
+                    <div class="faixa-botoes">
+                        <button type="submit" class="btn-pdf" id="btn-gerar" disabled>&#128196; Gerar Notificação (PDF)</button>
+                    </div>
+                </form>
+                {% elif not erro %}
+                <div class="vazio-inconf">Nenhum animal pendente de Notificação.</div>
+                {% endif %}
+
+                <div class="form-secao">Notificações geradas</div>
+                {% if notificacoes %}
+                <div class="rolagem">
+                <table class="tabela-consulta">
+                    <thead><tr><th>Notificação</th><th>Data</th><th>Animais</th><th>Situação</th><th>Em aberto há</th><th>Gerada em</th><th>Enviado em</th><th>Ações</th></tr></thead>
+                    <tbody>
+                        {% for p in notificacoes %}
+                        <tr class="linha-pedido {{ 'escolhido' if pedido and pedido.id == p.id else '' }}" onclick="location.href='{{ url_for('reidentificacao_consulta.consulta_lista', id_propriedade=id_propriedade, pedido=p.id) }}'">
+                            <td class="sisbov">{{ p.numero }}</td>
+                            <td>{{ p.data }}</td>
+                            <td>{{ p.quantidade }}</td>
+                            <td><span class="selo {{ p.situacao }}">{{ p.situacao_txt }}</span></td>
+                            <td>{% if p.dias is not none %}<span class="{{ 'dias-estourado' if p.prazo_estourado else '' }}">{{ p.dias }} dia(s)</span>{% else %}&#8212;{% endif %}</td>
+                            <td>{{ p.gerada_em or '—' }}</td>
+                            <td>{{ p.enviado_em or '—' }}</td>
+                            <td class="acoes-linha" onclick="event.stopPropagation();">
+                                <form method="POST" action="{{ url_for('reidentificacao_consulta.consulta_pdf') }}" class="form-linha" data-aviso-descricao="Notificação de Reidentificação (reimpressão)">
+                                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                                    <input type="hidden" name="pedido" value="{{ p.id }}">
+                                    <button type="submit" class="btn-pdf btn-mini">&#128196; Reimprimir PDF</button>
+                                </form>
+                                {% if p.situacao != 'ENVIADO' %}
+                                <form method="POST" action="{{ url_for('reidentificacao_consulta.consulta_enviar') }}" class="form-linha" onsubmit="return acaoComAguarde(this, 'Confirma que a Notificação {{ p.numero }} foi enviada à Certificadora?', 'Confirmar envio', 'Registrando o envio...');">
+                                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                                    <input type="hidden" name="pedido" value="{{ p.id }}">
+                                    <button type="submit" class="btn-enviar btn-mini">&#9993; Marcar como enviado</button>
+                                </form>
+                                {% endif %}
+                                <a href="{{ url_for('reidentificacao_consulta.consulta_lista', id_propriedade=id_propriedade, pedido=p.id) }}">Ver animais</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% elif not erro %}
+                <div class="vazio-inconf">Nenhuma Notificação gerada nesta Propriedade.</div>
+                {% endif %}
+
+                {% if pedido %}
+                <div class="form-secao">Notificação {{ pedido.numero }} &#8212; {{ pedido.quantidade }} animal(is)</div>
+                <div class="rolagem">
+                <table class="tabela-consulta">
+                    <thead><tr><th>Seq.</th><th>Data</th><th>SISBOV perdido (saída)</th><th>SISBOV novo (entrada)</th><th>Manejo perdido</th><th>Manejo novo</th><th>RFID</th><th>Sexo</th><th>Motivo</th></tr></thead>
+                    <tbody>
+                        {% for a in itens %}
+                        <tr>
+                            <td>{{ '%04d' % a.seq }}</td>
+                            <td>{{ a.data }}</td>
+                            <td class="antigo">{{ a.sisbov_antigo }}</td>
+                            <td class="novo">{{ a.sisbov_novo }}</td>
+                            <td>{{ a.manejo_antigo }}</td>
+                            <td>{{ a.manejo_novo }}</td>
+                            <td class="sisbov">{{ a.rfid }}</td>
+                            <td>{{ a.sexo }}</td>
+                            <td>{{ a.motivo }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+
+                <div class="nota-inconf">Envie o PDF à Certificadora e então clique em "Marcar como enviado". Enquanto não for marcado, a Notificação aparece como pendência na Home.</div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+    {% include 'produtor/modal_confirmacao.html' %}
+    {% include 'produtor/aviso_aguarde.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+        // confirma no modal padrao e, ao confirmar, mostra o aviso de espera antes de enviar (o form.submit() nao dispara o evento submit)
+        function acaoComAguarde(form, mensagem, textoBotao, tituloAguarde) {
+            confirmarAcaoAssincrona(function() { mostrarAguarde(tituloAguarde); form.submit(); }, mensagem, textoBotao);
+            return false;
+        }
+        // Gerar Notificacao: aviso de espera, baixa o PDF e so entao recarrega a pagina (os animais viram Notificacao)
+        (function() {
+            var form = document.getElementById('form-gerar');
+            if (!form) { return; }
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var btn = document.getElementById('btn-gerar');
+                if (btn && btn.disabled) { return; }
+                var qtde = form.getAttribute('data-qtde') || '';
+                confirmarAcaoAssincrona(enviarGerar, 'Gerar a Notificação com ' + qtde + ' animal(is)? Depois de gerada, os animais não poderão mais ser excluídos.', 'Gerar Notificação');
+            });
+            function enviarGerar() {
+                mostrarAguarde('Gerando a Notificação...');
+                fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' })
+                .then(function(resp) {
+                    var tipo = resp.headers.get('Content-Type') || '';
+                    if (tipo.indexOf('application/pdf') === -1) { window.location.href = resp.url; return null; }
+                    var nome = (resp.headers.get('Content-Disposition') || '').match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i);
+                    return resp.blob().then(function(blob) {
+                        var a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob); a.download = nome ? decodeURIComponent(nome[1]) : 'Notificacao.pdf';
+                        document.body.appendChild(a); a.click(); a.remove();
+                        setTimeout(function() { window.location.reload(); }, 600);
+                    });
+                })
+                .catch(function() { esconderAguarde(); mostrarAviso('Não foi possível gerar a Notificação. Verifique sua conexão.', 'OK'); });
+            }
+        })();
+        (function() {
+            var chk = document.getElementById('chk-confirmo'), btn = document.getElementById('btn-gerar');
+            if (!chk || !btn) { return; }
+            function sincronizar() { btn.disabled = !chk.checked; }
+            chk.checked = false; sincronizar();   // a lista pode ter mudado: a conferencia sempre recomeca
+            chk.addEventListener('change', sincronizar);
+            window.addEventListener('pageshow', function() { chk.checked = false; sincronizar(); });
+        })();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\reidentificacao_consulta.html
+     ========================================================= -->

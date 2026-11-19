@@ -1,0 +1,68 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- PASTA:        C:\orion\Tabelas\
+-- MODULO:       Tabelas\drop_uq_tb_2012_propriedade_numero_s085.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-10-04 16:05 -03
+-- ATUALIZADO EM: 2026-10-04 16:05 -03
+-- VERSAO:       1.0.0
+--
+-- DESCRICAO:
+--     Remove o indice unico uq_tb_2012_propriedade_numero
+--     (id_propriedade_destino, numero_comunicado) da tabela
+--     tb_2012_com_entrada, em TODOS os schemas produtor_NNNNN.
+--
+--     POR QUE: a tb_2012 guarda 1 LINHA POR GTA, e um Comunicado de
+--     Entrada tem de 1 ate 6 GTAs (regra MAXIMO_GTAS_POR_COMUNICADO =
+--     6, comunicado_entrada.py) - ou seja, o MESMO numero de
+--     Comunicado se repete em ate 6 linhas da mesma Propriedade.
+--     Esse indice aceitava so 1 linha por numero e recusaria a 2a GTA
+--     de qualquer Comunicado (exemplo real do legado GERAS: Comunicado
+--     000008 com 4 GTAs). A numeracao segue protegida pelo
+--     pg_advisory_xact_lock + MAX + 1 do Gerar Comunicado.
+--
+--     Funciona se o objeto for uma CONSTRAINT (remove a constraint, o
+--     indice vai junto) ou um indice avulso (DROP INDEX). Pode rodar
+--     mais de uma vez - nao da erro se ja foi removido. Nao apaga nem
+--     altera nenhum dado.
+--
+--     Companheiro do model backend\models\tb_2012_com_entrada.py
+--     v1.1.0 (instalar os dois).
+--
+--     v1.0.0: Criacao (Sessao 085, 04/10/2026, 16:05 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+    LOOP
+        -- Se for uma CONSTRAINT, remove ela (o indice vai junto).
+        IF EXISTS (
+            SELECT 1
+            FROM pg_constraint c
+            JOIN pg_namespace n ON n.oid = c.connamespace
+            WHERE n.nspname = schema_rec.schema_name
+              AND c.conname = 'uq_tb_2012_propriedade_numero'
+        ) THEN
+            EXECUTE format(
+                'ALTER TABLE %I.tb_2012_com_entrada DROP CONSTRAINT uq_tb_2012_propriedade_numero',
+                schema_rec.schema_name
+            );
+        END IF;
+
+        -- Se sobrou como indice avulso, remove.
+        EXECUTE format(
+            'DROP INDEX IF EXISTS %I.uq_tb_2012_propriedade_numero',
+            schema_rec.schema_name
+        );
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\drop_uq_tb_2012_propriedade_numero_s085.sql
+-- =========================================================

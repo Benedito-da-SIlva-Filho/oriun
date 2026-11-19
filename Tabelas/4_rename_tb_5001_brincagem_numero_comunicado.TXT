@@ -1,0 +1,54 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\4_rename_tb_5001_brincagem_numero_comunicado.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-14 17:10 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 052 (14/09/2026) - Modulo Gerar Comunicado.
+--     Renomeia tb_5001_brincagem.id_comunicado -> numero_comunicado,
+--     em TODOS os schemas produtor_NNNNN - mesmo motivo/padrao do
+--     script 1 (tb_4001_gta): padronizar o MESMO nome de campo em
+--     toda tabela que participa (ou vai participar, no caso da
+--     Brincagem Fisica - Leitor/Bastao, ainda nao construida) do
+--     ciclo de Comunicado de Entrada. Coluna nunca usada em codigo
+--     ate esta sessao (tabela tb_5001_brincagem ainda sem modulo
+--     real por tras).
+--
+--     IDEMPOTENTE: so renomeia se a coluna antiga ainda existir E a
+--     nova ainda nao existir.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = schema_rec.schema_name
+              AND table_name = 'tb_5001_brincagem'
+              AND column_name = 'id_comunicado'
+        ) AND NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = schema_rec.schema_name
+              AND table_name = 'tb_5001_brincagem'
+              AND column_name = 'numero_comunicado'
+        ) THEN
+            EXECUTE format(
+                'ALTER TABLE %I.tb_5001_brincagem RENAME COLUMN id_comunicado TO numero_comunicado',
+                schema_rec.schema_name
+            );
+            RAISE NOTICE 'Renomeado em %', schema_rec.schema_name;
+        END IF;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\4_rename_tb_5001_brincagem_numero_comunicado.sql
+-- =========================================================

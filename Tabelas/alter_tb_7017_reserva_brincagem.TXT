@@ -1,0 +1,20 @@
+-- Tabelas\alter_tb_7017_reserva_brincagem.sql
+-- Sessao 049 (10/09/2026) - reserva temporaria de brincos no
+-- Bloco B da Brincagem Sequencial, evitando divergencia entre
+-- o que a tela mostra e o que o Bloco C grava.
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %I.tb_7017_entrada_brincos_rfid
+             ADD COLUMN IF NOT EXISTS reservado_id_gta INTEGER,
+             ADD COLUMN IF NOT EXISTS reservado_ate TIMESTAMP',
+            schema_rec.schema_name
+        );
+    END LOOP;
+END $$;

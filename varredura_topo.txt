@@ -1,0 +1,16 @@
+﻿
+Filename                           LineNumber Line                                                              
+--------                           ---------- ----                                                              
+brincos_entrada_cadastro.html              94          o id="link-voltar-topo" exposto pela peca-mestra - NAO   
+brincos_entrada_sucesso.html               22          Brincos" / "Nova Entrada"). Usa mostrar_home=False no    
+brincos_entrada_sucesso.html               28          v1.2.0, com mostrar_home=False (esta tela nunca teve link
+brincos_entrada_sucesso.html               96     {% set mostrar_home = false %}                                
+gta_compra_cadastro.html                  169              Home continua aparecendo normalmente (mostrar_home   
+gta_consulta_lista.html                    81          aparecendo normalmente (mostrar_home default True), sem  
+impressao_comunicado_listar.html           79                  normalmente (mostrar_home default True).         
+produtor_home.html                         22              retomada agora). Home recebe mostrar_navegacao=False 
+produtor_topo.html                         30            - mostrar_navegacao (OPCIONAL, default True) - False   
+produtor_topo.html                         57         {% if mostrar_navegacao | default(true) %}                
+reimpressao_comunicado_listar.html         77                  normalmente (mostrar_home default True).         
+
+

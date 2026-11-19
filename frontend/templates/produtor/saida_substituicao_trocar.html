@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\saida_substituicao_trocar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-19 20:40 -03
+     ATUALIZADO EM: 2026-10-22 08:25 -03
+     VERSAO: 1.1.1
+
+     DESCRICAO:
+         Substituicao de Animal - tela da troca: mostra o animal trocado, busca o substituto por SISBOV ou Manejo, confere a categoria (igual a da GTA), avisos de responsabilidade, peso obrigatorio e caixa Revisei e confirmo (backend/routers/saida_substituicao.py, rotas substituir, checar e gravar).
+
+     v1.0.0: Criacao (Sessao 100).
+     v1.0.1: Alinhamento visual (Sessao 101): campos SISBOV, Manejo e Peso com a mesma largura e altura; botoes Buscar, Cancelar, Substituir animal e a caixa Revisei com a mesma altura e alinhados na mesma linha (o botao Substituir estava mais baixo por uma margem superior herdada).
+     v1.1.0: Sessao 102 (21/10/2026, 12:30 -03) - Tela tambem usada pela Troca depois do Comunicado (saida_troca_comunicado.py): enderecos de checar/gravar, titulo, rotulo do animal trocado e avisos de topo vem do router, com padrao igual ao anterior (a troca antes do Comunicado nao muda).
+     v1.1.1: Sessao 103 (22/10/2026, 08:25 -03) - Caixa "Revisei os dados e confirmo" em LARANJA ORION (fundo #D4370A, letra branca, borda vinho #7a1f04), igual ao Abate por Arquivo. So o CSS mudou.  REVERSAO: .bak_antes_laranja_s103.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Substitui&ccedil;&atilde;o de Animal</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+        .card h2 { font-size: 15px; color: #D4370A; margin-bottom: 10px; }
+        .grade { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+        .grade .item .rot { font-size: 11px; color: #888888; }
+        .grade .item .val { font-size: 14px; font-weight: bold; color: #333333; }
+        .busca { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .busca label { display: block; font-size: 12px; color: #888888; margin-bottom: 4px; }
+        .busca input, .campo-peso input { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; }
+        .busca .ou { font-size: 12px; color: #999999; padding-bottom: 10px; }
+        .btn-principal { padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #ffffff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #cccccc; cursor: not-allowed; }
+        .erro-form { background: #D32F2F; color: #ffffff; padding: 10px 14px; border-radius: 6px; margin-top: 12px; font-size: 13.5px; font-weight: bold; display: none; }
+        .achado { border: 2px solid #2e7d32; background: #f1f8f1; }
+        .achado .categoria { color: #1b5e20; font-weight: bold; margin-top: 8px; font-size: 13.5px; }
+        .aviso-resp { display: flex; gap: 10px; align-items: flex-start; background: #D32F2F; color: #ffffff; padding: 10px 14px; border-radius: 6px; margin-top: 10px; font-size: 13.5px; font-weight: bold; }
+        .aviso-resp input { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; }
+        .campo-peso { margin-top: 14px; }
+        .campo-peso label { display: block; font-size: 12px; color: #888888; margin-bottom: 4px; }
+        .barra-total { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin: 6px -24px -24px; padding: 12px 24px; flex-wrap: wrap; position: sticky; bottom: 0; z-index: 5; background: #ffffff; border-top: 1px solid #e0e0e0; }
+        .confirmacao-revisao { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #ffffff; background: #D4370A; border: 3px solid #7a1f04; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+        .confirmacao-revisao input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #7a1f04; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e3f2fd; color: #0d47a1; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+
+        /* v1.0.1 - ALINHAMENTO: campos de digitacao (SISBOV, Manejo, Peso) mesma largura e altura; DV (1 digito) so mais estreito, mesma altura */
+        .banner-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13.5px; font-weight: bold; }
+        .busca input, .campo-peso input { height: 40px; width: 190px; }
+        .busca input#f-dv { width: 60px; text-align: center; }
+        .busca .ou { height: 40px; line-height: 40px; padding-bottom: 0; }
+        /* v1.0.1 - ALINHAMENTO: botoes e caixa de revisao com a mesma altura, sem margem superior herdada */
+        .busca .btn-principal, .barra-total .btn-principal, .barra-total .btn-nav, .barra-total .confirmacao-revisao { height: 40px; margin-top: 0; display: inline-flex; align-items: center; justify-content: center; }
+        .barra-total .confirmacao-revisao { padding: 0 16px; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128260;</span> {{ titulo_tela|default('Substitui&ccedil;&atilde;o de Animal')|safe }} &#8212; Embarque {{ data_embarque }}</div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }}</div>
+
+            {% for aviso in avisos_topo|default([]) %}
+            <div class="banner-aviso">&#9888; {{ aviso }}</div>
+            {% endfor %}
+            <div class="card">
+                <h2>{{ titulo_antigo|default('Animal trocado (sai da leitura)') }}</h2>
+                <div class="grade">
+                    <div class="item"><div class="rot">SISBOV</div><div class="val">{{ antigo.sisbov }}</div></div>
+                    <div class="item"><div class="rot">Manejo</div><div class="val">{{ antigo.manejo }}</div></div>
+                    <div class="item"><div class="rot">Sexo</div><div class="val">{{ antigo.sexo }}</div></div>
+                    <div class="item"><div class="rot">Idade (no embarque)</div><div class="val">{{ antigo.faixa }}</div></div>
+                    <div class="item"><div class="rot">Ra&ccedil;a</div><div class="val">{{ antigo.raca }}</div></div>
+                    <div class="item"><div class="rot">Nascimento</div><div class="val">{{ antigo.nascimento }}</div></div>
+                    <div class="item"><div class="rot">Peso (kg)</div><div class="val">{{ antigo.peso }}</div></div>
+                    <div class="item"><div class="rot">GTA</div><div class="val">{{ antigo.gta if antigo.gta else '&#8212;'|safe }}</div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Animal que realmente embarcou</h2>
+                <div class="busca">
+                    <div><label for="f-sisbov">SISBOV (15 d&iacute;gitos)</label><input type="text" id="f-sisbov" maxlength="15" inputmode="numeric" autocomplete="off"></div>
+                    <div class="ou">ou</div>
+                    <div><label for="f-manejo">Manejo (6 n&uacute;meros)</label><input type="text" id="f-manejo" maxlength="6" inputmode="numeric" autocomplete="off"></div>
+                    <div id="area-dv" style="display:none"><label for="f-dv">DV</label><input type="text" id="f-dv" maxlength="1" inputmode="numeric" autocomplete="off"></div>
+                    <button type="button" class="btn-principal" id="btn-buscar">Buscar</button>
+                </div>
+                <div class="erro-form" id="erro-busca"></div>
+            </div>
+
+            <div class="card achado" id="card-achado" style="display:none">
+                <h2>Substituto encontrado</h2>
+                <div class="grade" id="ficha"></div>
+                <div class="categoria" id="categoria"></div>
+                <div id="avisos"></div>
+                <div class="campo-peso">
+                    <label for="f-peso">Peso do substituto (kg) *  (m&iacute;nimo {{ peso_minimo }} kg)</label>
+                    <input type="text" id="f-peso" inputmode="decimal" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="erro-form" id="erro-form"></div>
+
+            <div class="barra-total">
+                <label class="confirmacao-revisao">
+                    <input type="checkbox" id="chk-revisei" disabled>
+                    Revisei os dados e confirmo a substitui&ccedil;&atilde;o.
+                </label>
+                <a class="btn-nav" href="{{ url_voltar }}">Cancelar</a>
+                <button type="button" class="btn-principal" id="btn-gravar" disabled>Substituir animal</button>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROP = {{ id_propriedade }};
+        var ID_LINHA = {{ antigo.id }};
+
+        var fSisbov = document.getElementById('f-sisbov');
+        var fManejo = document.getElementById('f-manejo');
+        var fDv = document.getElementById('f-dv');
+        var areaDv = document.getElementById('area-dv');
+        var fPeso = document.getElementById('f-peso');
+        var chk = document.getElementById('chk-revisei');
+        var btnGravar = document.getElementById('btn-gravar');
+        var cardAchado = document.getElementById('card-achado');
+        var erroBusca = document.getElementById('erro-busca');
+        var erroForm = document.getElementById('erro-form');
+        var achado = null;   // SISBOV do substituto conferido
+
+        function soNumeros(el) { el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, ''); limpar(); }); }
+        soNumeros(fSisbov); soNumeros(fManejo); soNumeros(fDv);
+
+        function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+
+        function limpar() {
+            achado = null;
+            cardAchado.style.display = 'none';
+            document.getElementById('avisos').innerHTML = '';
+            fPeso.value = '';
+            chk.checked = false;
+            atualizar();
+        }
+
+        function avisosAtivos() {
+            return document.querySelectorAll('#avisos input[type=checkbox]');
+        }
+
+        function atualizar() {
+            var avisosOk = true;
+            avisosAtivos().forEach(function (c) { if (!c.checked) { avisosOk = false; } });
+            var pronto = achado && fPeso.value.trim() !== '' && avisosOk;
+            chk.disabled = !pronto;
+            if (!pronto) { chk.checked = false; }
+            btnGravar.disabled = !(pronto && chk.checked);
+        }
+
+        fPeso.addEventListener('input', function () { chk.checked = false; atualizar(); });
+        chk.addEventListener('change', atualizar);
+
+        function mostrarErro(el, texto) { el.textContent = texto; el.style.display = texto ? 'block' : 'none'; }
+
+        function buscar() {
+            mostrarErro(erroBusca, ''); mostrarErro(erroForm, '');
+            limpar();
+            var sisbov = fSisbov.value.trim(), manejo = fManejo.value.trim();
+            if (!sisbov && !manejo) { return mostrarErro(erroBusca, 'Digite o SISBOV ou o Manejo do animal que embarcou.'); }
+            fetch('{{ url_checar|default('/produtor/saida-substituicao/checar') }}', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: ID_PROP, id: ID_LINHA, sisbov: sisbov, manejo: sisbov ? '' : manejo, dv: fDv.value.trim() })
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (d.bloqueio) {
+                    if (d.pede_dv) { areaDv.style.display = 'block'; }
+                    return mostrarErro(erroBusca, d.mensagem);
+                }
+                if (!d.ok) { return mostrarErro(erroBusca, d.erro || 'Não foi possível conferir o animal.'); }
+                var a = d.animal;
+                achado = a.sisbov;
+                document.getElementById('ficha').innerHTML =
+                    '<div class="item"><div class="rot">SISBOV</div><div class="val">' + esc(a.sisbov) + '</div></div>' +
+                    '<div class="item"><div class="rot">Manejo</div><div class="val">' + esc(a.manejo) + '</div></div>' +
+                    '<div class="item"><div class="rot">Sexo</div><div class="val">' + esc(a.sexo === 'FEMEA' ? 'Fêmea' : 'Macho') + '</div></div>' +
+                    '<div class="item"><div class="rot">Idade (no embarque)</div><div class="val">' + esc(a.idade_meses) + '</div></div>' +
+                    '<div class="item"><div class="rot">Raça</div><div class="val">' + esc(a.raca) + '</div></div>' +
+                    '<div class="item"><div class="rot">Nascimento</div><div class="val">' + esc(a.nascimento) + '</div></div>' +
+                    '<div class="item"><div class="rot">Lote</div><div class="val">' + esc(a.lote_entrada) + '</div></div>';
+                document.getElementById('categoria').textContent = 'Mesma categoria do animal trocado: ' + d.categoria;
+                var html = '';
+                if (d.avisos.fora_liberacao.ativo) {
+                    html += '<label class="aviso-resp"><input type="checkbox" id="aceite-fora"><span>' + esc(d.avisos.fora_liberacao.texto) + ' Responsabilidade do Produtor: estou ciente e assumo.</span></label>';
+                }
+                if (d.avisos.era_0_12.ativo) {
+                    html += '<label class="aviso-resp"><input type="checkbox" id="aceite-era"><span>' + esc(d.avisos.era_0_12.texto) + ' Responsabilidade do Produtor: estou ciente.</span></label>';
+                }
+                document.getElementById('avisos').innerHTML = html;
+                avisosAtivos().forEach(function (c) { c.addEventListener('change', function () { chk.checked = false; atualizar(); }); });
+                cardAchado.style.display = 'block';
+                atualizar();
+                fPeso.focus();
+            }).catch(function () { mostrarErro(erroBusca, 'Falha de comunicação. Tente novamente.'); });
+        }
+
+        document.getElementById('btn-buscar').addEventListener('click', buscar);
+        [fSisbov, fManejo, fDv].forEach(function (el) {
+            el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+        });
+
+        btnGravar.addEventListener('click', function () {
+            mostrarErro(erroForm, '');
+            btnGravar.disabled = true;
+            var af = document.getElementById('aceite-fora'), ae = document.getElementById('aceite-era');
+            fetch('{{ url_gravar|default('/produtor/saida-substituicao/gravar') }}', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: ID_PROP, id: ID_LINHA, sisbov: achado, peso: fPeso.value,
+                                       aceite_fora_liberacao: !!(af && af.checked), aceite_era_0_12: !!(ae && ae.checked) })
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (d.ok) { window.location.href = d.url; return; }
+                mostrarErro(erroForm, d.erro || d.mensagem || 'Não foi possível substituir.');
+                atualizar();
+            }).catch(function () { mostrarErro(erroForm, 'Falha de comunicação. Tente novamente.'); atualizar(); });
+        });
+
+        fSisbov.focus();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\saida_substituicao_trocar.html
+     ========================================================= -->

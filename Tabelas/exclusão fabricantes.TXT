@@ -1,0 +1,21 @@
+-- -*- coding: utf-8 -*-
+-- PROJETO: Orion SISBOV
+-- PASTA: database/migrations
+-- MODULO: Exclusao de tabelas antigas (fabricantes_brincos, numeracoes) - preparacao para recriacao no padrao tb_NNNN
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 13/07/2026 17:35 -03
+-- ATUALIZADO EM: 13/07/2026 17:35 -03
+-- VERSAO: 1.0
+--
+-- CHANGELOG:
+-- v1.0 - 13/07/2026 17:35 -03 - Criacao inicial. Exclusao das tabelas fabricantes_brincos e numeracoes,
+--        que serao recriadas como tb_1021_fabricantes_brincos e tb_3007_brincos_entrada, seguindo o novo
+--        padrao de nomenclatura numerico (referencia as tabelas originais do GERAS).
+
+-- ATENCAO: Execute este script somente apos confirmar que nao ha dados relevantes
+-- nas tabelas abaixo. Ambas estavam vazias (Total rows: 0) no momento da exclusao.
+
+DROP TABLE IF EXISTS numeracoes;
+DROP TABLE IF EXISTS fabricantes_brincos;
+
+-- FIM DE ARQUIVO

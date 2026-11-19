@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\vitrine_visitantes.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-13 13:20 -03
+     ATUALIZADO EM: 2026-08-13 13:20 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Tela "Visitantes da Vitrine" (Cenario 2, Sessao 034
+         continuacao 9) - lista os visitantes da Tela Vitrine
+         (/convite, Etapa 1) ainda nao convertidos em cliente, com
+         um botao "Converter em Cliente" por linha. Espelha o
+         padrao visual de prospects.html (lista de "gente que
+         ainda nao e cliente" + acao). Ver vitrine_visitantes.py
+         para a logica completa. Exclusivo perfil CONSISTE. Sem
+         item proprio no menu lateral por enquanto (decisao de
+         Benedito) - acesso via link direto.
+
+         UX: aviso de "sair sem salvar" nao se aplica aqui - nao
+         ha formulario de edicao de texto nesta tela, so botoes de
+         acao direta (POST sem campos). Botao "Voltar" no topo
+         aponta para a Home Consiste.
+
+         v1.0.0: Criacao do modulo (Sessao 034, continuacao 9).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Visitantes da Vitrine</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; max-width: 900px; }
+        .sucesso { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #2e7d32; margin-bottom: 16px; max-width: 900px; }
+        .btn-whatsapp { display: inline-block; margin-top: 8px; padding: 8px 16px; background: #25D366; color: #ffffff; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; }
+        .btn-whatsapp:hover { background: #1DA851; }
+
+        .lista-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1000px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 12px; color: #888888; text-transform: uppercase; padding: 8px 10px; border-bottom: 2px solid #e0e0e0; }
+        td { padding: 10px; font-size: 13px; color: #333333; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        .sem-visitantes { font-size: 13px; color: #999999; padding: 16px 0; text-align: center; }
+        .btn-converter { padding: 7px 16px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-converter:hover { background: #D4370A; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <a href="{{ url_for('auth.consiste_home') }}" class="btn-voltar-topo">&#8592; Voltar</a>
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% include 'consiste/consiste_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128373; Visitantes da Vitrine</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if acesso_criado_agora %}
+            <div class="sucesso">
+                &#9989; Cliente convertido com sucesso! Um e-mail com login e senha provisória foi enviado.
+                {% if link_whatsapp %}
+                <br>
+                <a href="{{ link_whatsapp }}" target="_blank" class="btn-whatsapp">&#128241; Enviar também por WhatsApp</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="lista-container">
+                <div class="form-secao">Visitantes Pendentes de Conversão</div>
+
+                {% if visitantes %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF/CNPJ</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Data da Visita</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for visitante in visitantes %}
+                        <tr>
+                            <td>{{ visitante.nome }}</td>
+                            <td>{{ visitante.cpf_cnpj }}</td>
+                            <td>{{ visitante.email }}</td>
+                            <td>{{ visitante.telefone }}</td>
+                            <td>{{ visitante.visitado_em.strftime('%d/%m/%Y %H:%M') if visitante.visitado_em else '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('vitrine_visitantes.converter', id=visitante.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn-converter">Converter em Cliente</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="sem-visitantes">Nenhum visitante pendente de conversão no momento.</div>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\vitrine_visitantes.html
+     ========================================================= -->

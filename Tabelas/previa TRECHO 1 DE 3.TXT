@@ -1,0 +1,46 @@
+# TRECHO 1 DE 3 — PREVIA PARA REVISAO (nao e o arquivo final)
+# Mostra apenas as partes que MUDAM em auth.py. O arquivo
+# completo sera montado depois que os 3 trechos forem aprovados.
+
+from datetime import date
+
+# -------------------------------------------------------
+# Funcao auxiliar: redireciona para o home do perfil
+# ALTERADO: removido o perfil FAZENDA (era redundante com
+# PRODUTOR + cargo, aposentado nesta migracao).
+# -------------------------------------------------------
+def redirecionar_home(perfil):
+    if perfil == 'CONSISTE':
+        return redirect('/consiste/home')
+    elif perfil == 'CERTIFICADORA':
+        return redirect('/certificadora/home')
+    elif perfil == 'PRODUTOR':
+        return redirect('/produtor/home')
+    else:
+        return redirect(url_for('auth.login'))
+
+
+# -------------------------------------------------------
+# Funcao auxiliar NOVA: busca o vinculo ATIVO do usuario em
+# usuario_vinculo (data_fim IS NULL). So se aplica a perfil
+# PRODUTOR - CONSISTE e CERTIFICADORA nao usam vinculo.
+#
+# Retorna o objeto UsuarioVinculo se encontrar exatamente 1
+# vinculo ativo, ou None se nao encontrar nenhum (cadastro
+# incompleto/inconsistente - bloqueado no login()).
+#
+# OBS: usuarios com mais de 1 vinculo ativo simultaneo (ex.:
+# Mario, atendendo varias Propriedades) exigem a tela de
+# selecao apos o login - isso NAO esta implementado ainda
+# (adiado, ver pendencia P-036). Por enquanto, esta funcao
+# assume o caso comum (1 vinculo so) e pega o primeiro
+# encontrado se houver mais de um - a tela de selecao fica
+# para quando o primeiro caso real (multi-vinculo) aparecer.
+# -------------------------------------------------------
+def buscar_vinculo_ativo(db, id_usuario):
+    return db.query(UsuarioVinculo).filter_by(
+        id_usuario=id_usuario,
+        data_fim=None
+    ).first()
+
+# FIM DO TRECHO 1 DE 3

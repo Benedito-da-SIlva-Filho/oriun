@@ -1,0 +1,82 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\alter_tb_4001_gta_status_brincagem.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-09 11:00 -03
+-- ATUALIZADO EM: 2026-09-09 11:00 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Adiciona a coluna status_brincagem em tb_4001_gta, em TODOS
+--     os schemas produtor_NNNNN automaticamente (Regra de Ouro do
+--     projeto - ALTER TABLE sempre em bloco DO $$ percorrendo os
+--     schemas, nunca manual schema por schema).
+--
+--     Objetivo: identificar de forma explicita se uma GTA de COMPRA
+--     ja foi brincada ou nao, sem precisar inferir isso por ausencia
+--     de linhas em outras tabelas (tb_7017/tb_2001) - decisao fechada
+--     com Benedito na Sessao 048 (09/09/2026), durante o levantamento
+--     da rota "Lista de GTAs pendentes de Brincagem".
+--
+--     Valores possiveis (VARCHAR, sem ENUM por ora - poucos valores,
+--     tratado como Opcao B do alinhamento):
+--       - 'PENDENTE'   -> GTA de COMPRA, ainda sem brincagem feita.
+--       - 'BRINCADO'   -> GTA de COMPRA, brincagem ja concluida
+--                         (gravado no Bloco C - rota "Salvar" da
+--                         Brincagem Sequencial, junto com as outras
+--                         5 gravacoes da mesma operacao).
+--       - 'NAO_APLICA' -> qualquer tipo_movimento diferente de COMPRA
+--                         (ex: VENDA). Inclui TRANSFERENCIA por ora -
+--                         caso de Transferencia com substituicao de
+--                         brinco fica como PENDENCIA EXPLICITA para
+--                         sessao futura (nao desenhado ainda, ver
+--                         Referencia do Sistema).
+--
+--     Default da coluna e 'NAO_APLICA' (cobre toda GTA nova, de
+--     qualquer tipo, sem precisar que o codigo de criacao decida o
+--     valor na hora); o UPDATE abaixo corrige para 'PENDENTE' as
+--     GTAs de COMPRA (seguro aplicar em massa nas GTAs ja existentes,
+--     porque nenhuma foi brincada ainda no sistema - Sessao 048).
+--
+--     v1.0.0: Criacao do script (Sessao 048, 09/09/2026, 11:00 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        -- Cria a coluna (idempotente - se rodar 2x nao quebra)
+        EXECUTE format(
+            'ALTER TABLE %I.tb_4001_gta ADD COLUMN IF NOT EXISTS status_brincagem VARCHAR(20) DEFAULT ''NAO_APLICA''',
+            schema_rec.schema_name
+        );
+
+        -- Corrige as GTAs de COMPRA ja existentes para PENDENTE
+        -- (nenhuma foi brincada ainda - seguro aplicar em massa)
+        EXECUTE format(
+            'UPDATE %I.tb_4001_gta SET status_brincagem = ''PENDENTE'' WHERE tipo_movimento = ''COMPRA''',
+            schema_rec.schema_name
+        );
+
+        RAISE NOTICE 'status_brincagem aplicado em %', schema_rec.schema_name;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- VERIFICACAO (rode depois do script acima, um schema por vez,
+-- trocando produtor_00001 pelo schema que quiser conferir)
+-- =========================================================
+-- SET search_path TO produtor_00001;
+-- SELECT numero_gta_completo, tipo_movimento, status_brincagem
+-- FROM tb_4001_gta
+-- ORDER BY id;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_tb_4001_gta_status_brincagem.sql
+-- =========================================================

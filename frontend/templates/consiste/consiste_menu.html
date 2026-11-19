@@ -1,0 +1,170 @@
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\consiste_menu.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-25 13:08 -03
+     ATUALIZADO EM: 2026-10-09 19:05 bsf
+     VERSAO: 1.8.0
+
+     DESCRICAO:
+         Menu lateral da plataforma Consiste.
+         Incluido em todos os templates da plataforma Consiste
+         via: include 'consiste/consiste_menu.html'
+         Variavel menu_ativo define o item destacado em vermelho.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Sessao 011 - Adicionado item "Protocolos" em
+             ADMINISTRACAO, ao lado de Certificadoras. Tela de
+             administracao do catalogo de Protocolos de
+             Certificacao (ABPO, PEFB, CSCB, Cota Hilton, e
+             futuros). Acesso tambem liberado para o perfil
+             CERTIFICADORA na rota (protocolos.py), mas o link
+             so aparece aqui por enquanto - Certificadora ainda
+             nao tem portal/menu proprio.
+         v1.2.0: Sessao 011 - Correcao de acentuacao no texto
+             visivel ao usuario.
+         v1.3.0: Sessao 011.1 - Adicionado item "Proprietarios"
+             em CADASTROS, ao lado de Propriedades e Produtores.
+             Acesso restrito ao perfil CONSISTE por enquanto
+             (gestao "porteira para dentro") - acesso da
+             Certificadora fica para quando o Modulo
+             Certificadora (fluxo MAPA/P-013) for construido.
+         v1.4.0: Sessao 011.1 - Reordenado CADASTROS a pedido de
+             Benedito: Propriedades, Proprietarios, Produtores
+             (era Propriedades, Produtores, Proprietarios).
+         v1.5.0: Sessao 034 (continuacao 9, 13/08/2026, 14:25 -03) -
+             Nova secao COMERCIAL, com o item "Visitantes da
+             Vitrine" (backend/routers/vitrine_visitantes.py,
+             Cenario 2 - lista de visitantes da Tela Vitrine
+             pendentes de conversao em cliente real). Ate aqui a
+             tela so era acessivel via link direto (decisao
+             original de Benedito); teste real mostrou que digitar
+             a URL toda vez incomodava no dia a dia - Benedito
+             pediu item de menu. Secao nova (nao reaproveitada
+             ADMINISTRACAO/CADASTROS/CONSULTAS) porque este item e
+             conceitualmente distinto: convite/prospeccao
+             comercial, nao dado cadastral definitivo. "Convidar
+             Produtor" (prospects.py) continua fora do menu por
+             enquanto - so foi movido/adicionado o item pedido
+             nesta sessao, sem reestruturar o que ja existia sem
+             pedido explicito.
+         v1.6.0: Sessao 046 (04/09/2026, 13:40 -03) - Adicionado
+             item "Backup / Restore" em ADMINISTRACAO, ao lado de
+             Certificadoras/Usuários Consiste/Protocolos - aponta
+             para /consiste/backup-restore (backend/routers/
+             backup_restore.py, NOVO), tela que lista os pedidos
+             de Restore pendentes de TODOS os Produtores ativos.
+             Acesso exclusivo do perfil CONSISTE - so quem executa
+             um Restore de verdade (mecanismo de Backup/Restore de
+             Schema inteiro, alinhado com Benedito na Sessao 046).
+             Nenhuma outra mudanca neste arquivo.
+         v1.7.0: Sessao 092 (09/10/2026, 19:05 -03) - Adicionado item
+             "Blockchain" em ADMINISTRACAO, logo abaixo de Backup /
+             Restore - aponta para /consiste/blockchain (backend/
+             routers/consiste_blockchain.py, NOVO): tabela-resumo por
+             Produtor + validacao do blockchain (hashes, fila, envios).
+             Somente leitura - o envio continua automatico (carteiro).
+             Acesso exclusivo do perfil CONSISTE. Nenhuma outra mudanca
+             neste arquivo.
+         v1.9.0: BND/Fazenda (18/11/2026) - item "BND/Fazenda" em ADMINISTRACAO, abaixo de Carga de Animais (/consiste/bnd-fazenda, so CONSISTE).
+         v1.8.0: Carga (17/11/2026) - item "Carga de Animais" em ADMINISTRACAO, abaixo de Blockchain (/consiste/carga, so CONSISTE).
+     ========================================================= -->
+
+<div class="sidebar" id="sidebar">
+
+    <!-- Home -->
+    <a href="/consiste/home" class="menu-item {{ 'ativo' if menu_ativo == 'home' else '' }}">
+        <span class="menu-icone">&#127968;</span>
+        <span class="menu-texto">Home</span>
+    </a>
+
+    <!-- ADMINISTRACAO -->
+    <div class="menu-secao">ADMINISTRAÇÃO</div>
+
+    <a href="/certificadoras" class="menu-item {{ 'ativo' if menu_ativo == 'certificadoras' else '' }}">
+        <span class="menu-icone">&#127962;</span>
+        <span class="menu-texto">Certificadoras</span>
+    </a>
+
+    <a href="/usuarios" class="menu-item {{ 'ativo' if menu_ativo == 'usuarios' else '' }}">
+        <span class="menu-icone">&#128101;</span>
+        <span class="menu-texto">Usuários Consiste</span>
+    </a>
+
+    <a href="/protocolos" class="menu-item {{ 'ativo' if menu_ativo == 'protocolos' else '' }}">
+        <span class="menu-icone">&#128220;</span>
+        <span class="menu-texto">Protocolos</span>
+    </a>
+
+    <!-- NOVO (Sessao 046) - mecanismo de Backup/Restore de Schema
+         inteiro. So o perfil CONSISTE executa um Restore de
+         verdade - ver backend/routers/backup_restore.py. -->
+    <a href="/consiste/backup-restore" class="menu-item {{ 'ativo' if menu_ativo == 'backup-restore' else '' }}">
+        <span class="menu-icone">&#128190;</span>
+        <span class="menu-texto">Backup / Restore</span>
+    </a>
+
+    <!-- NOVO (Sessao 092) - painel de acompanhamento e validacao do
+         blockchain. Somente leitura, so o perfil CONSISTE - ver
+         backend/routers/consiste_blockchain.py. -->
+    <a href="/consiste/blockchain" class="menu-item {{ 'ativo' if menu_ativo == 'blockchain' else '' }}">
+        <span class="menu-icone">&#128279;</span>
+        <span class="menu-texto">Blockchain</span>
+    </a>
+
+    <!-- NOVO (Carga, 17/11/2026) - carga inicial de animais do Produtor (PDF do MAPA). So CONSISTE. -->
+    <a href="/consiste/carga" class="menu-item {{ 'ativo' if menu_ativo == 'carga' else '' }}">
+        <span class="menu-icone">&#128230;</span>
+        <span class="menu-texto">Carga de Animais</span>
+    </a>
+
+    <!-- NOVO (BND/Fazenda, 18/11/2026) - Correcao da base pelo Extrato do MAPA. So CONSISTE. -->
+    <a href="/consiste/bnd-fazenda" class="menu-item {{ 'ativo' if menu_ativo == 'bnd_fazenda' else '' }}">
+        <span class="menu-icone">&#9878;</span>
+        <span class="menu-texto">BND/Fazenda</span>
+    </a>
+
+    <!-- CADASTROS -->
+    <div class="menu-secao">CADASTROS</div>
+
+    <a href="/propriedades" class="menu-item {{ 'ativo' if menu_ativo == 'propriedades' else '' }}">
+        <span class="menu-icone">&#127806;</span>
+        <span class="menu-texto">Propriedades</span>
+    </a>
+
+    <a href="/proprietarios" class="menu-item {{ 'ativo' if menu_ativo == 'proprietarios' else '' }}">
+        <span class="menu-icone">&#128100;</span>
+        <span class="menu-texto">Proprietários</span>
+    </a>
+
+    <a href="/produtores" class="menu-item {{ 'ativo' if menu_ativo == 'produtores' else '' }}">
+        <span class="menu-icone">&#128104;&#8205;&#127806;</span>
+        <span class="menu-texto">Produtores</span>
+    </a>
+
+    <!-- COMERCIAL -->
+    <div class="menu-secao">COMERCIAL</div>
+
+    <a href="/vitrine-visitantes" class="menu-item {{ 'ativo' if menu_ativo == 'vitrine_visitantes' else '' }}">
+        <span class="menu-icone">&#128373;</span>
+        <span class="menu-texto">Visitantes da Vitrine</span>
+    </a>
+
+    <!-- CONSULTAS -->
+    <div class="menu-secao">CONSULTAS</div>
+
+    <a href="/consultas/produtor-propriedades" class="menu-item {{ 'ativo' if menu_ativo == 'consulta_produtor' else '' }}">
+        <span class="menu-icone">&#128269;</span>
+        <span class="menu-texto">Produtor &#8594; Propriedades</span>
+    </a>
+
+    <a href="/consultas/propriedade-produtores" class="menu-item {{ 'ativo' if menu_ativo == 'consulta_propriedade' else '' }}">
+        <span class="menu-icone">&#128269;</span>
+        <span class="menu-texto">Propriedade &#8594; Produtores</span>
+    </a>
+
+</div>
+
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\menu.html
+     ========================================================= -->

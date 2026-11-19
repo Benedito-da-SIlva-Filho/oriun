@@ -1,0 +1,78 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\16_apagar_ambientes_teste_11_12.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-10 17:15 -03
+-- ATUALIZADO EM: 2026-10-10 17:20 -03
+-- VERSAO: 1.0.1
+--
+-- DESCRICAO:
+--   Sessao 093 - Apaga os ambientes (schemas) dos 2 produtores de TESTE:
+--     id 11 CLAUDE ANTHROPIC          -> produtor_00011
+--     id 12 NATAL NATALICIO DE DEZEMBRO -> produtor_00012
+--   e volta o cadastro deles ao estado "sem ambiente" (schema_nome vazio).
+--   O CADASTRO do produtor (linha em produtores) NAO e apagado: so o
+--   ambiente. Depois, o botao de ativar ambiente volta a aparecer.
+--   SEGURANCA (tudo ou nada - se qualquer trava falhar, NADA e apagado):
+--     1. o id tem que estar com o schema_nome esperado e o nome esperado;
+--     2. o schema nao pode ter nenhum animal (tb_2001) nem GTA (tb_4001_gta).
+--   Nunca toca em produtor_00001, 00004, 00005 ou 00010.
+--
+--   v1.0.0: Criacao (Sessao 093).
+--   v1.0.1: o nome do id 11 tem um espaco no final ("CLAUDE ANTHROPIC ");
+--           a trava de nome agora ignora espacos nas pontas (btrim).
+-- =========================================================
+
+DO $$
+DECLARE
+    alvo RECORD;
+    achou INTEGER;
+    dados BIGINT;
+BEGIN
+    FOR alvo IN
+        SELECT * FROM (VALUES
+            (11, 'produtor_00011', 'CLAUDE ANTHROPIC'),
+            (12, 'produtor_00012', 'NATAL NATAL%')
+        ) AS t(id_produtor, schema_esperado, nome_esperado)
+    LOOP
+        SELECT count(*) INTO achou FROM produtores
+        WHERE id = alvo.id_produtor
+          AND schema_nome = alvo.schema_esperado
+          AND btrim(nome) LIKE alvo.nome_esperado;
+        IF achou <> 1 THEN
+            RAISE EXCEPTION 'Produtor % nao bate (schema/nome diferente do esperado) - nada foi apagado', alvo.id_produtor;
+        END IF;
+
+        IF to_regclass(format('%I.tb_2001', alvo.schema_esperado)) IS NOT NULL THEN
+            EXECUTE format('SELECT count(*) FROM %I.tb_2001', alvo.schema_esperado) INTO dados;
+            IF dados > 0 THEN
+                RAISE EXCEPTION '%: tem % animal(is) em tb_2001 - nada foi apagado', alvo.schema_esperado, dados;
+            END IF;
+        END IF;
+        IF to_regclass(format('%I.tb_4001_gta', alvo.schema_esperado)) IS NOT NULL THEN
+            EXECUTE format('SELECT count(*) FROM %I.tb_4001_gta', alvo.schema_esperado) INTO dados;
+            IF dados > 0 THEN
+                RAISE EXCEPTION '%: tem % GTA(s) em tb_4001_gta - nada foi apagado', alvo.schema_esperado, dados;
+            END IF;
+        END IF;
+    END LOOP;
+
+    -- Tudo conferido: agora apaga.
+    DROP SCHEMA IF EXISTS produtor_00011 CASCADE;
+    DROP SCHEMA IF EXISTS produtor_00012 CASCADE;
+    UPDATE produtores SET schema_nome = NULL WHERE id IN (11, 12);
+    RAISE NOTICE 'Ambientes de teste 11 e 12 apagados; cadastros voltaram a "sem ambiente".';
+END $$;
+
+-- ---------- VERIFICACAO ----------
+-- ESPERADO: 2 linhas (id 11 e 12), schema_nome vazio (null)
+SELECT id, nome, schema_nome FROM produtores WHERE id IN (11, 12) ORDER BY id;
+
+-- ESPERADO: so os 4 antigos (00001, 00004, 00005, 00010)
+SELECT schema_name FROM information_schema.schemata
+WHERE schema_name LIKE 'produtor\_%' ORDER BY 1;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\16_apagar_ambientes_teste_11_12.sql
+-- =========================================================

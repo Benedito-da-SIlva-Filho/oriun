@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\certificadora
+     MODULO: templates\certificadora\cert_cadastro_usuario.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-23 14:28 -03
+     ATUALIZADO EM: 2026-07-02 14:46 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Formulario de cadastro e edicao de Usuario da Certificadora.
+         Plataforma Certificadora — requer perfil CERTIFICADORA.
+         Menu lateral via include certificadora/certificadora_menu.html.
+         Consiste pode selecionar qualquer certificadora.
+         Master/Administrativo tem certificadora fixada pela sessao.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Migrado para pasta certificadora/. Bootstrap
+                 substituido por CSS proprio do sistema.
+                 Menu lateral adicionado via include.
+                 Topo padronizado com hamburguer, badge, Voltar e Sair.
+         v1.2.0: Sessao 010 - Corrigida comparacao no select de
+                 Certificadora: usuario_edit.certificadora_id ->
+                 usuario_edit.id_certificadora (campo renomeado
+                 no model). Sem essa correcao, a opcao correta
+                 nunca aparecia marcada como "selected" ao editar
+                 um usuario. Os atributos name="certificadora_id"
+                 do input hidden e do select foram mantidos como
+                 estao — sao nomes de campo do formulario HTML,
+                 nao dependem do nome da coluna no banco.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'Editar' if usuario_edit else 'Novo' }} Usuario Certificadora</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include certificadora_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        /* ---- Formulario ---- */
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 640px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-6  { grid-column: span 6; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .aviso { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #92400e; margin-top: 16px; }
+
+        /* ---- Botoes ---- */
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <button onclick="history.back()" class="btn-voltar-topo">&#8592; Voltar</button>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — plataforma Certificadora -->
+        {% include 'certificadora/certificadora_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128101; {{ 'Editar' if usuario_edit else 'Novo' }} Usuario Certificadora</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('cert_usuarios.salvar') }}">
+                    <input type="hidden" name="id" value="{{ usuario_edit.id if usuario_edit else '' }}">
+
+                    <!-- Dados do usuario -->
+                    <div class="form-secao">Dados do Usuario</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-12">
+                            <label>Nome Completo *</label>
+                            <input type="text" name="nome" required class="upper"
+                                value="{{ usuario_edit.nome if usuario_edit else '' }}"
+                                placeholder="Nome completo">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Login *</label>
+                            <input type="text" name="login" required
+                                value="{{ usuario_edit.login if usuario_edit else '' }}"
+                                placeholder="Login de acesso">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Email *</label>
+                            <input type="email" name="email" required
+                                value="{{ usuario_edit.email if usuario_edit else '' }}"
+                                placeholder="email@exemplo.com.br">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Cargo *</label>
+                            <select name="cargo" required>
+                                <option value="">Selecione...</option>
+                                {% for c in cargos %}
+                                <option value="{{ c }}" {{ 'selected' if usuario_edit and usuario_edit.cargo == c else '' }}>
+                                    {{ c }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Certificadora — fixa para Master/Administrativo, selecionavel para Consiste -->
+                        {% if cert_id_fixo %}
+                        <input type="hidden" name="certificadora_id" value="{{ cert_id_fixo }}">
+                        {% else %}
+                        <div class="form-group col-6">
+                            <label>Certificadora *</label>
+                            <select name="certificadora_id" required>
+                                <option value="">Selecione...</option>
+                                {% for cert in certificadoras %}
+                                <option value="{{ cert.id }}" {{ 'selected' if usuario_edit and usuario_edit.id_certificadora == cert.id else '' }}>
+                                    {{ cert.razao_social }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                    <!-- Aviso senha inicial — exibido apenas no cadastro novo -->
+                    {% if not usuario_edit %}
+                    <div class="aviso">
+                        &#128273; A senha inicial sera enviada por email automaticamente ao usuario.
+                    </div>
+                    {% endif %}
+
+                    <!-- Botoes -->
+                    <div class="form-botoes">
+                        <a href="{{ url_for('cert_usuarios.lista') }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar">
+                            {{ 'Salvar Alteracoes' if usuario_edit else 'Cadastrar' }}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informatica</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+
+        document.querySelectorAll('input.upper').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\certificadora\cert_cadastro_usuario.html
+     ========================================================= -->

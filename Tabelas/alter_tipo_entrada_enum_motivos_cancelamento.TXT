@@ -1,0 +1,34 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\alter_tipo_entrada_enum_motivos_cancelamento.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-03 09:12 -03
+-- ATUALIZADO EM: 2026-09-03 09:12 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   v1.0.0: Adiciona 4 novos valores ao enum tipo_entrada_enum
+--   (schema public, enum unico - confirmado via query em 2026-09-03),
+--   para suportar o campo Motivo da tela de Cancelamento de Brincos
+--   (modulo Hub de Brincos). Esses motivos serao gravados em
+--   tb_3008_brincos_saida.origem e replicados em tb_7017.saida_origem.
+--
+--   Cada ALTER TYPE roda como comando isolado, fora de bloco
+--   DO $$ ... $$ e fora de transacao unica, pois o Postgres exige
+--   que a adicao do valor seja confirmada (commit) antes que
+--   qualquer INSERT possa usar o valor novo.
+--
+--   Enum e unico no schema public (nao duplicado por Produtor),
+--   portanto nao ha necessidade de loop FOR schema_rec IN ...
+--   como no padrao usado para ALTER TABLE multi-tenant.
+-- =========================================================
+
+ALTER TYPE tipo_entrada_enum ADD VALUE IF NOT EXISTS 'DANIFICADO';
+ALTER TYPE tipo_entrada_enum ADD VALUE IF NOT EXISTS 'EXTRAVIADO';
+ALTER TYPE tipo_entrada_enum ADD VALUE IF NOT EXISTS 'INATIVADO';
+ALTER TYPE tipo_entrada_enum ADD VALUE IF NOT EXISTS 'VENDIDO';
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_tipo_entrada_enum_motivos_cancelamento.sql
+-- =========================================================

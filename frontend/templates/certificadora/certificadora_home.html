@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\certificadora
+     MODULO: templates\certificadora\certificadora_home.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-25 13:08 -03
+     ATUALIZADO EM: 2026-06-25 13:08 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Painel inicial da plataforma Certificadora.
+         Cards com totais da propria certificadora vindos do banco.
+         Menu lateral via include certificadora_menu.html.
+         Novos cards e botoes serao adicionados conforme evolucao.
+         v1.0.0: Criacao do modulo.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Home Certificadora</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; margin-bottom: 20px; }
+
+        /* ---- Cards ---- */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; }
+        .card-icone { font-size: 26px; }
+        .card h3 { font-size: 13px; color: #666666; margin: 8px 0 4px; font-weight: normal; }
+        .card .numero { font-size: 26px; font-weight: bold; color: #333333; }
+        .card .numero.alerta { color: #D4370A; }
+
+        /* ---- Acesso Rapido ---- */
+        .acesso-rapido { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; }
+        .acesso-rapido h2 { font-size: 14px; font-weight: bold; color: #333333; margin-bottom: 12px; }
+        .botoes-rapidos { display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn-rapido { padding: 8px 16px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-rapido:hover { background: #D4370A; color: #ffffff; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL -->
+        {% include 'certificadora/certificadora_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-titulo">&#127968; Painel Certificadora</div>
+
+            <!-- Cards com totais da propria certificadora -->
+            <div class="cards">
+                <div class="card">
+                    <div class="card-icone">&#127806;</div>
+                    <h3>Propriedades</h3>
+                    <div class="numero">{{ total_propriedades }}</div>
+                </div>
+                <div class="card">
+                    <div class="card-icone">&#128104;&#8205;&#127806;</div>
+                    <h3>Produtores</h3>
+                    <div class="numero">{{ total_produtores }}</div>
+                </div>
+                <div class="card">
+                    <div class="card-icone">&#128203;</div>
+                    <h3>Pendentes</h3>
+                    <div class="numero alerta">{{ total_pendentes }}</div>
+                </div>
+                <div class="card">
+                    <div class="card-icone">&#128004;</div>
+                    <h3>Animais</h3>
+                    <div class="numero">{{ total_animais }}</div>
+                </div>
+            </div>
+
+            <!-- Acesso rapido -->
+            <div class="acesso-rapido">
+                <h2>Acesso Rapido</h2>
+                <div class="botoes-rapidos">
+                    <a href="/certificadora/comunicados/pendentes" class="btn-rapido">Ver Pendentes</a>
+                    <a href="/certificadora/produtores/novo" class="btn-rapido">Novo Produtor</a>
+                    <a href="/certificadora/usuarios/novo" class="btn-rapido">Novo Usuario</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informatica</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\certificadora\certificadora_home.html
+     ========================================================= -->

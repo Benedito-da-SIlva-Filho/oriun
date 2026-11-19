@@ -1,0 +1,52 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\alter_nota_fiscal_brincos_10.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-02 10:00 -03
+-- ATUALIZADO EM: 2026-09-02 10:00 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Alinha o tamanho da coluna nota_fiscal em
+--     tb_3007_brincos_entrada de varchar(6) para varchar(10),
+--     em TODOS os schemas produtor_NNNNN existentes.
+--
+--     Motivo (Sessao 043 -> 044): o formulario de Entrada de
+--     Brincos e a validacao do servidor (brincos_entrada.py,
+--     TAMANHO_MAX_NOTA_FISCAL) ja aceitam ate 10 digitos desde a
+--     Sessao 043, mas a coluna real no banco ficou esquecida em
+--     varchar(6) - qualquer NF com 7+ digitos quebraria o INSERT.
+--     Corrigido agora para o Modulo Relatorio N.Fiscais (Sessao
+--     044), que tambem le esta coluna.
+--
+--     Segue REGRA PERMANENTE do Orion (registrada em memoria):
+--     toda alteracao de estrutura em tabela que vive no
+--     schema-por-Produtor deve ser aplicada automaticamente a
+--     TODOS os schemas produtor_NNNNN existentes, nunca so em um
+--     escolhido a dedo. ALTER COLUMN TYPE para um tamanho maior
+--     e seguro de rodar novamente (sem erro em re-execucao).
+--
+--     v1.0.0: Criacao (Sessao 044, 02/09/2026, 10:00 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %I.tb_3007_brincos_entrada ALTER COLUMN nota_fiscal TYPE character varying(10)',
+            schema_rec.schema_name
+        );
+        RAISE NOTICE 'Alterado: %.tb_3007_brincos_entrada.nota_fiscal -> varchar(10)', schema_rec.schema_name;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_nota_fiscal_brincos_10.sql
+-- =========================================================

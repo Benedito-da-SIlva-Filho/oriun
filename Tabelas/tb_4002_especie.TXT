@@ -1,0 +1,46 @@
+-- =============================================================
+-- PROJETO: Orion SISBOV
+-- PASTA: database/scripts/catalogos
+-- MODULO: tb_4002_especie
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 25/07/2026 08:26 -03
+-- ATUALIZADO EM: 25/07/2026 08:26 -03
+-- VERSAO: 1.0.0
+-- DESCRICAO: Catalogo de Especie (BOV Bovino, BUB Bubalino).
+--            Origem: GR4002 (GERAS) - pasta 4-Animais.
+--            Schema publico. Trigger dedicada (nao compartilhada).
+-- CHANGELOG:
+--   v1.0.0 - 25/07/2026 - Criacao inicial (tabela + trigger + seed) - Benedito Silva Filho
+-- =============================================================
+
+-- 1) TABELA
+CREATE TABLE public.tb_4002_especie (
+    id              SERIAL PRIMARY KEY,
+    codigo          VARCHAR(3) NOT NULL UNIQUE,
+    descricao       VARCHAR(60) NOT NULL,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.tb_4002_especie IS 'Catalogo de Especie - origem GR4002 (GERAS)';
+
+-- 2) TRIGGER DEDICADA (atualizado_em)
+CREATE OR REPLACE FUNCTION public.trg_tb_4002_especie_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_4002_especie_atualizado_em
+BEFORE UPDATE ON public.tb_4002_especie
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_tb_4002_especie_atualizado_em();
+
+-- 3) SEED (dados reais do GR4002)
+INSERT INTO public.tb_4002_especie (codigo, descricao) VALUES
+('BOV', 'Bovino'),
+('BUB', 'Bubalino');
+
+-- FIM DE ARQUIVO

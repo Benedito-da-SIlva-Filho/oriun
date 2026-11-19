@@ -1,0 +1,72 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\create_backup_restore.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-04 13:40 -03
+-- ATUALIZADO EM: 2026-09-04 13:40 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   v1.0.0: Cria a tabela tb_backup_restore_pedido em TODOS os
+--   schemas de Produtor existentes (produtor_NNNNN) - mesma
+--   logica de loop ja usada em create_log_operacoes.sql,
+--   adaptada para este mecanismo.
+--
+--   Alinhamento fechado com Benedito (Sessao 046, 04/09/2026):
+--   mecanismo de Backup/Restore de Schema inteiro. O Backup em
+--   si (arquivo .dump gerado por pg_dump) NAO tem registro em
+--   tabela - fica so no disco, 1 arquivo por Produtor por dia
+--   (nome do arquivo ja traz Produtor + data). Esta tabela
+--   registra apenas o PEDIDO DE RESTORE feito pelo TITULAR - o
+--   "livro de ocorrencias" oficial, mesmo que ele tambem ligue
+--   direto para a Consiste.
+--
+--   Regras de negocio fechadas:
+--   - Quem pode pedir: TITULAR/ADMINISTRADOR/ADMINISTRATIVO
+--     (mesmo padrao do Log de Operacoes).
+--   - Quem executa o Restore: so perfil CONSISTE, por tela
+--     propria dentro do Orion (nunca linha de comando direto).
+--   - Antes de qualquer Restore, o sistema tira um backup extra
+--     automatico do estado ATUAL, por seguranca (nome do arquivo
+--     de seguranca fica gravado em arquivo_seguranca_gerado).
+--   - atendido_em/atendido_por seguem o mesmo espirito de
+--     desfeito_em/desfeito_por do Log de Operacoes: NULOS ate o
+--     pedido ser atendido, usados tanto para saber SE ja foi
+--     atendido quanto para auditoria.
+--
+--   tb_backup_restore_pedido vive dentro do schema do Produtor
+--   (mesma logica de tb_log_operacoes) - isolamento garantido
+--   pelo proprio schema, sem coluna id_produtor.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format('
+            CREATE TABLE IF NOT EXISTS %I.tb_backup_restore_pedido (
+                id                       SERIAL PRIMARY KEY,
+                id_usuario               INTEGER NOT NULL REFERENCES public.usuarios(id),
+                id_propriedade           INTEGER NOT NULL REFERENCES public.propriedades(id),
+                motivo                   VARCHAR(255) NOT NULL,
+                data_backup_desejada     DATE NOT NULL,
+                criado_em                TIMESTAMP NOT NULL DEFAULT now(),
+                atendido_em              TIMESTAMP,
+                atendido_por             INTEGER REFERENCES public.usuarios(id),
+                arquivo_backup_usado     VARCHAR(255),
+                arquivo_seguranca_gerado VARCHAR(255)
+            );
+        ', schema_rec.schema_name);
+
+        RAISE NOTICE 'Tabela de Backup/Restore criada em %', schema_rec.schema_name;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\create_backup_restore.sql
+-- =========================================================

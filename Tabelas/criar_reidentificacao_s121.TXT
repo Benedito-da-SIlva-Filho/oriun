@@ -1,0 +1,116 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- PASTA:        C:\orion\Tabelas
+-- MODULO:       Tabelas\criar_reidentificacao_s121.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-11-11 11:30 -03
+-- VERSAO:       1.0.0
+--
+-- DESCRICAO:
+--     REIDENTIFICACAO (Sessao 121). Para TODOS os schemas produtor_NNNNN:
+--       1) tb_6005_reidentificacao_com_baixa (o PEDIDO): id_usuario, notificacao_gerada_em, enviado_em, enviado_por
+--          (data_solicitacao = Data da Reidentificacao, igual para todos os animais do pedido)
+--       2) tb_6006_reidentificacao_com_baixa_itens (cada animal): manejo_antigo, manejo_novo, motivo
+--          (PERDA / QUEBRA / DESGASTE / DEFEITO_LEITURA) + CHECK do motivo
+--       3) tb_4010_reidentificacao_inconformes (tentativas recusadas) + indice
+--       4) tb_2002_saida_animais: o CHECK de tipo_saida passa a aceitar REIDENTI
+--       5) tb_versao_schema = 11
+--     Pode rodar mais de uma vez (IF NOT EXISTS / DROP IF EXISTS). Rodar DEPOIS dos scripts da Linkagem (versao 10).
+--     Colunas e tabelas conferidas pelo information_schema do produtor_00004 (11/11/2026).
+--
+-- REVERSAO (so se precisar; rodar por schema):
+--     ALTER TABLE produtor_NNNNN.tb_6005_reidentificacao_com_baixa DROP COLUMN IF EXISTS id_usuario, DROP COLUMN IF EXISTS notificacao_gerada_em,
+--         DROP COLUMN IF EXISTS enviado_em, DROP COLUMN IF EXISTS enviado_por;
+--     ALTER TABLE produtor_NNNNN.tb_6006_reidentificacao_com_baixa_itens DROP CONSTRAINT IF EXISTS chk_tb_6006_motivo,
+--         DROP COLUMN IF EXISTS manejo_antigo, DROP COLUMN IF EXISTS manejo_novo, DROP COLUMN IF EXISTS motivo;
+--     DROP TABLE IF EXISTS produtor_NNNNN.tb_4010_reidentificacao_inconformes;
+--     ALTER TABLE produtor_NNNNN.tb_2002_saida_animais DROP CONSTRAINT IF EXISTS chk_tb_2002_tipo_saida;
+--     ALTER TABLE produtor_NNNNN.tb_2002_saida_animais ADD CONSTRAINT chk_tb_2002_tipo_saida
+--         CHECK (tipo_saida IN ('ABATE','VENDA','MORTE','TRANSFER','POSSE'));
+--     UPDATE produtor_NNNNN.tb_versao_schema SET versao = 10 WHERE versao = 11;
+-- =========================================================
+
+DO $blk$
+DECLARE
+    s text;
+BEGIN
+    FOR s IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+        ORDER BY schema_name
+    LOOP
+        IF NOT (EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = s AND table_name = 'tb_2001')
+            AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = s AND table_name = 'tb_6005_reidentificacao_com_baixa')
+            AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = s AND table_name = 'tb_6006_reidentificacao_com_baixa_itens')
+            AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = s AND table_name = 'tb_2002_saida_animais')
+            AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = s AND table_name = 'tb_versao_schema')) THEN
+            RAISE WARNING '% -> PULADO (falta tabela base)', s;
+            CONTINUE;
+        END IF;
+
+        -- 1) pedido
+        EXECUTE format('ALTER TABLE %I.tb_6005_reidentificacao_com_baixa '
+                       'ADD COLUMN IF NOT EXISTS id_usuario INTEGER, '
+                       'ADD COLUMN IF NOT EXISTS notificacao_gerada_em TIMESTAMP, '
+                       'ADD COLUMN IF NOT EXISTS enviado_em TIMESTAMP, '
+                       'ADD COLUMN IF NOT EXISTS enviado_por INTEGER', s);
+        EXECUTE format('CREATE INDEX IF NOT EXISTS ix_tb_6005_prop_data '
+                       'ON %I.tb_6005_reidentificacao_com_baixa (id_propriedade, data_solicitacao)', s);
+
+        -- 2) itens
+        EXECUTE format('ALTER TABLE %I.tb_6006_reidentificacao_com_baixa_itens '
+                       'ADD COLUMN IF NOT EXISTS manejo_antigo VARCHAR(6), '
+                       'ADD COLUMN IF NOT EXISTS manejo_novo VARCHAR(6), '
+                       'ADD COLUMN IF NOT EXISTS motivo VARCHAR(20)', s);
+        EXECUTE format('ALTER TABLE %I.tb_6006_reidentificacao_com_baixa_itens DROP CONSTRAINT IF EXISTS chk_tb_6006_motivo', s);
+        EXECUTE format('ALTER TABLE %I.tb_6006_reidentificacao_com_baixa_itens ADD CONSTRAINT chk_tb_6006_motivo '
+                       'CHECK (motivo IS NULL OR motivo IN (''PERDA'', ''QUEBRA'', ''DESGASTE'', ''DEFEITO_LEITURA''))', s);
+        EXECUTE format('CREATE INDEX IF NOT EXISTS ix_tb_6006_sisbov_antigo '
+                       'ON %I.tb_6006_reidentificacao_com_baixa_itens (sisbov_antigo)', s);
+        EXECUTE format('CREATE INDEX IF NOT EXISTS ix_tb_6006_sisbov_novo '
+                       'ON %I.tb_6006_reidentificacao_com_baixa_itens (sisbov_novo)', s);
+
+        -- 3) inconformidades
+        EXECUTE format('CREATE TABLE IF NOT EXISTS %I.tb_4010_reidentificacao_inconformes ('
+                       'id SERIAL PRIMARY KEY, '
+                       'id_propriedade INTEGER NOT NULL REFERENCES public.propriedades(id), '
+                       'id_usuario INTEGER, '
+                       'sisbov_antigo VARCHAR(40), '
+                       'sisbov_novo VARCHAR(40), '
+                       'motivo VARCHAR(200) NOT NULL, '
+                       'criado_em TIMESTAMP NOT NULL DEFAULT now())', s);
+        EXECUTE format('CREATE INDEX IF NOT EXISTS ix_tb_4010_prop_data '
+                       'ON %I.tb_4010_reidentificacao_inconformes (id_propriedade, criado_em)', s);
+
+        -- 4) tb_2002: tipo_saida aceita REIDENTI
+        EXECUTE format('ALTER TABLE %I.tb_2002_saida_animais DROP CONSTRAINT IF EXISTS chk_tb_2002_tipo_saida', s);
+        EXECUTE format('ALTER TABLE %I.tb_2002_saida_animais ADD CONSTRAINT chk_tb_2002_tipo_saida '
+                       'CHECK (tipo_saida IN (''ABATE'', ''VENDA'', ''MORTE'', ''TRANSFER'', ''POSSE'', ''REIDENTI''))', s);
+
+        -- 5) versao do schema
+        EXECUTE format('UPDATE %I.tb_versao_schema SET versao = 11 WHERE versao < 11', s);
+        EXECUTE format('INSERT INTO %I.tb_versao_schema (versao) SELECT 11 '
+                       'WHERE NOT EXISTS (SELECT 1 FROM %I.tb_versao_schema)', s, s);
+    END LOOP;
+END
+$blk$;
+
+-- =========================================================
+-- CONFERENCIA (rodar depois; trocar o schema se quiser ver outro)
+-- =========================================================
+-- 1) colunas novas (esperado: 4 em tb_6005 e 3 em tb_6006)
+-- SELECT table_name, column_name, data_type
+--   FROM information_schema.columns
+--  WHERE table_schema = 'produtor_00004'
+--    AND ((table_name = 'tb_6005_reidentificacao_com_baixa' AND column_name IN ('id_usuario','notificacao_gerada_em','enviado_em','enviado_por'))
+--      OR (table_name = 'tb_6006_reidentificacao_com_baixa_itens' AND column_name IN ('manejo_antigo','manejo_novo','motivo')))
+--  ORDER BY table_name, column_name;
+-- 2) tabela de inconformidades (esperado: 1 linha)
+-- SELECT table_name FROM information_schema.tables WHERE table_schema = 'produtor_00004' AND table_name = 'tb_4010_reidentificacao_inconformes';
+-- 3) CHECKs (esperado: REIDENTI na tb_2002 e o motivo na tb_6006)
+-- SELECT conrelid::regclass AS tabela, conname, pg_get_constraintdef(oid)
+--   FROM pg_constraint
+--  WHERE contype = 'c' AND conname IN ('chk_tb_2002_tipo_saida', 'chk_tb_6006_motivo')
+--    AND connamespace = 'produtor_00004'::regnamespace;
+-- 4) versao do schema (esperado: 11 em todos)
+-- SELECT 'produtor_00004' AS schema, versao FROM produtor_00004.tb_versao_schema;

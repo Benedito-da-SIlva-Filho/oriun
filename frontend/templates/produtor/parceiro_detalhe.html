@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\parceiro_detalhe.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-18 19:37 -03
+     ATUALIZADO EM: 2026-10-29 20:00 -03
+     VERSAO: 1.6.0
+
+     DESCRICAO:
+         Tela de detalhe (ficha) de 1 Parceiro/Fornecedor,
+         acessada a partir de parceiro_lista.html. Mostra os
+         dados do Parceiro (tb_parceiros) + todas as Propriedades
+         vinculadas a ele (tb_parceiros_propriedades, 1:N).
+         Botao "Imprimir Ficha" gera o PDF individual (P-047).
+
+         v1.6.0: Sessao 108 (29/10/2026, 20:00 -03) - Rotulo 'Codigo MAPA' vira 'Código do Estabelecimento (OESA)' (Cód. Estabelecimento (OESA) nos lugares apertados). REVERSAO: .bak_antes_s108_oesa_geral.
+         v1.0.0: Criacao do modulo (Sessao 034 continuacao 9,
+             18/08/2026).
+         v1.1.0: Sessao 035 (19/08/2026) - Suporte ao parametro
+             opcional propriedade_destaque (vindo da querystring
+             ?propriedade=<id>, ver backend/routers/
+             parceiros_fornecedores.py v1.2.0): quando presente, a
+             linha correspondente na Tabela de Propriedades recebe
+             destaque visual (fundo e borda coloridos) e a pagina
+             rola automaticamente ate ela ao carregar. Usado quando
+             o acesso vem de um clique numa Propriedade especifica
+             na Lista (padrao "Lista Clicavel" do Orion, ver
+             parceiro_lista.html v1.1.0) - evita o usuario ter que
+             procurar a Propriedade certa quando o Parceiro tem
+             varias.
+     v1.2.0: Sessao 077 (22/09/2026, 11:05 -03) - Tela estava fora
+         do padrao atual do Orion (apontado por Benedito): topo e
+         rodape ainda escritos direto no HTML, em vez das
+         pecas-mestras padronizadas na Sessao 076. Modularizados
+         para produtor_topo.html / produtor_rodape.html - o
+         destino do Voltar continua sendo a Lista de Parceiros, o
+         mesmo de sempre, sem mudanca de comportamento. O link
+         "Voltar" do cabecalho da pagina (dentro do conteudo,
+         acima da ficha) tambem NAO foi alterado - ja apontava
+         certo para a Lista.
+         v: Sessao 095 (13/10/2026, 14:10 -03) - AVISO DE DOWNLOAD PADRAO (lote 3): inclui a peca
+                 aviso_download e marca o link do PDF com data-aviso-*. REVERSAO: .bak_antes_aviso_download_s095.
+1.3.0         v1.4.0: Sessao 095 (13/10/2026, 19:10 -03) - Coluna separada Cód. Município e UF deixa de sair repetida. REVERSAO: .bak_antes_novo_parceiro_s095.
+         v1.5.0: Sessao 095 (13/10/2026, 19:30 -03) - Colunas Regiao do Brasil, Mesorregiao e Microrregiao (IBGE). REVERSAO: bak_antes_regioes_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ parceiro.nome }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+        .btn-primario { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #D4370A; background: #D4370A; color: #ffffff; }
+        .btn-primario:hover { background: #B22F09; }
+
+        .caixa-dados { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; }
+        .secao-titulo { font-size: 14px; font-weight: bold; color: #D4370A; margin-bottom: 12px; }
+        .linha-dado { display: flex; gap: 8px; padding: 6px 0; font-size: 14px; border-bottom: 1px solid #f5f5f5; }
+        .linha-dado:last-child { border-bottom: none; }
+        .rotulo-dado { font-weight: bold; color: #666666; width: 160px; flex-shrink: 0; }
+        .valor-dado { color: #333333; }
+        .status-ativo { color: #2e7d32; font-weight: bold; }
+        .status-inativo { color: #999999; }
+
+        .tabela-propriedades { width: 100%; border-collapse: collapse; }
+        .tabela-propriedades th { background: #D4370A; color: #ffffff; text-align: left; padding: 8px 12px; font-size: 12px; }
+        .tabela-propriedades td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #f0f0f0; color: #333333; }
+        .tabela-propriedades tr:last-child td { border-bottom: none; }
+        .sem-propriedades { color: #999999; font-style: italic; padding: 10px 0; }
+
+        /* ---------- Destaque de Propriedade (NOVO v1.1.0) ----------
+           Aplicado na linha correspondente a propriedade_destaque,
+           quando a tela chega via clique na Lista (?propriedade=<id>). */
+        .linha-destaque { background-color: #FBE9E4 !important; box-shadow: inset 3px 0 0 #D4370A; }
+        .linha-destaque td { font-weight: bold; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_for('parceiros_fornecedores.lista') %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo">{{ parceiro.nome }}</div>
+                <div class="botoes-topo">
+                    <a href="{{ url_for('parceiros_fornecedores.relatorio_pdf', id=parceiro.id) }}" class="btn-primario" data-aviso-descricao="Ficha do Parceiro {{ parceiro.nome }}" data-aviso-arquivo="parceiro_{{ parceiro.id }}_ficha.pdf">&#128424; Imprimir Ficha</a>
+                    <a href="{{ url_for('parceiros_fornecedores.lista') }}" class="btn-nav">&#8592; Voltar</a>
+                </div>
+            </div>
+
+            <div class="caixa-dados">
+                <div class="secao-titulo">Dados do Parceiro</div>
+                <div class="linha-dado">
+                    <div class="rotulo-dado">Nome / Razão Social:</div>
+                    <div class="valor-dado">{{ parceiro.nome }}</div>
+                </div>
+                <div class="linha-dado">
+                    <div class="rotulo-dado">CPF / CNPJ:</div>
+                    <div class="valor-dado">{{ parceiro.cpf_cnpj }}</div>
+                </div>
+                <div class="linha-dado">
+                    <div class="rotulo-dado">Status:</div>
+                    <div class="valor-dado {{ 'status-ativo' if parceiro.ativo else 'status-inativo' }}">{{ 'Ativo' if parceiro.ativo else 'Inativo' }}</div>
+                </div>
+                <div class="linha-dado">
+                    <div class="rotulo-dado">Cadastrado em:</div>
+                    <div class="valor-dado">{{ parceiro.criado_em.strftime('%d/%m/%Y às %H:%M') if parceiro.criado_em else '-' }}</div>
+                </div>
+            </div>
+
+            <div class="caixa-dados">
+                <div class="secao-titulo">Propriedades Vinculadas</div>
+                {% if propriedades %}
+                <table class="tabela-propriedades">
+                    <thead>
+                        <tr>
+                            <th>Estabelecimento</th>
+                            <th>Cód. Estabelecimento (OESA)</th>
+                            <th>Insc. Estadual</th>
+                            <th>Município/UF</th>
+                            <th>Cód. Município</th>
+                            <th>Região do Brasil</th>
+                            <th>Mesorregião</th>
+                            <th>Microrregião</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prop in propriedades %}
+                        <tr id="propriedade-{{ prop.id }}" {% if propriedade_destaque and prop.id == propriedade_destaque %}class="linha-destaque"{% endif %}>
+                            <td>{{ prop.estabelecimento }}</td>
+                            <td>{{ prop.codigo_mapa or '-' }}</td>
+                            <td>{{ prop.insc_estadual or '-' }}</td>
+                            <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+                            <td>{{ prop.municipio_codigo or '-' }}</td>
+                            <td>{{ prop.regiao_brasil or '-' }}</td>
+                            <td>{{ prop.regiao or prop.mesorregiao_ibge or '-' }}</td>
+                            <td>{{ prop.microrregiao or '-' }}</td>
+                            <td class="{{ 'status-ativo' if prop.ativo else 'status-inativo' }}">{{ 'Ativa' if prop.ativo else 'Inativa' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="sem-propriedades">Nenhuma Propriedade vinculada a este Parceiro.</div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+
+        // Rola ate a Propriedade em destaque, quando a tela chega
+        // via clique na Lista (?propriedade=<id>). Ver DESCRICAO
+        // no cabecalho deste arquivo (v1.1.0).
+        {% if propriedade_destaque %}
+        window.addEventListener('DOMContentLoaded', function () {
+            var linhaDestaque = document.getElementById('propriedade-{{ propriedade_destaque }}');
+            if (linhaDestaque) {
+                linhaDestaque.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+        {% endif %}
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\parceiro_detalhe.html
+     ========================================================= -->

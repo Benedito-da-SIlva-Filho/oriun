@@ -1,0 +1,46 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\5_alter_tb_2001_data_brincagem.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-14 17:10 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 052 (14/09/2026) - BUG REAL encontrado ao desenhar o
+--     modulo Gerar Comunicado: tb_2001 nunca teve uma coluna
+--     data_brincagem propria - o Bloco C da Brincagem Sequencial
+--     (Sessao 049) so gravava essa data em tb_7017.data_brincagem,
+--     e calculava liberacao_abate a partir de gta.data_entrega (
+--     ERRADO - a regra real e data_brincagem + 90 dias, confirmado
+--     por Benedito). Corrigido em 3 partes:
+--       1. Este script - ADD COLUMN data_brincagem em tb_2001.
+--       2. brincagem_sequencial.py v1.12.0 - passa a gravar
+--          data_brincagem e a calcular liberacao_abate correto
+--          para toda gravacao NOVA a partir de agora.
+--       3. 6_backfill_tb_2001_data_brincagem_liberacao_abate.sql -
+--          corrige TODO animal ja gravado desde a Sessao 049 (data_
+--          brincagem buscada em tb_7017 por SISBOV, liberacao_abate
+--          recalculada).
+--
+--     IDEMPOTENTE: ADD COLUMN IF NOT EXISTS.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %I.tb_2001 ADD COLUMN IF NOT EXISTS data_brincagem DATE',
+            schema_rec.schema_name
+        );
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\5_alter_tb_2001_data_brincagem.sql
+-- =========================================================

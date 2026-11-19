@@ -1,0 +1,80 @@
+# TRECHO 2 DE 3 — PREVIA PARA REVISAO (nao e o arquivo final)
+
+# -------------------------------------------------------
+# Rota: /login — tela e processamento do login
+# Apos autenticacao bem sucedida, verifica senha_provisoria.
+# Se False (senha provisoria), redireciona para troca de senha.
+# Se True (senha definitiva), redireciona para home do perfil.
+#
+# ALTERADO: usuario.cargo e usuario.id_produtor nao sao mais
+# lidos direto do Usuario. Para perfil PRODUTOR, busca o
+# vinculo ativo em usuario_vinculo (buscar_vinculo_ativo).
+# Se nao encontrar nenhum vinculo ativo (cadastro incompleto/
+# inconsistente), bloqueia o login com mensagem clara - nao
+# deveria acontecer na pratica (cadastro de Usuario sempre
+# exige id_produtor, ver modulo de Usuarios), mas e uma rede
+# de seguranca barata contra inconsistencia futura (ex.: um
+# vinculo encerrado sem um novo criado).
+# -------------------------------------------------------
+@auth.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'usuario_id' in session:
+        return redirecionar_home(session.get('usuario_perfil'))
+
+    erro = None
+
+    if request.method == 'POST':
+        login_informado = request.form.get('login')
+        senha_informada = request.form.get('senha')
+
+        with Session(engine) as db:
+            usuario = db.query(Usuario).filter_by(
+                login=login_informado,
+                ativo=True
+            ).first()
+
+            if usuario and check_password_hash(usuario.senha, senha_informada):
+
+                # Perfil PRODUTOR depende de vinculo ativo em
+                # usuario_vinculo - CONSISTE e CERTIFICADORA nao usam
+                # vinculo, seguem direto.
+                vinculo = None
+                if usuario.perfil == 'PRODUTOR':
+                    vinculo = buscar_vinculo_ativo(db, usuario.id)
+
+                    if not vinculo:
+                        erro = 'Seu acesso está sem vínculo ativo com nenhum Produtor. Contate o administrador.'
+                        return render_template('auth/login.html', erro=erro)
+
+                # Carrega dados do usuario na sessao
+                session['usuario_id']       = usuario.id
+                session['usuario_nome']     = usuario.nome
+                session['usuario_perfil']   = usuario.perfil
+                session['certificadora_id'] = usuario.id_certificadora
+                session['cor_primaria']     = '#D4370A'
+                session['nome_sistema']     = 'Orion SISBOV'
+
+                # So grava cargo/id_produtor na sessao se houver
+                # vinculo (perfil PRODUTOR) - CONSISTE/CERTIFICADORA
+                # ficam sem essas chaves na sessao (nao se aplicam).
+                if vinculo:
+                    session['usuario_cargo'] = vinculo.cargo
+                    session['id_produtor']   = vinculo.id_produtor
+
+                # Verifica se usuario esta com senha provisoria
+                # False = senha provisoria — obriga troca antes de acessar o home
+                if not usuario.senha_provisoria:
+                    response = make_response(redirect(url_for('usuarios.trocar_senha')))
+                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    return response
+
+                # True = senha definitiva — redireciona para home do perfil
+                return redirecionar_home(usuario.perfil)
+
+            else:
+                erro = 'Login ou senha incorretos!'
+
+    return render_template('auth/login.html', erro=erro)
+
+# FIM DO TRECHO 2 DE 3

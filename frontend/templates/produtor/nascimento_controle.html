@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\nascimento_controle.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-02 17:00 -03
+     ATUALIZADO EM: 2026-10-13 14:25 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Tela do relatorio "Nascimento por Numero de Controle"
+         (backend/routers/nascimentos_periodo.py v1.1.0): lista com as
+         Notificacoes (NAS) da Propriedade - escolher uma e Consultar;
+         mostra quadro-resumo e a lista dos animais da Notificacao (ate
+         500 linhas na tela - o PDF traz todos). SEXO e RACA da tabela
+         em MAIUSCULAS e SEM ACENTO (RACA = codigo). Mesmo CSS base das
+         telas do Produtor.
+
+     v1.0.0: Criacao (Sessao 084, 02/10/2026, 18:00 -03).
+         v1.1.0: Sessao 095 (13/10/2026, 11:27 -03) - PADRAO DE DOWNLOAD: o botao Imprimir PDF agora baixa o arquivo (pasta Downloads) em
+                 vez de abrir aba nova; banner azul "Gerando" e banner verde dizendo onde o arquivo ficou;
+                 clique repetido ignorado. REVERSAO: .bak_antes_download_s095.
+         v1.2.0: Sessao 095 (13/10/2026, 14:25 -03) - Troca do aviso de download copiado nesta tela pela peca
+                 padrao aviso_download (banners, trava e mensagem agora vem da peca). REVERSAO: .bak_antes_peca_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ titulo }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; align-items: center; margin-bottom: 14px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .info-propriedade { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 8px 16px; margin-bottom: 14px; font-size: 15px; color: #7a1f04; font-weight: bold; }
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 14px 18px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 14px; }
+        .vazio { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 30px; text-align: center; color: #888888; font-size: 15px; }
+
+        .filtro { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+        .filtro .campo { display: flex; flex-direction: column; gap: 5px; }
+        .filtro label { font-size: 12px; font-weight: bold; color: #333333; }
+        .filtro select { padding: 9px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 16px; min-width: 380px; font-family: Arial, sans-serif; }
+        .filtro select:focus { outline: none; border-color: #D4370A; }
+        .btn { padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
+        .btn-consultar { background: #D4370A; color: #ffffff; }
+        .btn-consultar:hover { background: #C0392B; }
+        .btn-pdf { background: #ffffff; color: #D4370A; border: 2px solid #D4370A; }
+        .btn-pdf:hover { background: #FBE9E4; }
+
+        .resumo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+        .caixa { background: #ffffff; border: 2px solid #333333; border-radius: 8px; padding: 6px 14px; text-align: center; }
+        .caixa .rotulo { font-size: 11px; font-weight: bold; color: #666666; }
+        .caixa .valor { font-size: 24px; font-weight: bold; color: #D4370A; }
+
+        .tabela-box { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+        .tabela-titulo { font-size: 14px; font-weight: bold; color: #7a1f04; padding: 10px 14px; background: #FBE9E4; border-bottom: 1px solid #f0d8cf; }
+        table.lista { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.lista th { background: #D4370A; color: #ffffff; text-align: left; padding: 8px 12px; font-size: 12px; }
+        table.lista td { padding: 7px 12px; border-top: 1px solid #ececec; color: #333333; }
+        table.lista tr:hover td { background: #fffaf8; }
+        .col-centro { text-align: center; }
+        .col-num { font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .aviso-limite { background: #fff8e1; border-left: 5px solid #f9a825; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #8a6d00; font-weight: bold; margin-bottom: 14px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        /* ---- v-s095: aviso de download (mesmo padrao visual da tela PIA) ---- */
+        .nota-download { background: #fff8e1; border-left: 6px solid #f9a825; padding: 10px 14px; border-radius: 6px; font-size: 13.5px; font-weight: bold; color: #8a6d00; margin: 0 0 16px 0; }
+        .btn-acao.travado { opacity: 0.55; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128202;</span> {{ titulo }}</h2>
+            </div>
+
+            <div class="info-propriedade">Propriedade: {{ propriedade_nome }}</div>
+
+            <form class="filtro" id="form-filtro" method="GET" action="{{ url_for('nascimentos_periodo.controle_tela') }}">
+                <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                <div class="campo">
+                    <label for="id_gta">Número de Controle (Notificação)</label>
+                    <select id="id_gta" name="id_gta" required>
+                        <option value="">--</option>
+                        {% for o in opcoes %}
+                        <option value="{{ o.id }}"{{ ' selected' if id_gta == o.id|string else '' }}>{{ o.numero }} — {{ o.data }} — {{ o.qtde }} animais</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-consultar">Consultar</button>
+                {% if consultou and totais.qtde > 0 %}
+                <a class="btn btn-pdf" data-aviso-descricao="Controle de Nascimentos da GTA {{ id_gta }}"
+                   href="{{ url_for('nascimentos_periodo.controle_pdf', id_propriedade=id_propriedade, id_gta=id_gta) }}">&#128424;&#65039; Imprimir PDF</a>
+                {% endif %}
+            </form>
+
+            {% include 'produtor/aviso_download.html' %}
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if consultou %}
+                {% if totais.qtde == 0 %}
+                <div class="vazio">Nenhum animal encontrado neste Número de Controle.</div>
+                {% else %}
+
+                <div class="resumo">
+                    <div class="caixa"><div class="rotulo">NOTIFICAÇÕES</div><div class="valor">{{ totais.notificacoes }}</div></div>
+                    <div class="caixa"><div class="rotulo">TOTAL DE ANIMAIS</div><div class="valor">{{ totais.qtde }}</div></div>
+                    <div class="caixa"><div class="rotulo">MACHOS</div><div class="valor">{{ totais.machos }}</div></div>
+                    <div class="caixa"><div class="rotulo">FÊMEAS</div><div class="valor">{{ totais.femeas }}</div></div>
+                    <div class="caixa"><div class="rotulo">ELEGÍVEIS À COTA HILTON</div><div class="valor">{{ totais.cth }}</div></div>
+                </div>
+
+                <div class="tabela-box">
+                    <div class="tabela-titulo">Resumo por Notificação</div>
+                    <table class="lista">
+                        <thead>
+                            <tr>
+                                <th>Notificação</th>
+                                <th>Data da Brincagem</th>
+                                <th class="col-centro">Animais</th>
+                                <th class="col-centro">Machos</th>
+                                <th class="col-centro">Fêmeas</th>
+                                <th class="col-centro">Cota Hilton</th>
+                                <th>Situação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for n in notificacoes %}
+                            <tr>
+                                <td class="col-num">{{ n.notificacao }}</td>
+                                <td>{{ n.data_brincagem }}</td>
+                                <td class="col-centro">{{ n.qtde }}</td>
+                                <td class="col-centro">{{ n.machos }}</td>
+                                <td class="col-centro">{{ n.femeas }}</td>
+                                <td class="col-centro">{{ n.cth }}</td>
+                                <td>{{ n.situacao }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if excedeu %}
+                <div class="aviso-limite">&#9888;&#65039; A tela mostra só os primeiros {{ limite_tela }} animais. O PDF traz todos os {{ totais.qtde }}.</div>
+                {% endif %}
+
+                <div class="tabela-box">
+                    <div class="tabela-titulo">Animais nascidos</div>
+                    <table class="lista">
+                        <thead>
+                            <tr>
+                                <th>Notificação</th>
+                                <th>Data da Brincagem</th>
+                                <th>SISBOV</th>
+                                <th>Manejo</th>
+                                <th>Sexo</th>
+                                <th>Raça</th>
+                                <th>Nascimento</th>
+                                <th class="col-centro">Idade (meses)</th>
+                                <th>Lote</th>
+                                <th class="col-centro">CTH</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in linhas %}
+                            <tr>
+                                <td class="col-num">{{ a.notificacao }}</td>
+                                <td>{{ a.data_brincagem }}</td>
+                                <td>{{ a.sisbov }}</td>
+                                <td>{{ a.manejo }}</td>
+                                <td>{{ a.sexo }}</td>
+                                <td>{{ a.raca }}</td>
+                                <td>{{ a.nascimento }}</td>
+                                <td class="col-centro">{{ a.meses }}</td>
+                                <td>{{ a.lote }}</td>
+                                <td class="col-centro">{{ a.cth }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% endif %}
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\nascimento_controle.html
+     ========================================================= -->

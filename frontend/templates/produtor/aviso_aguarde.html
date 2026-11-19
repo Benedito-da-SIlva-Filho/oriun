@@ -1,0 +1,82 @@
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\aviso_aguarde.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-10 12:43 -03
+     ATUALIZADO EM: 2026-11-10 12:43 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         AVISO DE ESPERA padrao do Orion (Regra de Ouro #65). Peca
+         unica e reutilizavel: caixa branca com barra animada
+         ("Aguarde... nao clique novamente") no mesmo visual do aviso
+         do Desfazer. Use em QUALQUER tela que demore para abrir.
+
+         COMO USAR (2 passos):
+           1. No fim da pagina de ORIGEM (a que tem o link), incluir
+              esta peca com o comando de include do Jinja, passando o
+              nome 'produtor/aviso_aguarde.html'.
+           2. No link (a) ou no formulario (form) que abre a tela
+              lenta, acrescentar o atributo data-aguarde com o titulo
+              do aviso. Exemplo: data-aguarde com o texto
+              "Buscando as operacoes...". Sem texto, o titulo padrao
+              e "Carregando...".
+         Tambem da para chamar por JavaScript: mostrarAguarde('texto')
+         e esconderAguarde().
+
+         O aviso some sozinho se o usuario voltar pelo botao do
+         navegador (cache da pagina). Ctrl+clique e clique com o
+         botao do meio (abrir em outra aba) NAO mostram o aviso.
+
+     HISTORICO DE VERSOES:
+     v1.0.0: Sessao 120 (10/11/2026, 12:43 -03) - Criacao. Primeiro uso: card Operacoes Recentes do Hub de Utilitarios (pedido do Benedito em teste real: a tela demora e o usuario clicava de novo).
+     ========================================================= -->
+<style>
+    /* Aviso de espera padrao (peca aviso_aguarde.html) */
+    .aguarde-fundo { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 99999; align-items: center; justify-content: center; }
+    .aguarde-fundo.ativo { display: flex; }
+    .aguarde-caixa { background: #ffffff; border-radius: 14px; padding: 28px 36px; width: 460px; max-width: 92vw; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); text-align: center; }
+    .aguarde-caixa .titulo { font-size: 18px; font-weight: bold; color: #333333; margin-bottom: 6px; }
+    .aguarde-caixa .texto { font-size: 13px; color: #666666; margin-bottom: 18px; }
+    .aguarde-barra { height: 10px; background: #eeeeee; border-radius: 6px; overflow: hidden; position: relative; }
+    .aguarde-barra .faixa { position: absolute; top: 0; bottom: 0; width: 40%; background: #D4370A; border-radius: 6px; animation: aguarde-vai 1.2s ease-in-out infinite; }
+    @keyframes aguarde-vai { 0% { left: -40%; } 100% { left: 100%; } }
+</style>
+<div class="aguarde-fundo" id="aguarde-fundo" role="alert" aria-live="assertive">
+    <div class="aguarde-caixa">
+        <div class="titulo" id="aguarde-titulo">Carregando...</div>
+        <div class="texto">Aguarde o final do processo. N&atilde;o feche a tela nem clique novamente.</div>
+        <div class="aguarde-barra"><div class="faixa"></div></div>
+    </div>
+</div>
+<script>
+    /* Mostra / esconde o aviso de espera */
+    function mostrarAguarde(titulo) {
+        var t = document.getElementById('aguarde-titulo');
+        if (t) { t.textContent = titulo || 'Carregando...'; }
+        var f = document.getElementById('aguarde-fundo');
+        if (f) { f.classList.add('ativo'); }
+    }
+    function esconderAguarde() {
+        var f = document.getElementById('aguarde-fundo');
+        if (f) { f.classList.remove('ativo'); }
+    }
+    /* Clique em link com data-aguarde: mostra o aviso e deixa o navegador seguir */
+    document.addEventListener('click', function (e) {
+        if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) { return; }
+        var a = e.target.closest ? e.target.closest('a[data-aguarde]') : null;
+        if (!a || a.target === '_blank') { return; }
+        mostrarAguarde(a.getAttribute('data-aguarde'));
+    });
+    /* Envio de formulario com data-aguarde */
+    document.addEventListener('submit', function (e) {
+        var f = e.target;
+        if (f && f.hasAttribute && f.hasAttribute('data-aguarde')) { mostrarAguarde(f.getAttribute('data-aguarde')); }
+    });
+    /* Voltar do navegador (cache): nunca deixar o aviso preso na tela */
+    window.addEventListener('pageshow', function (e) { if (e.persisted) { esconderAguarde(); } });
+</script>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\aviso_aguarde.html
+     ========================================================= -->

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_cancelamento_documentos_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 17:36 -03
+     ATUALIZADO EM: 2026-10-13 12:02 -03
+     VERSAO: 1.3.0
+
+     DESCRICAO:
+         Tela "Documentos de Cancelamento" (card "Histórico") - 8o
+         card do Hub de Brincos. Lista os DIAS em que houve pelo menos
+         1 cancelamento para a Propriedade (nao mais 1 linha por
+         operacao - ver changelog v1.1.0) - cada linha com o total de
+         brincos cancelados naquele dia e um botao para gerar/baixar o
+         Documento formal de Cancelamento (PDF) COMBINANDO todas as
+         operacoes daquele dia.
+
+         Se a lista vier vazia, mostra mensagem amigavel (nao e
+         erro - so significa que nenhum cancelamento foi feito
+         ainda para esta Propriedade).
+
+         Variaveis esperadas do router:
+           cabecalho       - SimpleNamespace(propriedade_nome,
+                             municipio, uf, produtor_nome)
+           id_propriedade  - string
+           dias            - lista de SimpleNamespace(data_iso,
+                             data_br, total_operacoes, total_brincos)
+           url_voltar      - path do botao "Voltar" da tarja
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 17:36 -03).
+     v1.1.0: Sessao 045 (03/09/2026, 18:10 -03) - Ajuste pos-entrega
+         (Benedito, teste real): passa a agrupar por DIA em vez de por
+         operacao individual - "podem haver varios cancelamentos no
+         mesmo dia e e justo apenas um comunicado". Variavel
+         "cancelamentos" (lista de operacoes) substituida por "dias"
+         (lista de dias agrupados); link de impressao passa
+         id_propriedade+data em vez de id_operacao.
+     v1.2.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, sem alteracao) nem de nenhuma outra logica desta
+         tela - so a extracao do bloco de HTML repetido.
+         v1.3.0: Sessao 095 (13/10/2026, 12:02 -03) - AVISO DE DOWNLOAD PADRAO: inclui a peca aviso_download (banner "Gerando", banner verde com o
+                 local do arquivo e trava de clique repetido). Sem aba nova. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Documentos de Cancelamento</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .cartao { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; max-width: 900px; }
+
+        .bloco-conferencia { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+        .bloco-conferencia strong { color: #D4370A; }
+
+        .lista-cancelamentos { display: flex; flex-direction: column; gap: 10px; }
+        .linha-cancelamento {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px;
+        }
+        .linha-cancelamento .info { flex: 1; }
+        .linha-cancelamento .descricao { font-size: 14px; font-weight: bold; color: #333333; }
+        .linha-cancelamento .meta { font-size: 12px; color: #888888; margin-top: 3px; }
+
+        .btn-imprimir {
+            background: #D4370A; color: #ffffff; border: none; border-radius: 6px;
+            padding: 9px 18px; font-size: 13px; font-weight: bold; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        .btn-imprimir:hover { opacity: 0.9; }
+
+        .vazio { text-align: center; padding: 40px 20px; color: #888888; }
+        .vazio .icone { font-size: 40px; margin-bottom: 12px; }
+        .vazio .texto { font-size: 14px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128196;</span> Documentos de Cancelamento</h2>
+            </div>
+
+            <div class="cartao">
+                <div class="bloco-conferencia">
+                    <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}<br>
+                    <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}
+                </div>
+
+                {% if dias %}
+                <div class="lista-cancelamentos">
+                    {% for d in dias %}
+                    <div class="linha-cancelamento">
+                        <div class="info">
+                            <div class="descricao">{{ d.data_br }}</div>
+                            <div class="meta">{{ d.total_brincos }} brinco(s) cancelado(s) — {{ d.total_operacoes }} operação(ões)</div>
+                        </div>
+                        <a href="/produtor/brincos-cancelamento/documento/pdf?id_propriedade={{ id_propriedade }}&data={{ d.data_iso }}"
+                           class="btn-imprimir" data-aviso-descricao="Documento de Cancelamento de {{ d.data_br }}" data-aviso-arquivo="cancelamento_{{ d.data_iso|replace('-', '') }}.pdf">&#128424;&#65039; Imprimir Documento</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="vazio">
+                    <div class="icone">&#128196;</div>
+                    <div class="texto">Nenhum cancelamento foi feito ainda para esta Propriedade.</div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_cancelamento_documentos_lista.html
+     ========================================================= -->

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\operacoes_recentes_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 15:30 -03
+     ATUALIZADO EM: 2026-10-23 10:15 -03
+     VERSAO: 1.5.0
+
+     DESCRICAO:
+         Tela central "Operações Recentes" - lista as operações da
+         Propriedade ainda desfazíveis (não desfeitas, dentro da
+         janela de 24h), mais recente primeiro. Cada linha mostra
+         descrição, quem fez, quando, e um botão Desfazer -
+         HABILITADO só se o Usuário logado tem permissão (mesma
+         regra de backend/utils/log_operacoes.py).
+
+         Se a lista vier vazia, mostra uma mensagem amigável (não é
+         erro - só significa que não há nada pendente de desfazer).
+
+         Variaveis esperadas do router:
+           cabecalho       - SimpleNamespace(propriedade_nome,
+                             municipio, uf, produtor_nome)
+           id_propriedade  - string
+           operacoes       - lista de SimpleNamespace(id, descricao,
+                             usuario_nome, criado_em, pode_desfazer)
+           janela_horas    - int (24), so para exibir na tela
+           url_voltar      - path do botao "Voltar" da tarja
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 15:30 -03).
+     v1.1.0: Sessao 045 (03/09/2026, 16:40 -03) - Trocado
+         window.confirm() pelo novo componente produtor/
+         modal_confirmacao.html - modal com a cara do Orion, pedido
+         por Benedito em teste real (mesma troca em
+         brincos_cancelamento_resultado.html v1.4.0).
+     v1.2.0: Sessao 076 (21/09/2026, 11:50 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, sem alteracao) nem de nenhuma outra logica desta
+         tela - so a extracao do bloco de HTML repetido.
+     v1.3.0: Sessao 094 (12/10/2026, 18:30 -03) - AVISO DE PROCESSAMENTO: ao
+         confirmar o Desfazer, a tela mostra "Desfazendo a operacao... aguarde"
+         com barra de progresso animada e bloqueia novos cliques (o usuario
+         clicava varias vezes por achar que nada acontecia). Nenhuma mudanca no
+         servidor. REVERSAO: devolver operacoes_recentes_lista.html.bak_antes_progresso.
+     v1.4.0: Sessao 094 (12/10/2026, 19:10 -03) - BLOQUEIO ANTES DE CONFIRMAR: operacao
+         que o servidor ja sabe que sera recusada (op.bloqueio) mostra o motivo na propria
+         linha e, ao clicar em Desfazer, abre so o AVISO com o motivo (sem "Tem certeza?").
+         REVERSAO: devolver operacoes_recentes_lista.html.bak_antes_bloqueio.
+     v1.5.0: Sessao 104 (23/10/2026, 10:15 -03) - DESFAZER SO O QUE NAO COMPROMETE (decisao de Benedito): a lista traz so o que pode ser desfeito agora; o que
+         ficou comprometido some; nova segunda lista "Historico" (variavel historico), so consulta, sem botao. Precisa do operacoes_recentes.py 1.5.0.
+         REVERSAO: .bak_antes_s104e e .bak_antes_s104e2.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Operações Recentes</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .pagina-subtitulo { font-size: 13px; color: #777777; margin-bottom: 20px; }
+
+        .cartao { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; max-width: 900px; }
+
+        .bloco-conferencia { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+        .bloco-conferencia strong { color: #D4370A; }
+
+        .lista-operacoes { display: flex; flex-direction: column; gap: 10px; }
+        .linha-operacao {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px;
+        }
+        .linha-operacao .info { flex: 1; }
+        .linha-operacao .descricao { font-size: 14px; font-weight: bold; color: #333333; }
+        .linha-operacao .meta { font-size: 12px; color: #888888; margin-top: 3px; }
+
+        .btn-desfazer {
+            background: #ffffff; color: #c62828; border: 1px solid #c62828; border-radius: 6px;
+            padding: 8px 16px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-desfazer:hover { background: #ffebee; }
+        .btn-desfazer.bloqueado { color: #888888; border-color: #bbbbbb; background: #f5f5f5; }
+        .linha-operacao .bloqueio { font-size: 12px; color: #c62828; margin-top: 4px; }
+
+        /* v1.3.0 - aviso de processamento (Desfazer em andamento) */
+        .processando-fundo {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
+            background: rgba(0, 0, 0, 0.55); align-items: center; justify-content: center;
+        }
+        .processando-fundo.ativo { display: flex; }
+        .processando-caixa {
+            background: #ffffff; border-radius: 10px; padding: 26px 34px; width: 420px; max-width: 90%;
+            text-align: center; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        }
+        .processando-caixa .titulo { font-size: 18px; font-weight: bold; color: #333333; margin-bottom: 6px; }
+        .processando-caixa .texto { font-size: 13px; color: #666666; margin-bottom: 18px; }
+        .processando-barra { height: 10px; background: #eeeeee; border-radius: 6px; overflow: hidden; position: relative; }
+        .processando-barra .faixa {
+            position: absolute; top: 0; bottom: 0; width: 40%; background: #D4370A; border-radius: 6px;
+            animation: processando-vai 1.2s ease-in-out infinite;
+        }
+        @keyframes processando-vai { 0% { left: -40%; } 100% { left: 100%; } }
+
+        .sem-permissao {
+            font-size: 12px; color: #999999; font-style: italic; white-space: nowrap;
+        }
+
+        .vazio { text-align: center; padding: 40px 20px; color: #888888; }
+        .vazio .icone { font-size: 40px; margin-bottom: 12px; }
+        .vazio .texto { font-size: 14px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#8635;</span> Operações Recentes</h2>
+            </div>
+            <div class="pagina-subtitulo">Operações que ainda podem ser desfeitas (até {{ janela_horas }}h após serem feitas). Só aparece aqui o que pode ser desfeito sem comprometer o que veio depois.</div>
+
+            <div class="cartao">
+                <div class="bloco-conferencia">
+                    <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}<br>
+                    <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}
+                </div>
+
+                {% if operacoes %}
+                <div class="lista-operacoes">
+                    {% for op in operacoes %}
+                    <div class="linha-operacao">
+                        <div class="info">
+                            <div class="descricao">{{ op.descricao }}</div>
+                            <div class="meta">Feito por {{ op.usuario_nome }} em {{ op.criado_em }}</div>
+                            {% if op.bloqueio %}<div class="bloqueio">&#9888; Não pode ser desfeita: {{ op.bloqueio }}</div>{% endif %}
+                        </div>
+                        {% if op.pode_desfazer and op.bloqueio %}
+                        <button type="button" class="btn-desfazer bloqueado" data-motivo="{{ op.bloqueio }}"
+                                onclick="mostrarAviso(this.getAttribute('data-motivo'));">&#8630; Desfazer</button>
+                        {% elif op.pode_desfazer %}
+                        <form method="POST" action="/produtor/operacoes-recentes/desfazer"
+                              onsubmit="return pedirDesfazer(this);">
+                            <input type="hidden" name="id_operacao" value="{{ op.id }}">
+                            <input type="hidden" name="url_origem" value="/produtor/operacoes-recentes/lista?id_propriedade={{ id_propriedade }}">
+                            <button type="submit" class="btn-desfazer">&#8630; Desfazer</button>
+                        </form>
+                        {% else %}
+                        <span class="sem-permissao">Sem permissão</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="vazio">
+                    <div class="icone">&#9989;</div>
+                    <div class="texto">Nenhuma operação pendente de desfazer no momento.</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if historico %}
+            <div class="pagina-subtitulo" style="margin-top:22px;">Histórico (só consulta &#8212; não podem ser desfeitas aqui)</div>
+            <div class="cartao">
+                <div class="lista-operacoes">
+                    {% for op in historico %}
+                    <div class="linha-operacao">
+                        <div class="info">
+                            <div class="descricao">{{ op.descricao }}</div>
+                            <div class="meta">Feito por {{ op.usuario_nome }} em {{ op.criado_em }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+    <!-- v1.3.0 - aviso de processamento -->
+    <div class="processando-fundo" id="processando-fundo">
+        <div class="processando-caixa">
+            <div class="titulo">Desfazendo a operação...</div>
+            <div class="texto">Aguarde o final do processo. Não feche a tela nem clique novamente.</div>
+            <div class="processando-barra"><div class="faixa"></div></div>
+        </div>
+    </div>
+
+    <script>
+        // v1.3.0 - confirma, mostra o aviso com barra e so entao envia (1 clique so).
+        var desfazerEmAndamento = false;
+
+        function pedirDesfazer(form) {
+            if (desfazerEmAndamento) { return false; }
+            confirmarAcaoAssincrona(function () {
+                if (desfazerEmAndamento) { return; }
+                desfazerEmAndamento = true;
+                document.getElementById('processando-fundo').classList.add('ativo');
+                var botoes = document.querySelectorAll('.btn-desfazer');
+                for (var i = 0; i < botoes.length; i++) { botoes[i].disabled = true; }
+                setTimeout(function () { form.submit(); }, 60);   // deixa o aviso aparecer antes de enviar
+            }, 'Tem certeza que deseja desfazer esta operação?');
+            return false;
+        }
+
+        // Voltar do navegador (cache): nunca deixar o aviso preso na tela.
+        window.addEventListener('pageshow', function (evento) {
+            if (evento.persisted) { window.location.reload(); }
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\operacoes_recentes_lista.html
+     ========================================================= -->

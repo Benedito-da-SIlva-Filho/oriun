@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_relatorio_resumo_filtro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-01 11:50 -03
+     ATUALIZADO EM: 2026-10-13 12:02 -03
+     VERSAO: 1.3.0
+
+     DESCRICAO:
+         Tela de filtro do Relatorio Resumo de Entrada de Brincos.
+         Segue o MESMO padrao visual/estrutural ja fechado em
+         brincos_entrada_cadastro.html:
+           - Bloco de cabecalho (Propriedade/Produtor) SO PARA
+             CONFERENCIA (readonly, bloco-conferencia) - ja
+             resolvido no passo anterior do fluxo (iniciar/
+             selecionar-vinculo).
+           - 2 campos editaveis (Data Inicio / Data Fim), com
+             mascara de data (mesmo JS ja usado em outras telas).
+           - Ao Salvar (Gerar PDF), o proprio navegador dispara o
+             download do arquivo (resposta do servidor com
+             Content-Disposition: attachment) - a tela de filtro
+             continua aberta, sem navegar para outra pagina.
+           - Datas nascem SEMPRE VAZIAS (decisao de Benedito,
+             Sessao 043 - sem periodo padrao).
+
+         Variaveis esperadas do router:
+           erro             - mensagem de erro (ou None)
+           cabecalho        - SimpleNamespace(id_propriedade,
+                              propriedade_nome, municipio, uf,
+                              id_produtor, produtor_nome) ou None
+           filtro_tentativa - SimpleNamespace(data_inicio,
+                              data_fim) com os dados ja digitados
+                              (reexibicao apos erro) ou None
+           url_voltar       - destino do Voltar (topo) e Cancelar
+                              (rodape) - calculado dinamicamente
+                              pelo router (ver v1.1.0)
+
+     v1.0.0: Criacao do modulo (Sessao 043, 01/09/2026, 11:50 -03).
+     v1.0.1: Sessao 043 (01/09/2026, 13:45 -03) - Correcao de
+         timestamp incorreto na v1.0.0 (Claude codou sem pedir a
+         hora real antes). Nenhuma mudanca visual/funcional.
+     v1.1.0: Sessao 044 (02/09/2026, 17:04 -03) - Bug real de
+         navegacao (Benedito, teste real, mesma correcao ja
+         aplicada em Entrada de Brincos e Relatorio N.Fiscais):
+         Voltar (topo) e Cancelar (rodape) estavam hardcoded para
+         '/produtor/hub/brincos', pulando direto a tela de
+         Selecionar Propriedade quando ela existia (usuario com
+         2+ Propriedades). Ambos agora usam a variavel dinamica
+         url_voltar, calculada pelo router
+         (_url_voltar_filtro() em brincos_relatorio_resumo.py
+         v1.1.0) - cadeia correta: 04-Filtro -> 03-Selecionar
+         Propriedade (se existiu) -> 01-Hub de Brincos. NOTA: este
+         modulo ja seguia o principio que virou a Regra de Ouro #9
+         (Sessao 076) antes mesmo dela ser formalizada.
+     v1.2.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, ja calculado dinamicamente desde a v1.1.0) nem de
+         nenhuma outra logica desta tela - so a extracao do bloco
+         de HTML repetido.
+         v1.3.0: Sessao 095 (13/10/2026, 12:02 -03) - AVISO DE DOWNLOAD PADRAO: inclui a peca aviso_download; o aviso dispara no envio do
+                 formulario (so com as datas preenchidas) e o segundo envio e bloqueado. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Relatório Resumo de Brincos</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 640px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus { outline: none; border-color: #D4370A; }
+        .centralizado { text-align: center; }
+
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128203;</span> Relatório Resumo de Brincos</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if cabecalho %}
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('brincos_relatorio_resumo.gerar') }}" autocomplete="off" id="form-relatorio-resumo" data-aviso-descricao="Resumo de Brincos por período">
+
+                    <input type="hidden" name="id_propriedade" value="{{ cabecalho.id_propriedade }}">
+
+                    <div class="bloco-conferencia">
+                        <div class="linha"><span class="rotulo">Propriedade</span><span class="valor">{{ cabecalho.propriedade_nome }} - {{ cabecalho.municipio or '-' }} / {{ cabecalho.uf or '-' }}</span></div>
+                        <div class="linha"><span class="rotulo">Produtor</span><span class="valor">{{ cabecalho.produtor_nome }}</span></div>
+                    </div>
+
+                    <div class="form-secao">Período</div>
+                    <div class="form-grid">
+                        <div class="form-group col-6">
+                            <label>Data Início *</label>
+                            <input type="text" name="data_inicio" id="data_inicio" required maxlength="10" class="centralizado campo-data" autocomplete="off" placeholder="dd/mm/aaaa"
+                                value="{{ filtro_tentativa.data_inicio if filtro_tentativa else '' }}">
+                        </div>
+                        <div class="form-group col-6">
+                            <label>Data Fim *</label>
+                            <input type="text" name="data_fim" id="data_fim" required maxlength="10" class="centralizado campo-data" autocomplete="off" placeholder="dd/mm/aaaa"
+                                value="{{ filtro_tentativa.data_fim if filtro_tentativa else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="{{ url_voltar }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-gerar">Gerar PDF</button>
+                    </div>
+
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        function aplicarMascaraData(campo) {
+            if (!campo) return;
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                var formatado = digitos;
+                if (digitos.length > 4) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                } else if (digitos.length > 2) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                }
+                this.value = formatado;
+            });
+        }
+        document.querySelectorAll('.campo-data').forEach(aplicarMascaraData);
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_relatorio_resumo_filtro.html
+     ========================================================= -->

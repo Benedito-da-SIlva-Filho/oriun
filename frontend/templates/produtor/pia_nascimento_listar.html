@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\pia_nascimento_listar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-02 09:00 -03
+     ATUALIZADO EM: 2026-10-13 11:50 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Lista da PLANILHA PIA DE NASCIMENTOS (pia_impressao.py v1.2.0):
+         as Notificacoes (NAS) da Propriedade, da mais nova para a mais
+         antiga, com a quantidade de animais da PIA e o botao "Imprimir
+         PIA" (so liberado com TODOS os brincos conferidos no brete).
+         A PIA so le o banco - pode ser impressa quantas vezes precisar.
+
+     v1.0.0: Criacao (Sessao 084, 02/10/2026, 16:00 -03).
+         v1.1.0: Sessao 095 (13/10/2026, 11:50 -03) - AVISO DE DOWNLOAD PADRAO: inclui a peca aviso_download (banner "Gerando", banner verde com o
+                 local do arquivo e trava de clique repetido). Links sem target blank. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ titulo }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .info-propriedade { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 8px 16px; margin-bottom: 14px; font-size: 15px; color: #7a1f04; font-weight: bold; }
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 14px 18px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 14px; }
+        .vazio { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 30px; text-align: center; color: #888888; font-size: 15px; }
+
+        .tabela-box { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; }
+        table.lista { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table.lista th { background: #D4370A; color: #ffffff; text-align: left; padding: 10px 14px; font-size: 13px; }
+        table.lista td { padding: 10px 14px; border-top: 1px solid #ececec; color: #333333; vertical-align: middle; }
+        table.lista tr:hover td { background: #fffaf8; }
+        .col-num { font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .col-centro { text-align: center; }
+
+        .selo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .selo.impressa { background: #e8f5e9; color: #1b5e20; }
+        .selo.pendente { background: #fff8e1; color: #8a6d00; }
+        .prazo.ok { color: #2e7d32; }
+        .prazo.urgente { color: #e65100; font-weight: bold; }
+        .prazo.vencido { color: #c62828; font-weight: bold; }
+
+        .btn-acao { display: inline-block; padding: 7px 18px; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; border: none; cursor: pointer; white-space: nowrap; }
+        .btn-imprimir { background: #D4370A; color: #ffffff; }
+        .btn-imprimir:hover { background: #C0392B; }
+        .btn-reimprimir { background: #ffffff; color: #555555; border: 1px solid #888888; }
+        .btn-reimprimir:hover { background: #888888; color: #ffffff; }
+        .btn-bloqueado { background: #eeeeee; color: #999999; cursor: not-allowed; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128196;</span> {{ titulo }}</h2>
+            </div>
+
+            <div class="info-propriedade">Propriedade: {{ propriedade_nome }}</div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if not notificacoes %}
+            <div class="vazio">Não existe Notificação de Nascimento lançada para esta Propriedade.</div>
+            {% else %}
+            <div class="tabela-box">
+                <table class="lista">
+                    <thead>
+                        <tr>
+                            <th>Notificação</th>
+                            <th>Data da Brincagem</th>
+                            <th class="col-centro">Animais na PIA</th>
+                            <th>Situação</th>
+                            <th class="col-centro">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notificacoes %}
+                        <tr>
+                            <td class="col-num">{{ n.numero }}</td>
+                            <td>{{ n.data }}</td>
+                            <td class="col-centro">{{ n.qtde }}</td>
+                            <td>
+                                {% if n.faltam > 0 %}
+                                <span class="selo pendente">Faltam {{ n.faltam }} a conferir no brete</span>
+                                {% else %}
+                                <span class="selo impressa">&#10003; Pronta para imprimir</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-centro">
+                                {% if n.faltam > 0 %}
+                                <span class="btn-acao btn-bloqueado" title="Confira todos os brincos no brete antes de imprimir a PIA">Imprimir PIA</span>
+                                {% else %}
+                                <a class="btn-acao btn-imprimir"
+                                   data-aviso-descricao="PIA da Notificação {{ n.numero }}"
+                                   href="{{ url_for('pia_impressao.nascimento_pdf', id_gta=n.id, id_propriedade=id_propriedade) }}">Imprimir PIA</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\pia_nascimento_listar.html
+     ========================================================= -->

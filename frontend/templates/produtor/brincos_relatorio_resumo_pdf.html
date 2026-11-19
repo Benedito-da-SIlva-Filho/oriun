@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_relatorio_resumo_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-01 11:50 -03
+     ATUALIZADO EM: 2026-09-01 14:42 -03
+     VERSAO: 1.3.0
+
+     DESCRICAO:
+         Template do Relatorio Resumo de Entrada de Brincos em
+         PDF, renderizado pelo xhtml2pdf (chamado em
+         brincos_relatorio_resumo.py, rota gerar()). Sintese de
+         tb_3007_brincos_entrada num periodo, 1 linha por lote.
+
+         Segue o MESMO padrao visual/tecnico ja fechado e
+         confirmado em consiste/produtor_relatorio_pdf.html
+         (primeiro PDF real do Orion, Sessao 011.2):
+           - xhtml2pdf (motor reportlab) NAO suporta flexbox/grid -
+             layout com <table> e CSS 2.1.
+           - Largura de coluna via width (em pt) DIRETO NAS CELULAS
+             <th> da 1a linha (thead) - <colgroup>/<col> NAO tem
+             nenhum efeito neste motor (testado e confirmado,
+             Sessao 043: com colgroup a tabela sempre saia com
+             colunas iguais, ignorando qualquer largura definida
+             ali). "border: none" explicito nas celulas restantes.
+           - Zebra striping #FBE9E4 (laranja claro da marca),
+             titulo #D4370A, rodape padrao.
+
+         UNICA DIFERENCA do padrao existente: orientacao A4
+         PAISAGEM (nao retrato) - com 9 colunas e codigos de 15
+         digitos (Codigo Inicial/Final), retrato nao caberia
+         (decisao tecnica, Sessao 043).
+
+         Variaveis esperadas do router:
+           cabecalho        - SimpleNamespace(propriedade_nome,
+                              municipio, uf, produtor_nome)
+           lotes            - lista de SimpleNamespace(nota_fiscal,
+                              data_entrada, fornecedor_nome,
+                              qtde_entrada, qtde_saida, saldo,
+                              codigo_inicial, codigo_final,
+                              responsavel_nome)
+           data_inicio      - string dd/mm/aaaa
+           data_fim         - string dd/mm/aaaa
+           data_emissao     - string dd/mm/aaaa (hoje)
+           total_entrada    - int, soma de qtde_entrada
+           total_saida      - int, soma de qtde_saida
+           total_disponivel - int, soma de saldo
+
+     v1.0.0: Criacao do modulo (Sessao 043, 01/09/2026, 11:50 -03).
+     v1.1.0: Sessao 043 (01/09/2026, 13:45 -03) - BUG REAL
+         corrigido, confirmado por teste de Benedito: a v1.0.0
+         usava `size: A4 landscape;` no @page, mas o motor
+         reportlab (xhtml2pdf) NAO respeita de forma confiavel a
+         palavra-chave "landscape" - o PDF saiu em retrato mesmo
+         assim. Corrigido para `size: 29.7cm 21cm;` (dimensoes de
+         A4 ja INVERTIDAS, declaradas explicitamente) - mesma
+         classe de limitacao do motor ja documentada para % em
+         largura de coluna. Licao generalizada na memoria de longo
+         prazo do Claude para qualquer futuro relatorio em
+         paisagem. Timestamp da v1.0.0 tambem estava incorreto
+         (Claude codou sem pedir a hora real antes) - corrigido
+         aqui junto.
+     v1.2.0: Sessao 043 (01/09/2026, 14:07 -03) - Ajuste visual
+         pedido por Benedito (comparacao com mockup feito no
+         Paint): larguras de coluna redistribuidas - Fornecedor
+         ganhou espaco (5.5cm -> 8.0cm, reduz quebra de linha),
+         Codigo Inicial/Final ficaram mais compactos (3.5cm ->
+         3.0cm cada, sem espaco em branco excedente para 15
+         digitos), N.Fiscal/Data Entrada tambem reduzidos
+         (2.2/2.4cm -> 1.8/2.2cm). Adicionadas divisorias
+         verticais leves entre colunas (border-right #e0e0e0 nas
+         celulas, branco no cabecalho) para organizar visualmente
+         a leitura da tabela. Coluna Responsavel centralizada
+         (era alinhada a esquerda, deixava a quebra de linha com
+         aparencia desalinhada). Soma das larguras mantida em
+         26.7cm (cabe em A4 paisagem com margem 1.5cm).
+     v1.3.0: Sessao 043 (01/09/2026, 14:42 -03) - BUG REAL
+         corrigido, confirmado por teste interno (renderizacao
+         real com xhtml2pdf, nao so leitura de codigo): o
+         <colgroup>/<col> da v1.2.0 NAO tinha nenhum efeito no
+         motor - a tabela sempre saia com colunas iguais,
+         ignorando qualquer largura ali definida (mesmo com
+         atributo width="Xpt" no lugar de style). Corrigido para
+         o mecanismo que REALMENTE funciona: width (em pt) direto
+         no style de cada <th> da 1a linha. <colgroup> removido
+         do arquivo (era codigo morto). Larguras recalculadas pelo
+         metodo indicado por Benedito (maior entre label e maior
+         valor esperado, por coluna): N.Fiscal 54pt, Data Entrada
+         84pt, Fornecedor 200pt, Entrada 48pt, Saida/Saldo 43pt
+         cada, Codigo Inicial/Final 91pt cada, Responsavel 105pt
+         (soma 759pt = 26.7cm). Divisorias verticais leves
+         mantidas. Licao generalizada na memoria de longo prazo do
+         Claude para qualquer futuro relatorio PDF do Orion -
+         incluindo o novo processo de teste interno (render +
+         screenshot) ANTES de qualquer entrega.
+     ========================================================= -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            /* xhtml2pdf (motor reportlab) NAO respeita de forma
+               confiavel a palavra-chave "landscape" - mesma classe
+               de limitacao ja documentada para % em largura de
+               coluna (ver Referencia do Sistema). Correcao: declarar
+               a dimensao ja INVERTIDA explicitamente (largura x
+               altura de A4 trocadas), em vez de "A4 landscape".
+               Confirmado por teste real, Sessao 043. */
+            size: 29.7cm 21cm;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333333;
+        }
+
+        /* ---- Cabecalho: titulo + subtitulo (sem logo - Brincos
+           nao tem Marca/Criador equivalente ao Produtor) ---- */
+        .cabecalho-relatorio {
+            border-bottom: 3px solid #D4370A;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+        .cabecalho-relatorio h1 {
+            font-size: 16pt;
+            color: #D4370A;
+            margin: 0 0 4px 0;
+        }
+        .cabecalho-relatorio .subtitulo {
+            font-size: 9pt;
+            color: #777777;
+        }
+
+        .secao-titulo {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #D4370A;
+            border-bottom: 1px solid #D4370A;
+            padding-bottom: 4px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        /* ---- Caixa de conferencia (Propriedade/Produtor/Periodo) ---- */
+        .caixa-dados {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #fafafa;
+            padding: 8px 12px;
+        }
+        table.dados-cabecalho {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.dados-cabecalho td {
+            border: none;
+            padding: 3px 10px;
+            font-size: 10pt;
+            line-height: 1.3;
+            vertical-align: top;
+        }
+        table.dados-cabecalho td.rotulo {
+            width: 3.5cm;
+            font-weight: bold;
+            color: #555555;
+        }
+
+        /* ---- Tabela de lotes, colunas com largura FIXA em cm
+           (soma = 26.7cm, cabe em A4 paisagem com margem 1.5cm) ---- */
+        table.lotes {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        table.lotes th {
+            background-color: #D4370A;
+            color: #ffffff;
+            text-align: left;
+            padding: 5px 8px;
+            font-size: 9pt;
+            border: none;
+            border-right: 1px solid #ffffff;
+        }
+        table.lotes th:last-child {
+            border-right: none;
+        }
+        table.lotes td {
+            padding: 4px 8px;
+            font-size: 9pt;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+        }
+        table.lotes td:last-child {
+            border-right: none;
+        }
+        table.lotes th.centralizado, table.lotes td.centralizado {
+            text-align: center;
+        }
+        table.lotes tr.linha-par td {
+            background-color: #FBE9E4;
+        }
+
+        .sem-lotes {
+            font-size: 10.5pt;
+            color: #999999;
+            font-style: italic;
+            padding: 10px 0;
+        }
+
+        /* ---- Demonstrativo de totais ---- */
+        .caixa-totais {
+            margin-top: 16px;
+            border: 1px solid #D4370A;
+            border-radius: 4px;
+            background-color: #FBE9E4;
+            padding: 10px 14px;
+        }
+        table.totais {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.totais td {
+            border: none;
+            text-align: center;
+            padding: 4px;
+        }
+        table.totais .rotulo-total {
+            font-size: 9pt;
+            color: #7a1f04;
+            font-weight: bold;
+        }
+        table.totais .valor-total {
+            font-size: 15pt;
+            color: #D4370A;
+            font-weight: bold;
+        }
+
+        .rodape-relatorio {
+            margin-top: 20px;
+            padding-top: 8px;
+            border-top: 1px solid #cccccc;
+            font-size: 8.5pt;
+            color: #999999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho-relatorio">
+        <h1>Relatório Resumo — Entrada de Brincos</h1>
+        <div class="subtitulo">Orion SISBOV — Emitido em {{ data_emissao }}</div>
+    </div>
+
+    <div class="caixa-dados">
+        <table class="dados-cabecalho">
+            <tr>
+                <td class="rotulo">Propriedade:</td>
+                <td>{{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio or '-' }} / {{ cabecalho.uf or '-' }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Produtor:</td>
+                <td>{{ cabecalho.produtor_nome }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Período:</td>
+                <td>{{ data_inicio }} até {{ data_fim }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="secao-titulo">Registro de Entrada de Brincos</div>
+
+    {% if lotes %}
+    <table class="lotes" width="759">
+        <thead>
+            <tr>
+                <th style="width: 54pt;">N.Fiscal</th>
+                <th style="width: 84pt;">Data Entrada</th>
+                <th style="width: 200pt;">Fornecedor</th>
+                <th class="centralizado" style="width: 48pt;">Entrada</th>
+                <th class="centralizado" style="width: 43pt;">Saída</th>
+                <th class="centralizado" style="width: 43pt;">Saldo</th>
+                <th style="width: 91pt;">Código Inicial</th>
+                <th style="width: 91pt;">Código Final</th>
+                <th class="centralizado" style="width: 105pt;">Responsável</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lote in lotes %}
+            <tr {% if loop.index0 % 2 == 0 %}class="linha-par"{% endif %}>
+                <td>{{ lote.nota_fiscal }}</td>
+                <td>{{ lote.data_entrada.strftime('%d/%m/%Y') if lote.data_entrada else '-' }}</td>
+                <td>{{ lote.fornecedor_nome }}</td>
+                <td class="centralizado">{{ lote.qtde_entrada }}</td>
+                <td class="centralizado">{{ lote.qtde_saida }}</td>
+                <td class="centralizado">{{ lote.saldo }}</td>
+                <td>{{ lote.codigo_inicial }}</td>
+                <td>{{ lote.codigo_final }}</td>
+                <td class="centralizado">{{ lote.responsavel_nome }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="sem-lotes">Nenhuma Entrada de Brincos encontrada no período informado.</div>
+    {% endif %}
+
+    <div class="caixa-totais">
+        <table class="totais">
+            <tr>
+                <td>
+                    <div class="rotulo-total">TOTAL ENTRADA</div>
+                    <div class="valor-total">{{ total_entrada }}</div>
+                </td>
+                <td>
+                    <div class="rotulo-total">TOTAL SAÍDAS</div>
+                    <div class="valor-total">{{ total_saida }}</div>
+                </td>
+                <td>
+                    <div class="rotulo-total">TOTAL DISPONÍVEL</div>
+                    <div class="valor-total">{{ total_disponivel }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="rodape-relatorio">
+        Orion SISBOV &copy; 2026 &#8212; Consiste Informática — Documento gerado automaticamente
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_relatorio_resumo_pdf.html
+     ========================================================= -->

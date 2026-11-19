@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_consulta_opcoes.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-21 19:05 -03
+     ATUALIZADO EM: 2026-11-13 18:50 -03
+     VERSAO: 1.7.0
+     v1.7.0: Sessao 123 (2026-11-13 18:50 -03) - AUDITORIA ETAPA 6 (Regra #69): faixa de aviso quando o usuario chega aqui vindo de tela bloqueada. REVERSAO: .bak_antes_etapa6.
+
+     DESCRICAO:
+         Tela intermediaria entre a Lista de GTAs e o Visualizar/
+         Alterar (Sessao 037/038) - mesmo padrao do GERAS (coluna
+         CONFERENCIA com botoes separados "Alterar" e "GTA de
+         Entrada"/Visualizar). Mostra um resumo rapido da GTA
+         escolhida e os botoes de acao disponiveis.
+
+     v1.0.0: Criacao do modulo (Sessao 037/038).
+     v1.1.0: Sessao (26/08/2026, 15:56 -03) - CORRECAO DE BUG real
+         apontada por Benedito: o botao "Voltar" da barra vermelha
+         estava fixo em /produtor/home, mesmo esta tela sendo
+         alcancada a partir da Lista de GTAs de uma Propriedade
+         especifica (/produtor/gta-consulta/lista?id_propriedade=
+         <id>) - voltar para o Home perdia o contexto da
+         Propriedade, obrigando o usuario a escolher tudo de novo.
+         Corrigido: "Voltar" agora usa gta.id_propriedade (campo ja
+         disponivel no objeto Gta) para montar o link de volta
+         direto para a Lista da MESMA Propriedade.
+     v1.2.0: Sessao 048 (09/09/2026, 18:40 -03) - NOVA regra de
+         negocio fechada com Benedito: uma GTA com
+         status_brincagem='BRINCADO' (Brincagem Sequencial ja
+         concluida) nao pode mais ser alterada por um Produtor
+         comum - os brincos ja foram consumidos e vinculados as
+         categorias de animais que existiam naquele momento;
+         alterar Quantidade/Categorias depois quebraria essa
+         consistencia. Card "Alterar" passa a renderizar
+         DESABILITADO (sem <a>, classe .desabilitado, sem hover)
+         quando isso ocorre, com aviso explicito abaixo do card
+         explicando o motivo. Card "Visualizar" nao muda em nada -
+         GTA brincada continua 100% consultavel. PENDENCIA
+         ANOTADA (nao implementada nesta sessao, por decisao de
+         Benedito): no futuro, a equipe CONSISTE (usuario_perfil=
+         'CONSISTE') deve poder alterar mesmo GTAs ja brincadas,
+         para corrigir erros graves de UF/Numero/Serie que ja
+         foram gravados em cascata noutras tabelas.
+     v1.3.0: Sessao 050 (12/09/2026, 13:05 -03) - NOVO card
+         "Relatório" (equivalente ao botao Imprimir/Consulta GTA
+         do GERAS) - visivel SOMENTE quando gta_brincada (mesma
+         condicao que ja desabilita o "Alterar"), pois o relatorio
+         depende de dados individuais reais de tb_2001 (SISBOV ja
+         gravado), que so existem apos o Bloco C da Brincagem
+         Sequencial. Aponta para a nova rota
+         gta_consulta.relatorio() (v1.8.0 do router), que gera e
+         baixa o PDF direto - sem tela intermediaria. Posicionado
+         entre "Visualizar" e "Alterar", pela ordem natural de uso
+         (ver -> imprimir -> [alterar, se ainda possivel]).
+     v1.4.0: Sessao 076 (21/09/2026, 21:45 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar (antes
+         escrito direto no HTML, calculado com gta.id_propriedade,
+         ver v1.1.0) passado via um comando de atribuicao antes do
+         include - mesma logica de sempre, sem mudanca de
+         comportamento.
+         v1.5.0: Sessao 095 (13/10/2026, 12:02 -03) - AVISO DE DOWNLOAD PADRAO: inclui a peca aviso_download (banner "Gerando", banner verde com o
+                 local do arquivo e trava de clique repetido). Sem aba nova. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; GTA {{ gta.numero_gta_completo if gta else '' }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .cartao-opcoes { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 40px; max-width: 520px; width: 100%; text-align: center; margin-top: 20px; }
+        .numero-gta { font-size: 26px; font-weight: bold; color: #333333; margin-bottom: 6px; letter-spacing: 1px; }
+        .resumo-gta { font-size: 13.5px; color: #888888; margin-bottom: 32px; }
+
+        .botoes-opcoes { display: flex; flex-direction: column; gap: 14px; }
+        .faixa-aviso-gta { background: #fff8e1; border-left: 6px solid #f9a825; color: #6d5400; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: bold; line-height: 1.5; }
+        .btn-opcao { display: flex; align-items: center; gap: 14px; padding: 18px 22px; border-radius: 10px; border: 2px solid #e0e0e0; text-decoration: none; text-align: left; transition: border-color 0.15s, background-color 0.15s; }
+        .btn-opcao .icone-opcao { font-size: 28px; line-height: 1; }
+        .btn-opcao .texto-opcao { flex: 1; }
+        .btn-opcao .titulo-opcao { font-size: 16px; font-weight: bold; color: #333333; margin-bottom: 2px; }
+        .btn-opcao .subtitulo-opcao { font-size: 12.5px; color: #888888; }
+        .btn-opcao.visualizar:hover { border-color: #1565c0; background: #e3f2fd; }
+        .btn-opcao.alterar:hover { border-color: #D4370A; background: #FBE9E4; }
+        /* NOVO v1.3.0: card Relatorio (so aparece com GTA brincada) */
+        .btn-opcao.relatorio:hover { border-color: #2e7d32; background: #e8f5e9; }
+
+        /* NOVO v1.2.0: card Alterar desabilitado (GTA ja brincada) */
+        .btn-opcao.desabilitado { border-color: #e0e0e0; background: #f5f5f5; cursor: not-allowed; }
+        .btn-opcao.desabilitado .icone-opcao { opacity: 0.4; }
+        .btn-opcao.desabilitado .titulo-opcao { color: #999999; }
+        .btn-opcao.desabilitado .subtitulo-opcao { color: #aaaaaa; }
+        .aviso-brincada { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #7a1f04; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 8px 12px; margin-top: 6px; text-align: left; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/gta-consulta/lista?id_propriedade=' + (gta.id_propriedade | string if gta else '') %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+            {% if aviso %}<div class="faixa-aviso-gta">&#9888;&#65039; {{ aviso }}</div>{% endif %}
+            <div class="cartao-opcoes">
+                {% if gta %}
+                <div class="numero-gta">{{ gta.numero_gta_completo }}</div>
+                <div class="resumo-gta">{{ gta.qtde_animais }} animal(is) &#8212; Emissão {{ gta.data_emissao.strftime('%d/%m/%Y') if gta.data_emissao else '-' }}</div>
+                {% endif %}
+
+                {% set gta_brincada = gta and gta.status_brincagem == 'BRINCADO' %}
+
+                <div class="botoes-opcoes">
+                    <a href="/produtor/gta-consulta/detalhe/{{ gta.id if gta else '' }}" class="btn-opcao visualizar">
+                        <span class="icone-opcao">&#128065;&#65039;</span>
+                        <div class="texto-opcao">
+                            <div class="titulo-opcao">Visualizar</div>
+                            <div class="subtitulo-opcao">Ver todos os dados da GTA, somente leitura</div>
+                        </div>
+                    </a>
+
+                    {% if gta_brincada %}
+                    <a href="/produtor/gta-consulta/relatorio/{{ gta.id }}" class="btn-opcao relatorio" data-aviso-descricao="Relatório da GTA {{ gta.numero_gta_completo }}" data-aviso-arquivo="Relatorio_GTA_{{ gta.numero_gta_completo }}.pdf">
+                        <span class="icone-opcao">&#128424;&#65039;</span>
+                        <div class="texto-opcao">
+                            <div class="titulo-opcao">Relatório</div>
+                            <div class="subtitulo-opcao">Baixar PDF com os animais desta GTA (SISBOV, Raça, Categoria)</div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if gta_brincada %}
+                    <div class="btn-opcao alterar desabilitado">
+                        <span class="icone-opcao">&#9999;&#65039;</span>
+                        <div class="texto-opcao">
+                            <div class="titulo-opcao">Alterar</div>
+                            <div class="subtitulo-opcao">Corrigir dados do documento ou dos Animais</div>
+                        </div>
+                    </div>
+                    <div class="aviso-brincada">&#128274; Esta GTA já foi brincada — alterações bloqueadas.</div>
+                    {% elif em_leitura %}
+                    <div class="btn-opcao alterar desabilitado">
+                        <span class="icone-opcao">&#9999;&#65039;</span>
+                        <div class="texto-opcao">
+                            <div class="titulo-opcao">Alterar</div>
+                            <div class="subtitulo-opcao">Corrigir dados do documento ou dos Animais</div>
+                        </div>
+                    </div>
+                    <div class="aviso-brincada">&#128274; Esta GTA está em leitura no brete ({{ em_leitura }} brincos lidos) — termine a leitura antes de alterar.</div>
+                    {% else %}
+                    <a href="/produtor/gta-consulta/editar/{{ gta.id if gta else '' }}" class="btn-opcao alterar">
+                        <span class="icone-opcao">&#9999;&#65039;</span>
+                        <div class="texto-opcao">
+                            <div class="titulo-opcao">Alterar</div>
+                            <div class="subtitulo-opcao">Corrigir dados do documento ou dos Animais</div>
+                        </div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_consulta_opcoes.html
+     ========================================================= -->

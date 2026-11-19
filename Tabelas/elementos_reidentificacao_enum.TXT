@@ -1,0 +1,33 @@
+-- =============================================================
+-- PROJETO: Orion SISBOV
+-- PASTA: database/scripts/enums
+-- MODULO: elementos_reidentificacao_enum
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 25/07/2026 11:16 -03
+-- ATUALIZADO EM: 25/07/2026 11:16 -03
+-- VERSAO: 1.0.0
+-- DESCRICAO: ENUM nativo do Postgres para o campo "Elementos" do
+--            processo de Reidentificacao (GR6003/GR6004 do
+--            GERAS) - qual elemento fisico esta sendo reposto.
+--            Confirmado por Benedito: 3 valores (Brinco, Botton,
+--            Brinco + Botton). Decisao de modelagem: ENUM fixo
+--            em vez de tabela catalogo, por serem valores
+--            estruturais estaveis (nao dependem de ato normativo
+--            do MAPA para mudar, diferente de Motivo de Morte).
+--            Schema publico - referenciado pelas tabelas
+--            tb_6003_re_id_elementos, que vivem no schema de
+--            cada Produtor (create_type=False nos Models Python
+--            para nao tentar recriar o tipo no boot).
+-- CHANGELOG:
+--   v1.0.0 - 25/07/2026 - Criacao inicial - Benedito Silva Filho
+-- =============================================================
+
+CREATE TYPE public.elementos_reidentificacao_enum AS ENUM (
+    'BRINCO',
+    'BOTTON',
+    'BRINCO_BOTTON'
+);
+
+COMMENT ON TYPE public.elementos_reidentificacao_enum IS 'Elemento fisico reposto na Reidentificacao - origem GR6003 (GERAS)';
+
+-- FIM DE ARQUIVO

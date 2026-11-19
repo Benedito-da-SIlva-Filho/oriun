@@ -1,0 +1,70 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\criar_tb_auditoria_eras.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-07 12:05 -03
+-- ATUALIZADO EM: 2026-10-07 12:05 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Cria as 2 tabelas das Auditorias ERAS (vistorias nas
+--     propriedades que tem codigo ERAS). As duas ficam no schema
+--     PUBLIC (a vistoria e da Propriedade, nao de um Produtor), por
+--     isso NAO precisa do bloco que percorre os schemas produtor_NNNNN.
+--
+--       tb_auditoria_eras      - uma linha por vistoria (nunca apagada).
+--       tb_log_auditoria_eras  - uma linha por CAMPO corrigido numa
+--                                vistoria (antes, depois, quem, quando).
+--
+--     Pode ser rodado mais de uma vez (IF NOT EXISTS).
+--
+--     v1.0.0: Criacao (Sessao 089, 07/10/2026, 12:05 -03).
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS public.tb_auditoria_eras (
+    id              SERIAL PRIMARY KEY,
+    id_propriedade  INTEGER      NOT NULL REFERENCES public.propriedades(id),
+    data_vistoria   DATE         NOT NULL,
+    veredito        VARCHAR(12)  NOT NULL,
+    vistoriador     VARCHAR(100) NOT NULL,
+    proxima_data    DATE         NOT NULL,
+    observacao      TEXT,
+    id_usuario      INTEGER      NOT NULL REFERENCES public.usuarios(id),
+    usuario_nome    VARCHAR(150) NOT NULL,
+    criado_em       TIMESTAMP    NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP,
+    CONSTRAINT ck_tb_auditoria_eras_veredito CHECK (veredito IN ('CONFORME', 'NAO_CONFORME')),
+    CONSTRAINT ck_tb_auditoria_eras_proxima  CHECK (proxima_data > data_vistoria)
+);
+
+CREATE INDEX IF NOT EXISTS ix_tb_auditoria_eras_propriedade
+    ON public.tb_auditoria_eras (id_propriedade, data_vistoria DESC);
+
+CREATE TABLE IF NOT EXISTS public.tb_log_auditoria_eras (
+    id                  SERIAL PRIMARY KEY,
+    id_auditoria        INTEGER      NOT NULL REFERENCES public.tb_auditoria_eras(id),
+    id_usuario          INTEGER      NOT NULL REFERENCES public.usuarios(id),
+    usuario_nome        VARCHAR(150) NOT NULL,
+    campo_alterado      VARCHAR(60)  NOT NULL,
+    valor_anterior      TEXT,
+    valor_novo          TEXT,
+    confirmou_alerta_60 BOOLEAN      NOT NULL DEFAULT FALSE,
+    alterado_em         TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ix_tb_log_auditoria_eras_auditoria
+    ON public.tb_log_auditoria_eras (id_auditoria);
+
+-- ---------------------------------------------------------
+-- CONFERENCIA (rodar depois): deve listar as 2 tabelas e as colunas.
+-- ---------------------------------------------------------
+-- SELECT table_name, column_name, data_type, character_maximum_length, is_nullable
+--   FROM information_schema.columns
+--  WHERE table_schema = 'public'
+--    AND table_name IN ('tb_auditoria_eras', 'tb_log_auditoria_eras')
+--  ORDER BY table_name, ordinal_position;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\criar_tb_auditoria_eras.sql
+-- =========================================================

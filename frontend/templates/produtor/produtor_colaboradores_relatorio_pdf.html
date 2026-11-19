@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_colaboradores_relatorio_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-15 12:15 -03
+     ATUALIZADO EM: 2026-10-15 12:15 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         PDF do Relatorio de Colaboradores (motor xhtml2pdf, retrato, padrao
+         dos demais relatorios do Orion). 1 bloco por pessoa, sem tabelas:
+         nome/cargo/situacao, dados de cadastro e as permissoes agrupadas por
+         nivel (asterisco = ajuste fora do padrao). CPF nao aparece.
+         Variaveis do router: nome_propriedade, pessoas, resumo, so_ativos,
+         gerado_por, data_impressao.
+         v1.0.0: Sessao 097 (15/10/2026, 12:15 -03) - Criacao.
+     ========================================================= -->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 21cm 29.7cm;
+        margin: 1.2cm;
+    }
+    * { margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 8pt; color: #222222; }
+
+    .titulo-relatorio { font-size: 13pt; font-weight: bold; color: #D4370A; }
+    .subtitulo { font-size: 9pt; color: #555555; margin-top: 2px; }
+    .linha-fazenda { font-size: 9pt; margin-top: 6px; margin-bottom: 8px; }
+    .linha-fazenda strong { color: #D4370A; }
+
+    .pessoa { border-top: 1px solid #cccccc; padding-top: 6px; margin-top: 10px; }
+    .nome { font-size: 10pt; font-weight: bold; color: #222222; }
+    .nome .cargo { color: #D4370A; font-size: 8pt; }
+    .nome .situacao { color: #666666; font-size: 8pt; font-weight: normal; }
+    .dados { font-size: 8pt; color: #555555; margin-top: 2px; margin-bottom: 3px; }
+    .dados strong { color: #333333; }
+    .nivel { font-size: 8pt; margin-top: 2px; }
+    .nivel strong { color: #D4370A; }
+    .encerrado { font-size: 8pt; color: #777777; font-style: italic; }
+
+    .rodape-total { margin-top: 14px; border-top: 1px solid #D4370A; padding-top: 6px; font-size: 9pt; font-weight: bold; color: #D4370A; }
+    .nota { font-size: 7pt; color: #777777; margin-top: 3px; }
+    .rodape-impressao { font-size: 7pt; color: #999999; text-align: right; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+    <div class="titulo-relatorio">Relatório de Colaboradores</div>
+    <div class="subtitulo">Cadastro, cargos e permissões{{ ' — somente ativos' if so_ativos else '' }}</div>
+    <div class="linha-fazenda"><strong>Propriedade:</strong> {{ nome_propriedade }}</div>
+
+    {% for p in pessoas %}
+    <div class="pessoa">
+        <div class="nome">{{ p.nome }}
+            &nbsp;<span class="cargo">{{ p.cargo }}</span>
+            &nbsp;<span class="situacao">({{ 'Ativo' if p.ativo else 'Encerrado' }})</span>
+        </div>
+        <div class="dados">
+            <strong>Login/Celular:</strong> {{ p.login }}
+            &nbsp;|&nbsp; <strong>E-mail:</strong> {{ p.email }}<br>
+            <strong>Início:</strong> {{ p.inicio }}
+            {% if not p.ativo %}&nbsp;|&nbsp; <strong>Fim:</strong> {{ p.fim }}{% endif %}
+            &nbsp;|&nbsp; <strong>Último acesso:</strong> {{ p.ultimo_acesso }}
+        </div>
+        {% if p.ativo %}
+            {% for g in p.grupos %}
+            <div class="nivel"><strong>{{ g.nome }}:</strong> {{ g.modulos | join(', ') }}</div>
+            {% endfor %}
+        {% else %}
+            <div class="encerrado">Vínculo encerrado — sem acesso a esta fazenda.</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if not pessoas %}
+    <div class="pessoa">Nenhum colaborador encontrado.</div>
+    {% endif %}
+
+    <div class="rodape-total">Total: {{ resumo.total }} colaborador{{ '' if resumo.total == 1 else 'es' }} ({{ resumo.ativos }} ativo{{ '' if resumo.ativos == 1 else 's' }}{% if not so_ativos %}, {{ resumo.encerrados }} encerrado{{ '' if resumo.encerrados == 1 else 's' }}{% endif %})</div>
+    {% if resumo.ha_ajuste %}<div class="nota">* Ajuste diferente do padrão do cargo, feito nesta fazenda.</div>{% endif %}
+    <div class="nota">O CPF não é exibido neste relatório.</div>
+    <div class="rodape-impressao">Emitido por {{ gerado_por }} em {{ data_impressao }}</div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_colaboradores_relatorio_pdf.html
+     ========================================================= -->

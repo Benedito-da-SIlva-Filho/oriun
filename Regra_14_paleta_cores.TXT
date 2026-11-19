@@ -1,0 +1,9 @@
+*Atualizado na Sessão 095 (13/10/2026, 11:23 -03) — adicionada a Regra de Ouro #14 (paleta de cores da Consiste), decisão de Benedito: laranja é a cor da marca, vinho só como texto de destaque, cinza só em documento oficial replicado.*
+
+- **Regra de Ouro #14 (paleta de cores da Consiste):** a cor da marca é o **laranja `#D4370A`** — é a cor de topo, botões e barras/títulos de TODO documento e tela próprios do Orion (PDFs usam `COR_PRIMARIA` de `pdf_reportlab.py`, nunca a cor escrita de novo no arquivo). O **rosa `#FBE9E4`** é o fundo suave e o destaque de total (`COR_FUNDO_TOTAL`). O **vinho `#7a1f04`** é só **cor de TEXTO de destaque** sobre o rosa (melhor leitura que o laranja) — NUNCA como barra, faixa ou fundo. **Cinzas neutros** são só apoio: rótulos `#666666`, bordas `#999999`/`#cccccc`, cabeçalho de tabela `#f0f0f0`. **Documento oficial replicado** (Anexo XIX e semelhantes) fica em preto e cinza, sem laranja — vale a fidelidade ao formulário do MAPA. Todo PDF novo importa as cores de `pdf_reportlab.py`. Bug real (Sessão 095): a Notificação de Nascimento e o Relatório de Nascimentos por Período usavam o vinho como cor de barra e fundo próprio, diferentes dos demais documentos; corrigidos (v1.2.0 e v1.3.0). Decisão de Benedito (Sessão 095): "vamos pintar na cor da Consiste".
+
+(Colar a Regra #14 logo abaixo da Regra #13 na seção 1 do Regras.TXT e trocar "#1–#13" por "#1–#14" no topo, no "Como usar" e no índice.)
+
+# =========================================================
+# FIM DE ARQUIVO: Regra_14_paleta_cores.TXT
+# =========================================================

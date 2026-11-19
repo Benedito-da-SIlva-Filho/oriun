@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\convite
+     MODULO: templates\convite\vitrine.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-11 20:30 -03
+     ATUALIZADO EM: 2026-08-11 20:30 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Tela Vitrine - demonstracao PUBLICA (sem login) do
+         sistema completo, mostrada ao visitante logo apos passar
+         na Etapa 1 do Convite Publico (/convite). Mostra todos os
+         modulos do Produtor como blocos travados (sem funcao
+         real) - o objetivo e so apresentar o produto. CTA final:
+         link direto de WhatsApp para a Consiste, com mensagem
+         pre-preenchida e o nome do visitante.
+         Ver backend/routers/convite.py v2.2.0 para o fluxo
+         completo.
+         v1.0.0: Criacao do modulo (Sessao 034, continuacao 6).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Conheça a Plataforma</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; }
+
+        /* ---- Topo ---- */
+        .topo { background-color: #D4370A; color: #ffffff; padding: 16px 24px; display: flex; align-items: center; justify-content: center; }
+        .topo h1 { font-size: 20px; font-weight: bold; }
+
+        /* ---- Boas-vindas ---- */
+        .boas-vindas { max-width: 900px; margin: 32px auto 8px; padding: 0 20px; text-align: center; }
+        .boas-vindas h2 { font-size: 24px; color: #333333; margin-bottom: 8px; }
+        .boas-vindas p { font-size: 14px; color: #666666; line-height: 1.6; }
+
+        /* ---- Aviso de demonstracao ---- */
+        .aviso-demo { max-width: 900px; margin: 20px auto; padding: 12px 20px; background: #fff8e1; border: 1px solid #f9a825; border-radius: 8px; font-size: 13px; color: #8a6d00; text-align: center; }
+
+        /* ---- Grid de modulos ---- */
+        .modulos-container { max-width: 900px; margin: 0 auto 32px; padding: 0 20px; }
+        .modulos-titulo { font-size: 13px; font-weight: bold; color: #D4370A; margin-bottom: 14px; text-transform: uppercase; }
+        .modulos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+        .modulo-card { position: relative; background: #ffffff; border-radius: 10px; padding: 20px 16px; text-align: center; opacity: 0.85; }
+        .modulo-icone { font-size: 30px; margin-bottom: 10px; }
+        .modulo-nome { font-size: 14px; font-weight: bold; color: #333333; }
+        .modulo-cadeado { position: absolute; top: 10px; right: 12px; font-size: 14px; }
+
+        /* ---- CTA final ---- */
+        .cta-container { max-width: 600px; margin: 0 auto 48px; padding: 28px 24px; background: #ffffff; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .cta-container h3 { font-size: 18px; color: #333333; margin-bottom: 8px; }
+        .cta-container p { font-size: 14px; color: #666666; margin-bottom: 20px; line-height: 1.5; }
+        .btn-whatsapp { display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; background: #25D366; color: #ffffff; border-radius: 8px; font-size: 16px; font-weight: bold; text-decoration: none; }
+        .btn-whatsapp:hover { background: #1EBE57; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 20px; color: #999999; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo">
+        <h1>&#128009; Orion SISBOV</h1>
+    </div>
+
+    <!-- BOAS-VINDAS -->
+    <div class="boas-vindas">
+        <h2>Olá, {{ nome }}! 👋</h2>
+        <p>Esta é uma demonstração do Orion SISBOV — a plataforma de rastreabilidade bovina da Consiste Informática. Veja abaixo tudo que o sistema oferece para o seu dia a dia na fazenda.</p>
+    </div>
+
+    <div class="aviso-demo">
+        &#128274; Você está vendo uma demonstração. Os módulos abaixo ainda não estão ativos — fale com a gente para liberar seu acesso completo.
+    </div>
+
+    <!-- MODULOS -->
+    <div class="modulos-container">
+        <div class="modulos-titulo">Módulos do Sistema</div>
+        <div class="modulos-grid">
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#127968;</div>
+                <div class="modulo-nome">Home</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128666;</div>
+                <div class="modulo-nome">Entrada</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#127991;&#65039;</div>
+                <div class="modulo-nome">Brincos</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128692;</div>
+                <div class="modulo-nome">Saídas</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#9878;&#65039;</div>
+                <div class="modulo-nome">Pesos</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128230;</div>
+                <div class="modulo-nome">Inventário</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128197;</div>
+                <div class="modulo-nome">Eventos</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128220;</div>
+                <div class="modulo-nome">Formulários</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128269;</div>
+                <div class="modulo-nome">Inspeção</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#9989;</div>
+                <div class="modulo-nome">Consistência</div>
+            </div>
+            <div class="modulo-card">
+                <span class="modulo-cadeado">&#128274;</span>
+                <div class="modulo-icone">&#128295;</div>
+                <div class="modulo-nome">Utilitários</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA FINAL -->
+    <div class="cta-container">
+        <h3>Gostou do que viu?</h3>
+        <p>Fale agora com a Consiste pelo WhatsApp e a gente libera seu acesso completo.</p>
+        <a href="{{ link_whatsapp }}" target="_blank" class="btn-whatsapp">
+            &#128241; Falar no WhatsApp
+        </a>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\convite\vitrine.html
+     ========================================================= -->

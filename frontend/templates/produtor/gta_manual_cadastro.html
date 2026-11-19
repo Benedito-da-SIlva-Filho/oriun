@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_manual_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-21 15:20 -03
+     ATUALIZADO EM: 2026-11-12 19:20 -03
+     VERSAO: 1.16.0
+     v1.15.0: Sessao 120 (2026-11-10 12:43 -03) - GTA duplicada avisada na hora: tarja vermelha na linha toda e o resto do formulario fica TRAVADO ate corrigir o numero (antes so avisava depois do Salvar). Precisa do gta_manual.py 1.15.0. REVERSAO: .bak_antes_s120_gta_dup.
+     v1.14.1: Sessao 118 (08/11/2026, 15:15 -03) - Digitar o CPF na busca da Procedencia nao dispara mais o aviso "dados nao salvos" ao clicar em Escolher. REVERSAO: .bak_antes_s118_vigia.
+     v1.14.0: Sessao 118 (08/11/2026, 15:00 -03) - Procedencia com Buscar CPF/CNPJ dentro do formulario (sem a tela do CPF); Voltar volta ao card Compras / GTA. REVERSAO: .bak_antes_s118_compra.
+
+     DESCRICAO:
+         Formulario completo da GTA Manual (Sessao 036/037).
+         Baseado visualmente em gta_compra_cadastro.html, mas:
+           - Campos do documento EDITAVEIS (sem readonly), com
+             mascara de data - diferente do fluxo automatico,
+             aqui nao ha PDF pra conferir, o usuario transcreve.
+           - Procedencia e Destino aparecem SO PARA CONFERENCIA
+             (readonly) - ja foram resolvidos nas telas
+             anteriores do fluxo (Cadastro Manual de Parceiro +
+             selecao de Propriedade), nao sao digitados aqui.
+           - Campo "Qtde de Animais na GTA" declarado no topo
+             (padrao real do GERAS) - a soma das categorias
+             incluidas precisa bater com este numero antes de
+             salvar (conferido no servidor, nao so no JS).
+           - Tabela de Animais COM adicionar/remover linha -
+             usuario monta as categorias na mao (ao contrario do
+             fluxo automatico, que so exibe o que veio do PDF).
+             Especie em dropdown do catalogo tb_4002 (mostra a
+             descricao, envia o codigo - v1.8.0); Sexo em
+             dropdown fixo; Idade em dropdown com as 5 faixas
+             normatizadas.
+           - SEM checagem de estoque/Brincagem (fica para quando
+             o Painel de Brincagem existir - decisao de Benedito,
+             Sessao 036).
+           - 1 unico checkbox de confirmacao (nao 4 como no
+             fluxo automatico) - aqui todo o formulario e uma
+             coisa so, digitada pelo proprio usuario.
+
+         Segue os padroes obrigatorios do Orion: aviso de
+         alteracoes nao salvas, botao Voltar, maxlength nos
+         campos, uppercase automatico.
+
+     v1.13.0: Sessao 108 (29/10/2026, 20:00 -03) - Rotulo 'Codigo MAPA' vira 'Código do Estabelecimento (OESA)' (Cód. Estabelecimento (OESA) nos lugares apertados). REVERSAO: .bak_antes_s108_oesa_geral.
+     v1.0.0: Criacao do modulo (Sessao 036/037).
+     v1.1.0: Sessao 037 (15:36) - Blocos de Procedencia e Destino
+         enriquecidos com os mesmos campos que aparecem na e-GTA
+         fisica (Regiao, Codigo MAPA, Insc. Estadual). Destino
+         ganhou tambem o nome/CPF-CNPJ do Produtor vinculado -
+         antes so mostrava o nome da Propriedade. Motivacao de
+         Benedito: mais informacao para conferencia = maior
+         chance do usuario detectar um erro antes de salvar.
+     v1.2.0: Sessao 037 (16:00) - Ajustes pedidos por Benedito
+         apos revisao: (1) UF trocado de texto livre para
+         select com as 27 siglas fixas (protege contra digito
+         errado do usuario); (2) Serie restrita a 1 letra via
+         mascara JS (formato real da GTA); (3) Numero restrito a
+         6 digitos, com zero-pad a esquerda automatico ao sair do
+         campo (blur); (4) Meio de Transporte trocado de texto
+         livre para select com 5 opcoes fixas (Rodoviario, A Pe/
+         Comitiva/Tocada, Fluvial/Maritimo, Ferroviario, Aereo) -
+         valor interno da opcao Comitiva mantido como "COMITIVA"
+         para nao quebrar a regra de tolerancia de 30 dias ja
+         validada no servidor; (5) Fonte de "Quantidade de Animais
+         na GTA" e do contador "Falta incluir" aumentada
+         (label 13->17px, input 20->26px, contador 13->20px).
+     v1.3.0: Sessao 037 (16:30) - Reorganizacao da linha "Dados
+         do Documento", a pedido de Benedito: campos com pouco
+         conteudo real (UF, Serie) tinham largura de coluna maior
+         do que precisavam, empurrando Meio de Transporte para
+         uma linha propria sem necessidade. Larguras ajustadas
+         para caber tudo em uma unica linha de 12 colunas: UF(1)
+         + Serie(1) + Numero(2) + Emissao(2) + Validade(2) +
+         Entrega(2) + Meio de Transporte(2) = 12. UF tambem
+         ganhou negrito (.campo-uf-negrito), reforcando o mesmo
+         destaque visual dos demais campos desta linha.
+     v1.4.0: Sessao 037 (16:50) - Testado o fluxo completo pela
+         primeira vez com dados reais (Roselene -> Maria
+         Angelica), validacao de janela de Data de Entrega
+         confirmada funcionando corretamente (bloqueou Entrega
+         fora da janela sem Comitiva). Dois ajustes pedidos por
+         Benedito: (1) mensagem de erro com tom mais forte e
+         fonte maior (.erro: borda de 4 para 6px, fonte de 13
+         para 17px, negrito, padding maior); (2) placeholder de
+         exemplo ("Ex: Q") removido do campo Serie - campo fica
+         em branco ate o usuario digitar.
+     v1.5.0: Sessao 037/038 (19:40) - CORRECAO DE BUG real,
+         identificado no formulario irmao (gta_consulta_editar.html):
+         o simbolo de confirmacao (checkmark) do contador "Total
+         confere com a GTA" aparecia como "?" na tela (caractere
+         corrompido por encoding). Trocado de textContent com
+         caractere unicode bruto para innerHTML com entidade HTML
+         (checkmark numerico), que nao depende do encoding do
+         arquivo.
+     v1.6.0: Sessao 047 (07/09/2026, 10:00) - Padrao de UX
+         "Quantidade agregada com limite declarado" (alinhado com
+         Benedito, motivado por teste real onde o total incluido
+         passou do declarado sem aviso previo): (1) campo
+         Quantidade de cada linha agora AUTO-LIMITA ao restante
+         ainda disponivel (declarado - soma das demais linhas)
+         diretamente no evento input - trava o excesso ANTES de
+         acontecer, nao so avisa depois; (2) botao "+ Adicionar
+         Categoria" desabilita automaticamente quando o total
+         incluido bate exatamente com o total declarado (restante
+         = 0), reabilitando se alguma linha for reduzida/excluida.
+         Este e o modelo de referencia para o mesmo padrao em
+         outras telas futuras com "total declarado + N linhas"
+         (ex: GTA Consulta/Alteracao).
+     v1.7.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar (fixo
+         para /produtor/home) passado via um comando de
+         atribuicao (url_voltar) antes do include - mesmo destino
+         de sempre, sem mudanca de comportamento (nao avaliado sob
+         a Regra de Ouro #9 nesta rodada - fica registrado que
+         este e um destino fixo, para revisao futura se fizer
+         sentido calcular dinamicamente). Botao "Cancelar" do
+         rodape do formulario NAO mexido - continua indo para
+         /produtor/home, com seu proprio aviso de "dados nao
+         salvos" via id="link-cancelar".
+     v1.7.1: Sessao 082 (29/09/2026, 06:50 -03) - RECUPERACAO: o
+         arquivo foi sobrescrito por acidente com o conteudo de
+         parceiro_cadastro_manual.html (a tela da GTA Manual
+         deixou de funcionar). Conteudo restaurado LINHA POR
+         LINHA a partir da v1.7.0 entregue na Sessao 076 (historico
+         das conversas). Unica diferenca: o changelog da v1.7.0
+         citava literalmente a sintaxe Jinja do comando de
+         atribuicao dentro deste comentario - o Jinja processa
+         comentario HTML e isso quebrava a tela (Regra de Ouro
+         #10; mesma correcao feita nas 16 telas na propria Sessao
+         076). Texto trocado por descricao em palavras. Nenhuma
+         mudanca de comportamento, CSS, HTML ou JavaScript.
+     v1.8.0: Sessao 082 (29/09/2026, 06:55 -03) - ESPECIE PELO
+         CATALOGO (regra de Benedito: banco com codigo, tela com a
+         palavra). A variavel especies passa a ser a lista do
+         catalogo tb_4002 (dicts com codigo e descricao, vinda de
+         gta_manual.py v1.6.0): cada opcao do dropdown de Especie
+         (linhas da tabela E modelo de linha nova) envia o CODIGO
+         ("BOV") e mostra a DESCRICAO ("Bovino"). Antes enviava o
+         texto por extenso ("BOVINO"), que travava a Brincagem
+         Sequencial. Nenhuma outra mudanca.
+     v1.9.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). Incluida a peca modal_confirmacao.html.
+     v1.10.0: Sessao 085 (04/10/2026, 18:20 -03) - SERIE POR UF (regra de
+         Benedito: Goias com 2 letras, demais UFs com 1 - regras_sisbov.py
+         v1.4.0 / gta_manual.py v1.8.0). O campo Serie passa a aceitar 2
+         letras quando a UF escolhida e GO e 1 nas demais; o limite muda na
+         hora ao trocar a UF, e a tela reexibida apos erro ja nasce com o
+         limite certo. Nenhuma outra mudanca de HTML, CSS ou JavaScript.
+     v1.11.0: Sessao 087 (05/10/2026, 10:50 -03) - VOLTAR PELO CAMINHO
+         INVERSO (Regra de Ouro #4, pedido de Benedito): o Voltar do topo
+         e o botao Cancelar iam fixo para a Home e o usuario perdia o
+         trabalho (Propriedade escolhida e Parceiro digitado). Agora os
+         dois voltam para a tela Cadastro Manual do Parceiro, levando a
+         Propriedade (id_propriedade_interna) e o CPF/CNPJ da Procedencia
+         ja preenchido. Sem esses dados (tela de erro de contexto), cai
+         em /produtor/gta-manual/iniciar. Quem quiser atalho usa o Home.
+         Nenhuma outra mudanca de HTML, CSS ou JavaScript.
+     v1.12.0: Sessao 106 (26/10/2026, 11:10 -03) - AVISO DAS DATAS NA HORA
+         v1.16.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+         (pedido do Benedito: o usuario nao deve digitar tudo para so descobrir
+         o erro no Salvar). Assim que a data tem 10 digitos (e ao trocar o Meio
+         de Transporte), a tela confere as MESMAS regras que o servidor ja tinha
+         em gta_manual.py salvar(): (1) Validade antes da Emissao; (2) Entrega
+         futura; (3) Entrega antes da Emissao; (4) Entrega depois da Validade
+         (Comitiva: tolerancia de 30 dias); mais data inexistente (ex.: 31/02).
+         Campo vermelho + faixa vermelha com a mensagem + botao Salvar desligado.
+         O servidor continua conferindo no Salvar (rede de seguranca). Nenhuma
+         regra nova; gta_manual.py nao mudou. REVERSAO: .bak_antes_s106d.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; GTA Manual</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1100px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-1  { grid-column: span 1; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+        .campo-destaque input { font-size: 17px; font-weight: bold; }
+        .campo-uf-negrito { font-size: 17px; font-weight: bold; }
+
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; }
+        .divisor-vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .caixa-qtde-gta { background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .caixa-qtde-gta label { font-size: 17px; font-weight: bold; color: #7a1f04; }
+        .caixa-qtde-gta input { width: 120px; font-size: 26px; font-weight: bold; text-align: center; padding: 10px; border: 1px solid #D4370A; border-radius: 6px; }
+        .contador-restante { font-size: 20px; font-weight: bold; }
+        .contador-restante.ok { color: #2e7d32; }
+        .contador-restante.falta { color: #D4370A; }
+
+        .tabela-animais { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .tabela-animais th { text-align: left; font-size: 12px; color: #666666; padding: 8px 6px; border-bottom: 2px solid #e0e0e0; }
+        .tabela-animais th.col-acao { width: 10%; text-align: center; }
+        .tabela-animais td { padding: 6px; border-bottom: 1px solid #f0f0f0; }
+        .tabela-animais input, .tabela-animais select { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; width: 100%; font-family: Arial, sans-serif; }
+        .btn-excluir-linha { background: #ffffff; border: 1px solid #c62828; color: #c62828; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+        .btn-excluir-linha:hover { background: #c62828; color: #ffffff; }
+        .btn-adicionar-linha { padding: 8px 18px; background: #ffffff; border: 1px dashed #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .btn-adicionar-linha:hover { background: #FBE9E4; }
+        .btn-adicionar-linha:disabled { border-color: #cccccc; color: #aaaaaa; background: #f5f5f5; cursor: not-allowed; }
+        .btn-adicionar-linha:disabled:hover { background: #f5f5f5; }
+
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 20px; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-resumo .valor { font-size: 19px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.total { color: #D4370A; }
+
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro label { font-size: 13px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        /* ---- v1.12.0: aviso das datas na hora (campo vermelho + faixa) ---- */
+        .campo-erro { border: 2px solid #c62828 !important; background: #fff5f5 !important; }
+        .faixa-datas { display: none; background: #ffebee; border-left: 6px solid #c62828; padding: 12px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-top: 12px; line-height: 1.4; }
+        .faixa-datas.visivel { display: block; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        #form-gta-manual.aguardando-procedencia > *:not(.duas-colunas):not(input) { display: none !important; }
+        /* s120 - GTA duplicada: tarja vermelha na linha toda + resto do formulario travado (Regra de Ouro #66) */
+        .tarja-gta-dup { display: none; width: 100%; background: #C62828; color: #ffffff; font-weight: bold; font-size: 15px; line-height: 1.35; text-align: center; padding: 12px 16px; border-radius: 6px; margin: 12px 0; }
+        .trava-dup { opacity: 0.45; pointer-events: none; user-select: none; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/entrada/compra/nova' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#9997;&#65039;</span> GTA de Entrada &#8212; Preenchimento Manual</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if ids %}
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('gta_manual.salvar') }}" autocomplete="off" id="form-gta-manual"{% if escolher_procedencia %} class="aguardando-procedencia"{% endif %}>
+
+                    <input type="hidden" name="id_parceiro" value="{{ ids.id_parceiro }}">
+                    <input type="hidden" name="id_propriedade" value="{{ ids.id_propriedade }}">
+                    <input type="hidden" name="id_propriedade_interna" value="{{ ids.id_propriedade_interna }}">
+
+                    <div class="duas-colunas" style="margin-bottom: 24px;">
+                        <div class="divisor-vertical"></div>
+                        <div>
+                            {% if escolher_procedencia %}
+                            <div class="form-secao">Procedência</div>
+                            <div class="bloco-conferencia" style="padding:14px">
+                                <label style="font-size:13px;color:#666;display:block;margin-bottom:6px">CPF / CNPJ da Procedência *</label>
+                                <div style="display:flex;gap:8px">
+                                    <input type="text" id="proc-doc" maxlength="18" placeholder="Digite o CPF ou CNPJ" autocomplete="off" style="flex:1;padding:9px 10px;border:1px solid #ccc;border-radius:6px;font-size:14px">
+                                    <button type="button" id="proc-btn" style="padding:9px 18px;border:none;border-radius:6px;background:#D4370A;color:#fff;font-weight:bold;cursor:pointer">Buscar</button>
+                                </div>
+                                <div id="proc-status" style="margin-top:10px;font-size:13.5px"></div>
+                                <div id="proc-lista" style="margin-top:8px"></div>
+                            </div>
+                            {% else %}
+                            <div class="form-secao">Procedência (confirmada)</div>
+                            <div class="bloco-conferencia">
+                                <div class="linha"><span class="rotulo">Nome</span><span class="valor">{{ procedencia.nome if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">CPF/CNPJ</span><span class="valor">{{ procedencia.cpf_cnpj if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Estabelecimento</span><span class="valor">{{ procedencia.estabelecimento if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Região</span><span class="valor">{{ procedencia.regiao if procedencia and procedencia.regiao else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Cód. Estabelecimento (OESA)</span><span class="valor">{{ procedencia.codigo_mapa if procedencia and procedencia.codigo_mapa else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Insc. Estadual</span><span class="valor">{{ procedencia.insc_estadual if procedencia and procedencia.insc_estadual else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="form-secao">Destino (sua Propriedade)</div>
+                            <div class="bloco-conferencia">
+                                <div class="linha"><span class="rotulo">Produtor</span><span class="valor">{{ destino.produtor_nome if destino and destino.produtor_nome else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">CPF/CNPJ</span><span class="valor">{{ destino.cpf_cnpj if destino and destino.cpf_cnpj else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Propriedade</span><span class="valor">{{ destino.nome if destino else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Região</span><span class="valor">{{ destino.regiao if destino and destino.regiao else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Cód. Estabelecimento (OESA)</span><span class="valor">{{ destino.codigo_mapa if destino and destino.codigo_mapa else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Insc. Estadual</span><span class="valor">{{ destino.insc_estadual if destino and destino.insc_estadual else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ destino.municipio_nome if destino else '-' }} / {{ destino.uf if destino else '-' }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Dados do Documento (GTA)</div>
+                    <div class="form-grid">
+                        <div class="form-group col-1 campo-destaque">
+                            <label>UF *</label>
+                            <select name="uf_gta" id="uf_gta" required class="centralizado campo-uf-negrito">
+                                <option value="">--</option>
+                                {% set ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if gta and gta.uf_gta == sigla else '' }}>{{ sigla }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-1 campo-destaque">
+                            <label>Série *</label>
+                            <input type="text" name="serie_gta" id="serie_gta" required maxlength="{{ 2 if gta and gta.uf_gta == 'GO' else 1 }}" class="upper centralizado" autocomplete="off"
+                                value="{{ gta.serie_gta if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Número *</label>
+                            <input type="text" name="numero_gta_sequencial" id="numero_gta_sequencial" required maxlength="6" class="centralizado" autocomplete="off" placeholder="000000" inputmode="numeric"
+                                value="{{ gta.numero_gta_sequencial if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Emissão *</label>
+                            <input type="text" name="data_emissao" id="data_emissao" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_emissao if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Validade *</label>
+                            <input type="text" name="data_validade" id="data_validade" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_validade if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Entrega *</label>
+                            <input type="text" name="data_entrega" id="data_entrega" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_entrega if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2">
+                            <label>Meio de Transporte *</label>
+                            <select name="meio_transporte" id="meio_transporte" required>
+                                <option value="">--</option>
+                                {% set meios = [('RODOVIARIO', 'Rodoviário'), ('COMITIVA', 'A Pé (Comitiva / Tocada)'), ('FLUVIAL_MARITIMO', 'Fluvial / Marítimo'), ('FERROVIARIO', 'Ferroviário'), ('AEREO', 'Aéreo')] %}
+                                {% for valor, rotulo in meios %}
+                                <option value="{{ valor }}" {{ 'selected' if gta and gta.meio_transporte == valor else '' }}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <!-- s120 - tarja de GTA duplicada (linha toda) -->
+                    <div id="aviso-gta-dup" class="tarja-gta-dup" role="alert"></div>
+
+                    <!-- v1.12.0 - faixa do aviso das datas (preenchida pelo JavaScript) -->
+                    <div class="faixa-datas" id="faixa-datas" role="alert"></div>
+
+                    <div class="caixa-qtde-gta" style="margin-top: 20px;">
+                        <label>Quantidade de Animais na GTA *</label>
+                        <input type="number" name="qtde_animais_gta" id="qtde_animais_gta" min="1" required
+                            value="{{ gta.qtde_animais_gta if gta else '' }}">
+                        <span class="contador-restante" id="contador-restante"></span>
+                    </div>
+
+                    <div class="form-secao">Animais (por categoria)</div>
+
+                    <table class="tabela-animais" id="tabela-animais">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Espécie</th>
+                                <th style="width: 20%;">Sexo</th>
+                                <th style="width: 30%;">Idade</th>
+                                <th style="width: 18%;">Quantidade</th>
+                                <th class="col-acao"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-animais">
+                            {% for animal in animais %}
+                            <tr class="linha-animal">
+                                <td>
+                                    <select name="especie[]" class="campo-especie">
+                                        <option value="">--</option>
+                                        {% for esp in especies %}
+                                        <option value="{{ esp.codigo }}" {{ 'selected' if animal.especie == esp.codigo else '' }}>{{ esp.descricao }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="sexo[]" class="campo-sexo">
+                                        <option value="">--</option>
+                                        {% for sx in sexos %}
+                                        <option value="{{ sx }}" {{ 'selected' if animal.sexo == sx else '' }}>{{ sx.capitalize() }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="idade_faixa[]" class="campo-idade">
+                                        <option value="">--</option>
+                                        {% for faixa in faixas_idade %}
+                                        <option value="{{ faixa }}" {{ 'selected' if animal.idade_meses == faixa else '' }}>{{ faixa }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="quantidade[]" min="1" class="campo-quantidade" value="{{ animal.quantidade }}"></td>
+                                <td style="text-align: center;"><button type="button" class="btn-excluir-linha" onclick="removerLinhaAnimal(this)">&#10005;</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <button type="button" class="btn-adicionar-linha" id="btn-adicionar-linha">+ Adicionar Categoria</button>
+
+                    <div class="painel-resumo">
+                        <div>
+                            <div class="rotulo">Fêmea</div>
+                            <div class="valor" id="resumo-femea">0</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Macho</div>
+                            <div class="valor" id="resumo-macho">0</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Total Incluído</div>
+                            <div class="valor total" id="resumo-total">0</div>
+                        </div>
+                    </div>
+
+                    <div class="confirma-quadro">
+                        <input type="checkbox" id="confirma_dados" name="confirma_dados"
+                            {% if gta and gta.confirma_dados %}checked{% endif %}>
+                        <label for="confirma_dados">Confirmo que os dados acima foram conferidos e estão corretos.</label>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="{{ url_voltar }}" class="btn-cancelar" id="link-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-salvar" disabled>Salvar</button>
+                    </div>
+
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <template id="template-linha-animal">
+        <tr class="linha-animal">
+            <td>
+                <select name="especie[]" class="campo-especie">
+                    <option value="">--</option>
+                    {% for esp in especies %}
+                    <option value="{{ esp.codigo }}">{{ esp.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="sexo[]" class="campo-sexo">
+                    <option value="">--</option>
+                    {% for sx in sexos %}
+                    <option value="{{ sx }}">{{ sx.capitalize() }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="idade_faixa[]" class="campo-idade">
+                    <option value="">--</option>
+                    {% for faixa in faixas_idade %}
+                    <option value="{{ faixa }}">{{ faixa }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="number" name="quantidade[]" min="1" class="campo-quantidade" value=""></td>
+            <td style="text-align: center;"><button type="button" class="btn-excluir-linha" onclick="removerLinhaAnimal(this)">&#10005;</button></td>
+        </tr>
+    </template>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        function aplicarMascaraData(campo) {
+            if (!campo) return;
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                var formatado = digitos;
+                if (digitos.length > 4) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                } else if (digitos.length > 2) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                }
+                this.value = formatado;
+            });
+        }
+        aplicarMascaraData(document.getElementById('data_emissao'));
+        aplicarMascaraData(document.getElementById('data_validade'));
+        aplicarMascaraData(document.getElementById('data_entrega'));
+
+        // ---- v1.12.0: AVISO DAS DATAS NA HORA ----
+        // Mesmas regras de gta_manual.py salvar() (o servidor segue conferindo no Salvar).
+        // TOLERANCIA_COMITIVA_DIAS tem de ser igual ao do gta_manual.py (30).
+        var TOLERANCIA_COMITIVA_DIAS = 30;
+        var datasComErro = false;
+
+        // Texto dd/mm/aaaa (10 caracteres) -> Date; 'incompleta' se ainda nao tem 10; 'invalida' se nao existe (ex.: 31/02).
+        function lerDataBr(texto) {
+            texto = (texto || '').trim();
+            if (texto.length < 10) { return 'incompleta'; }
+            var partes = texto.split('/');
+            if (partes.length !== 3) { return 'invalida'; }
+            var dia = parseInt(partes[0], 10), mes = parseInt(partes[1], 10), ano = parseInt(partes[2], 10);
+            var data = new Date(ano, mes - 1, dia);
+            if (isNaN(data.getTime()) || data.getFullYear() !== ano || data.getMonth() !== mes - 1 || data.getDate() !== dia || ano < 1900) {
+                return 'invalida';
+            }
+            return data;
+        }
+        function formatarDataBr(data) {
+            var dd = ('0' + data.getDate()).slice(-2), mm = ('0' + (data.getMonth() + 1)).slice(-2);
+            return dd + '/' + mm + '/' + data.getFullYear();
+        }
+
+        // Confere as datas na ordem do servidor. Mostra so a 1a mensagem, marca os campos envolvidos
+        // e liga/desliga o Salvar (datasComErro).
+        function conferirDatas() {
+            var campoEmissao = document.getElementById('data_emissao');
+            var campoValidade = document.getElementById('data_validade');
+            var campoEntrega = document.getElementById('data_entrega');
+            var campoMeio = document.getElementById('meio_transporte');
+            var faixa = document.getElementById('faixa-datas');
+
+            [campoEmissao, campoValidade, campoEntrega].forEach(function(c) { c.classList.remove('campo-erro'); });
+
+            var emissao = lerDataBr(campoEmissao.value);
+            var validade = lerDataBr(campoValidade.value);
+            var entrega = lerDataBr(campoEntrega.value);
+            var mensagem = '';
+            var marcar = [];
+
+            function ehData(valor) { return valor !== 'incompleta' && valor !== 'invalida'; }
+
+            if (emissao === 'invalida') {
+                mensagem = 'Data de Emissão incorreta! Use uma data que exista, no formato dd/mm/aaaa.'; marcar = [campoEmissao];
+            } else if (validade === 'invalida') {
+                mensagem = 'Data de Validade incorreta! Use uma data que exista, no formato dd/mm/aaaa.'; marcar = [campoValidade];
+            } else if (entrega === 'invalida') {
+                mensagem = 'Data de Entrega incorreta! Use uma data que exista, no formato dd/mm/aaaa.'; marcar = [campoEntrega];
+            } else if (ehData(emissao) && ehData(validade) && validade < emissao) {
+                mensagem = 'Data de Validade não pode ser anterior à Data de Emissão!'; marcar = [campoValidade, campoEmissao];
+            } else if (ehData(entrega)) {
+                var hoje = new Date();
+                hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+                if (entrega > hoje) {
+                    mensagem = 'Data de Entrega não pode ser uma data futura (hoje é ' + formatarDataBr(hoje) + ')! Confira o dia, o mês e o ano digitados.';
+                    marcar = [campoEntrega];
+                } else if (ehData(emissao) && entrega < emissao) {
+                    mensagem = 'Data de Entrega não pode ser anterior à Data de Emissão!'; marcar = [campoEntrega, campoEmissao];
+                } else if (ehData(validade)) {
+                    var ehComitiva = (campoMeio.value === 'COMITIVA');
+                    var limite = ehComitiva
+                        ? new Date(validade.getFullYear(), validade.getMonth(), validade.getDate() + TOLERANCIA_COMITIVA_DIAS)
+                        : validade;
+                    if (entrega > limite) {
+                        if (ehComitiva) {
+                            mensagem = 'Data de Entrega além do limite de tolerância para Comitiva (até ' + TOLERANCIA_COMITIVA_DIAS +
+                                       ' dias após a Validade, ' + formatarDataBr(limite) + ')!';
+                        } else if (ehData(emissao)) {
+                            mensagem = 'Data de Entrega deve estar entre a Emissão (' + formatarDataBr(emissao) +
+                                       ') e a Validade (' + formatarDataBr(validade) + ')!';
+                        } else {
+                            mensagem = 'Data de Entrega não pode ser posterior à Validade (' + formatarDataBr(validade) + ')!';
+                        }
+                        marcar = [campoEntrega, campoValidade];
+                    }
+                }
+            }
+
+            marcar.forEach(function(c) { c.classList.add('campo-erro'); });
+            datasComErro = (mensagem !== '');
+            faixa.textContent = mensagem ? ('⚠️ ' + mensagem) : '';
+            faixa.classList.toggle('visivel', datasComErro);
+            atualizarBotaoSalvar();
+        }
+
+        ['data_emissao', 'data_validade', 'data_entrega'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', conferirDatas);
+        });
+        document.getElementById('meio_transporte').addEventListener('change', conferirDatas);
+
+        // ---- Serie: 1 letra (2 em GO) - v1.10.0: o limite segue a UF escolhida ----
+        var campoUf = document.getElementById('uf_gta');
+        var campoSerie = document.getElementById('serie_gta');
+        function ajustarSerie() {
+            var limite = (campoUf.value === 'GO') ? 2 : 1;
+            campoSerie.maxLength = limite;
+            campoSerie.value = campoSerie.value.replace(/[^A-Za-z]/g, '').slice(0, limite).toUpperCase();
+        }
+        campoUf.addEventListener('change', ajustarSerie);
+        campoSerie.addEventListener('input', ajustarSerie);
+        ajustarSerie();
+
+        // ---- Numero: 6 digitos, zero-padded a esquerda ao sair do campo ----
+        var campoNumero = document.getElementById('numero_gta_sequencial');
+        campoNumero.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+        campoNumero.addEventListener('blur', function() {
+            if (this.value.length > 0) {
+                this.value = this.value.padStart(6, '0');
+            }
+        });
+
+        var formularioGta = document.getElementById('form-gta-manual');
+        var corpoTabela = document.getElementById('corpo-tabela-animais');
+        var btnAdicionarLinha = document.getElementById('btn-adicionar-linha');
+        var templateLinha = document.getElementById('template-linha-animal');
+        var campoQtdeGta = document.getElementById('qtde_animais_gta');
+        var contadorRestante = document.getElementById('contador-restante');
+
+        function removerLinhaAnimal(botao) {
+            var linha = botao.closest('tr');
+            linha.remove();
+            atualizarResumoAnimais();
+        }
+
+        function adicionarLinhaAnimal() {
+            var fragmento = templateLinha.content.cloneNode(true);
+            corpoTabela.appendChild(fragmento);
+            ligarEventosLinha(corpoTabela.lastElementChild);
+        }
+
+        // ---- v1.6.0: auto-limita a Quantidade digitada ao restante ainda
+        // disponivel (declarado - soma das DEMAIS linhas), travando o
+        // excesso ANTES de acontecer. Padrao de UX do projeto (Sessao 047),
+        // reaproveitar em toda tela futura com "total declarado + N linhas". ----
+        function limitarQuantidadeCampo(campo) {
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            if (isNaN(declarado) || declarado <= 0) return;
+
+            var somaOutras = 0;
+            document.querySelectorAll('.campo-quantidade').forEach(function(outroCampo) {
+                if (outroCampo === campo) return;
+                var qtd = parseInt(outroCampo.value, 10);
+                if (!isNaN(qtd)) somaOutras += qtd;
+            });
+
+            var restante = declarado - somaOutras;
+            if (restante < 0) restante = 0;
+
+            var valorAtual = parseInt(campo.value, 10);
+            if (!isNaN(valorAtual) && valorAtual > restante) {
+                campo.value = restante;
+            }
+        }
+
+        function ligarEventosLinha(linha) {
+            linha.querySelector('.campo-sexo').addEventListener('change', atualizarResumoAnimais);
+            linha.querySelector('.campo-quantidade').addEventListener('input', function() {
+                limitarQuantidadeCampo(this);
+                atualizarResumoAnimais();
+            });
+        }
+
+        document.querySelectorAll('.linha-animal').forEach(ligarEventosLinha);
+
+        if (btnAdicionarLinha) {
+            btnAdicionarLinha.addEventListener('click', adicionarLinhaAnimal);
+        }
+
+        function atualizarResumoAnimais() {
+            var femea = 0;
+            var macho = 0;
+
+            document.querySelectorAll('.linha-animal').forEach(function(linha) {
+                var sexo = linha.querySelector('.campo-sexo').value;
+                var qtd = parseInt(linha.querySelector('.campo-quantidade').value, 10);
+                if (isNaN(qtd)) qtd = 0;
+
+                if (sexo === 'FEMEA') {
+                    femea += qtd;
+                } else if (sexo === 'MACHO') {
+                    macho += qtd;
+                }
+            });
+
+            var total = femea + macho;
+            document.getElementById('resumo-femea').textContent = femea;
+            document.getElementById('resumo-macho').textContent = macho;
+            document.getElementById('resumo-total').textContent = total;
+
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            if (!isNaN(declarado) && declarado > 0) {
+                var diferenca = declarado - total;
+                if (diferenca === 0) {
+                    contadorRestante.className = 'contador-restante ok';
+                    contadorRestante.innerHTML = '&#10003; Total confere com a GTA';
+                } else if (diferenca > 0) {
+                    contadorRestante.className = 'contador-restante falta';
+                    contadorRestante.textContent = 'Falta incluir ' + diferenca + ' animal(is)';
+                } else {
+                    contadorRestante.className = 'contador-restante falta';
+                    contadorRestante.textContent = 'Excedeu em ' + Math.abs(diferenca) + ' animal(is)';
+                }
+            } else {
+                contadorRestante.textContent = '';
+            }
+
+            // ---- v1.6.0: trava o "+ Adicionar Categoria" quando nao sobra
+            // mais nenhum animal pra incluir (restante = 0) ----
+            if (btnAdicionarLinha) {
+                btnAdicionarLinha.disabled = (!isNaN(declarado) && declarado > 0 && total >= declarado);
+            }
+
+            atualizarBotaoSalvar();
+        }
+
+        campoQtdeGta.addEventListener('input', atualizarResumoAnimais);
+
+        // s120 - GTA duplicada NA HORA: tarja vermelha + trava o resto do preenchimento (Regra de Ouro #66)
+        var gtaDuplicada = false;
+        function travarPosGta(travar) {
+            var alvos = [];
+            ['data_emissao', 'data_validade', 'data_entrega', 'meio_transporte'].forEach(function(i) {
+                var c = document.getElementById(i);
+                if (c && c.closest('.form-group')) { alvos.push(c.closest('.form-group')); }
+            });
+            var q = document.getElementById('qtde_animais_gta');
+            if (q && q.closest('.caixa-qtde-gta')) { alvos.push(q.closest('.caixa-qtde-gta')); }
+            ['tabela-animais', 'btn-adicionar-linha'].forEach(function(i) { var e = document.getElementById(i); if (e) { alvos.push(e); } });
+            alvos.forEach(function(el) {
+                if (travar) { el.classList.add('trava-dup'); el.setAttribute('inert', ''); }
+                else { el.classList.remove('trava-dup'); el.removeAttribute('inert'); }
+            });
+        }
+        function conferirGtaDuplicada() {
+            var aviso = document.getElementById('aviso-gta-dup');
+            var uf = (document.getElementById('uf_gta').value || '').trim();
+            var serie = (document.getElementById('serie_gta').value || '').trim();
+            var numero = (document.getElementById('numero_gta_sequencial').value || '').trim();
+            if (!uf || !serie || numero.length !== 6) { gtaDuplicada = false; aviso.style.display = 'none'; travarPosGta(false); atualizarBotaoSalvar(); return; }
+            fetch('/produtor/gta-manual/gta-checar?uf=' + encodeURIComponent(uf) + '&serie=' + encodeURIComponent(serie) + '&numero=' + encodeURIComponent(numero), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    var msg = (res && res.mensagem) ? res.mensagem : '';
+                    gtaDuplicada = !!msg;
+                    aviso.textContent = msg;
+                    aviso.style.display = msg ? 'block' : 'none';
+                    travarPosGta(gtaDuplicada);
+                    atualizarBotaoSalvar();
+                })
+                .catch(function() { /* sem rede: o Salvar confere de novo no servidor */ });
+        }
+        ['uf_gta', 'serie_gta', 'numero_gta_sequencial'].forEach(function(i) {
+            var c = document.getElementById(i);
+            if (c) { c.addEventListener('change', conferirGtaDuplicada); c.addEventListener('blur', conferirGtaDuplicada); }
+        });
+
+        function atualizarBotaoSalvar() {
+            var confirma = document.getElementById('confirma_dados').checked;
+
+            var camposObrigatorios = document.querySelectorAll('#form-gta-manual [required]');
+            var todosPreenchidos = Array.prototype.every.call(camposObrigatorios, function(campo) {
+                return campo.value.trim() !== '';
+            });
+
+            var femeaEl = document.getElementById('resumo-femea');
+            var machoEl = document.getElementById('resumo-macho');
+            var total = (femeaEl ? parseInt(femeaEl.textContent, 10) : 0) + (machoEl ? parseInt(machoEl.textContent, 10) : 0);
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            var totalBate = (!isNaN(declarado) && declarado === total && total > 0);
+
+            // v1.12.0 - data com erro (faixa vermelha) tambem desliga o Salvar.
+            document.getElementById('btn-salvar').disabled = !(confirma && todosPreenchidos && totalBate && !datasComErro && !gtaDuplicada);
+        }
+
+        document.getElementById('confirma_dados').addEventListener('change', atualizarBotaoSalvar);
+        document.querySelectorAll('#form-gta-manual [required]').forEach(function(campo) {
+            campo.addEventListener('input', atualizarBotaoSalvar);
+        });
+
+        atualizarResumoAnimais();
+        conferirDatas();   // v1.12.0 - tela reexibida apos erro do servidor ja nasce conferida
+
+        var formularioAlterado = false;
+        formularioGta.addEventListener('input', function(ev) { if (ev.target && ev.target.id === 'proc-doc') { return; } formularioAlterado = true; });   // s118 - o CPF da busca da Procedencia nao conta como dado nao salvo
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioAlterado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+        formularioGta.addEventListener('submit', function() { formularioAlterado = false; });
+        // v1.9.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return formularioAlterado; },
+                function() { formularioAlterado = false; }
+            );
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+    {% if escolher_procedencia %}
+    <script>
+        // s118 - Procedencia dentro do formulario: busca CPF/CNPJ; escolhe a Propriedade ou cadastra a parceira
+        (function() {
+            var ID_INTERNA = '{{ ids.id_propriedade_interna }}';
+            var campo = document.getElementById('proc-doc'), btn = document.getElementById('proc-btn');
+            var status = document.getElementById('proc-status'), lista = document.getElementById('proc-lista');
+            function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+            function cadastrar(dig) {
+                return '<a href="/produtor/parceiro-manual?id_propriedade_interna=' + ID_INTERNA + '&documento=' + dig + '" style="display:inline-block;margin-top:6px;padding:7px 14px;border:1px solid #D4370A;border-radius:6px;color:#D4370A;font-weight:bold;text-decoration:none">+ Cadastrar Propriedade parceira</a>';
+            }
+            function buscar() {
+                var dig = campo.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+                lista.innerHTML = '';
+                if (dig.length !== 11 && dig.length !== 14) { status.style.color = '#c62828'; status.textContent = 'Digite um CPF (11 números) ou CNPJ (14 caracteres).'; return; }
+                status.style.color = '#666'; status.textContent = 'Buscando...';
+                btn.disabled = true;
+                fetch('/api/busca-parceiro?documento=' + encodeURIComponent(dig)).then(function(r) { return r.json(); }).then(function(d) {
+                    btn.disabled = false;
+                    if (d.encontrado && d.propriedades && d.propriedades.length) {
+                        status.style.color = '#1b7a2b'; status.textContent = 'Parceiro encontrado: ' + d.parceiro.nome + '. Escolha a Propriedade:';
+                        var h = '';
+                        d.propriedades.forEach(function(p) {
+                            h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #eee"><span>' + esc(p.estabelecimento) + ' <small style="color:#888">' + esc(p.municipio_nome || '') + (p.uf ? ' / ' + esc(p.uf) : '') + '</small></span>'
+                               + '<a href="/produtor/gta-manual/nova?id_parceiro=' + d.parceiro.id + '&id_propriedade=' + p.id + '&id_propriedade_interna=' + ID_INTERNA + '" style="padding:6px 14px;border:1px solid #D4370A;border-radius:6px;color:#D4370A;font-weight:bold;text-decoration:none">Escolher</a></div>';
+                        });
+                        lista.innerHTML = h + cadastrar(dig);
+                    } else {
+                        status.style.color = '#8a6d00';
+                        status.textContent = d.encontrado ? 'Parceiro sem Propriedade cadastrada.' : 'Parceiro não encontrado.';
+                        lista.innerHTML = cadastrar(dig);
+                    }
+                }).catch(function() { btn.disabled = false; status.style.color = '#c62828'; status.textContent = 'Erro ao buscar. Tente novamente.'; });
+            }
+            btn.addEventListener('click', buscar);
+            campo.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+        })();
+    </script>
+    {% endif %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_manual_cadastro.html
+     ========================================================= -->

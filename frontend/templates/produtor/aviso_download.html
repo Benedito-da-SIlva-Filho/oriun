@@ -1,0 +1,143 @@
+<!-- =========================================================
+     PROJETO:      Orion
+     PASTA:        C:\orion\frontend\templates\produtor
+     MODULO:       frontend\templates\produtor\aviso_download.html
+     AUTOR:        Benedito Silva Filho
+     CRIADO EM:    2026-10-13 11:46 -03
+     ATUALIZADO EM: 2026-10-13 13:35 -03
+     VERSAO:       1.2.0
+
+     DESCRICAO:
+         PECA-MESTRA do aviso de download (Sessao 095). Toda tela que
+         gera um arquivo para o usuario baixar (PDF) inclui esta peca UMA
+         vez, logo no inicio da area de conteudo, e marca cada link ou
+         botao de download com atributos - o aviso, a trava de clique
+         repetido e o texto de onde o arquivo ficou vem todo daqui.
+
+         COMO USAR (copiar de uma tela real, nunca de memoria):
+           1. Dentro da area de conteudo, no inicio, incluir a peca com o
+              comando de include apontando para produtor/aviso_download.html.
+           2. No link ou botao que baixa o arquivo, acrescentar:
+                data-aviso-descricao="Texto curto do que esta sendo gerado"
+                data-aviso-arquivo="nome_do_arquivo.pdf"   (opcional)
+              A descricao e obrigatoria (e ela que liga o aviso). O nome do
+              arquivo so entra quando o servidor gera o nome exato.
+           3. O link NAO usa target blank: o arquivo e baixado e a tela
+              continua onde esta.
+           4. Para download disparado por codigo (sem link), chamar
+              avisarDownload(descricao, arquivo, elementoQueTrava).
+
+         O QUE FAZ: ao clicar, trava o elemento por 4 segundos (clique
+         repetido e ignorado), mostra o banner azul "Gerando" e, 1,5 s
+         depois, o banner verde dizendo que o PDF foi salvo na pasta
+         Downloads. A mensagem verde sobrevive a um recarregamento da
+         tela feito logo em seguida (guardada por alguns segundos).
+
+         v1.0.0: Criacao da peca (Sessao 095, 13/10/2026, 11:46 -03).
+         v1.1.0: Sessao 095 (13/10/2026, 12:02 -03) - FORMULARIO que devolve PDF: o atributo
+                 data-aviso-descricao tambem vale na tag do formulario; o aviso dispara no ENVIO
+                 (so quando os campos obrigatorios estao preenchidos) e o segundo envio e bloqueado.
+         v1.2.0: Sessao 095 (13/10/2026, 13:35 -03) - O LOCAL DO ARQUIVO VEM NO PRIMEIRO AVISO: o banner
+                 azul, que aparece no instante do clique (junto com o download), ja diz que o PDF sera
+                 salvo na pasta Downloads. Antes, o local so aparecia 1,5 s depois, quando o arquivo ja
+                 tinha chegado (ou aberto numa aba pela extensao do navegador).
+     ========================================================= -->
+<style>
+    .adl-banner { display: none; border-radius: 6px; padding: 12px 16px; margin: 0 0 16px 0; line-height: 1.5; font-family: Arial, sans-serif; }
+    .adl-banner.adl-visivel { display: block; }
+    .adl-gerando { background: #E3F2FD; border-left: 6px solid #1565C0; color: #1565C0; font-size: 14px; font-weight: bold; }
+    .adl-pronto  { background: #e8f5e9; border-left: 6px solid #1b7a2b; color: #1b5e20; font-size: 14.5px; font-weight: bold; }
+    .adl-pronto .adl-onde { font-weight: normal; font-size: 13px; color: #2e7d32; }
+    .adl-travado { opacity: 0.55; cursor: not-allowed; }
+</style>
+<div class="adl-banner adl-gerando" id="adl-gerando"></div>
+<div class="adl-banner adl-pronto" id="adl-pronto"></div>
+<script>
+    (function () {
+        var TEMPO_PRONTO = 1500;    // ms ate mostrar o banner verde
+        var TEMPO_TRAVA = 4000;     // ms que o botao fica travado
+        var CHAVE = 'adl_mensagem';
+
+        function montarPronto(descricao, arquivo) {
+            var caixa = document.getElementById('adl-pronto');
+            while (caixa.firstChild) { caixa.removeChild(caixa.firstChild); }
+            caixa.appendChild(document.createTextNode('\u2705 ' + descricao + ' \u2014 PDF gerado!'));
+            if (arquivo) {
+                caixa.appendChild(document.createElement('br'));
+                caixa.appendChild(document.createTextNode('Arquivo: ' + arquivo));
+            }
+            caixa.appendChild(document.createElement('br'));
+            var onde = document.createElement('span');
+            onde.className = 'adl-onde';
+            onde.appendChild(document.createTextNode('Salvo na pasta '));
+            var negrito = document.createElement('b');
+            negrito.appendChild(document.createTextNode('Downloads'));
+            onde.appendChild(negrito);
+            onde.appendChild(document.createTextNode(' do seu computador (ou na pasta que o navegador usa para downloads). Abra o arquivo para imprimir.'));
+            caixa.appendChild(onde);
+            caixa.classList.add('adl-visivel');
+        }
+
+        function avisarDownload(descricao, arquivo, elemento) {
+            var gerando = document.getElementById('adl-gerando');
+            var pronto = document.getElementById('adl-pronto');
+            pronto.classList.remove('adl-visivel');
+            gerando.textContent = '\u231B Gerando o PDF: ' + descricao + ' \u2014 ele ser\u00E1 salvo na pasta Downloads do seu computador. Aguarde...';
+            gerando.classList.add('adl-visivel');
+            if (elemento) {
+                elemento.setAttribute('data-aviso-travado', '1');
+                elemento.classList.add('adl-travado');
+            }
+            try {
+                sessionStorage.setItem(CHAVE, JSON.stringify({ d: descricao, a: arquivo || '', t: Date.now() }));
+            } catch (e) { /* sem armazenamento: so nao sobrevive ao recarregamento */ }
+            setTimeout(function () {
+                gerando.classList.remove('adl-visivel');
+                montarPronto(descricao, arquivo);
+            }, TEMPO_PRONTO);
+            setTimeout(function () {
+                try { sessionStorage.removeItem(CHAVE); } catch (e) { }   // a tela nao recarregou: nao deixa mensagem velha
+                if (elemento) {
+                    elemento.removeAttribute('data-aviso-travado');
+                    elemento.classList.remove('adl-travado');
+                }
+            }, TEMPO_TRAVA);
+            return true;
+        }
+        window.avisarDownload = avisarDownload;
+
+        document.addEventListener('click', function (evento) {
+            var alvo = evento.target && evento.target.closest ? evento.target.closest('[data-aviso-descricao]') : null;
+            if (!alvo || alvo.tagName === 'FORM') { return; }   // formulario e tratado no envio
+            if (alvo.getAttribute('data-aviso-travado') === '1') {
+                evento.preventDefault();
+                evento.stopPropagation();
+                return;
+            }
+            avisarDownload(alvo.getAttribute('data-aviso-descricao'), alvo.getAttribute('data-aviso-arquivo'), alvo);
+        }, true);
+
+        document.addEventListener('submit', function (evento) {
+            var formulario = evento.target;
+            if (!formulario || !formulario.getAttribute || !formulario.hasAttribute('data-aviso-descricao')) { return; }
+            if (formulario.getAttribute('data-aviso-travado') === '1') {
+                evento.preventDefault();
+                return;
+            }
+            avisarDownload(formulario.getAttribute('data-aviso-descricao'), formulario.getAttribute('data-aviso-arquivo'), formulario);
+        }, true);
+
+        // Tela recarregada logo apos o clique: mostra de novo a mensagem verde (ate 20 s).
+        try {
+            var guardado = sessionStorage.getItem(CHAVE);
+            if (guardado) {
+                var dados = JSON.parse(guardado);
+                sessionStorage.removeItem(CHAVE);
+                if (dados && (Date.now() - dados.t) < 20000) { montarPronto(dados.d, dados.a); }
+            }
+        } catch (e) { /* ignora */ }
+    })();
+</script>
+<!-- =========================================================
+     FIM DE ARQUIVO: frontend\templates\produtor\aviso_download.html
+     ========================================================= -->

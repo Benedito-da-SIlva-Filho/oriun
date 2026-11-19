@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_disponiveis_confirmar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-02 14:53 -03
+     ATUALIZADO EM: 2026-10-13 12:02 -03
+     VERSAO: 1.4.0
+
+     DESCRICAO:
+         Tela intermediaria de confirmacao do Brincos Disponiveis
+         - criada porque o fluxo anterior (redirect direto para o
+         PDF quando ha 1 so par Propriedade/Produtor) deixava o
+         Usuario sem nenhum aviso visual de que a impressao
+         estava rodando ou tinha terminado (bug real reportado por
+         Benedito, Sessao 044). Agora SEMPRE passa por esta tela,
+         mesmo com 1 par so, mostrando Propriedade/Produtor em
+         bloco readonly + botao "Imprimir" explicito, com aviso
+         de "Gerando..." ao clicar.
+
+         Estrutura (.topo/.layout/.sidebar via include
+         produtor/produtor_menu.html/.conteudo/.rodape) copiada de
+         brincos_fornecedor_lista.html (PADRAO REUTILIZAVEL
+         confirmado, ver memoria do Piloto) - Voltar aponta para
+         /produtor/hub/brincos (Hub de Brincos), NUNCA para a Home.
+
+         Variaveis esperadas do router:
+           cabecalho - SimpleNamespace(propriedade_nome, municipio,
+                       uf, produtor_nome)
+           url_pdf   - string, URL da rota de geracao do PDF
+           url_voltar - CALCULADO DINAMICAMENTE pelo router (ver
+                       brincos_disponiveis.py v1.2.0) - segue a
+                       Regra de Ouro #9 (Voltar e sempre o caminho
+                       real): quando houve mais de 1 par
+                       Propriedade/Produtor, aponta de volta para
+                       Selecionar Propriedade; com 1 par so, aponta
+                       pro Hub de Brincos.
+
+     v1.0.0: Criacao (Sessao 044, 02/09/2026, 14:53 -03).
+     v1.1.0: Sessao 044 (02/09/2026, 15:05 -03) - Bug real (UX)
+         reportado por Benedito, teste real em producao: a linha
+         "Propriedade: FAZENDA CAMPO GRANDE — RIBEIRÃO
+         CASCALHEIRA/MT" quebrava em 2 linhas dentro do bloco de
+         conferencia (card estreito demais, max-width 560px).
+         Corrigido alargando o card para max-width 820px.
+     v1.2.0: Sessao 044 (02/09/2026, 15:11 -03) - Cadeia de
+         navegacao "Voltar" corrigida (Benedito, teste real):
+         Confirmar -> Voltar -> Selecionar Propriedade (quando
+         houve mais de 1 par) -> Voltar -> Hub de Brincos. Antes
+         o Voltar desta tela ia direto pro Hub sempre, pulando a
+         tela de Selecionar Propriedade quando ela existia. Rota
+         passa a decidir url_voltar dinamicamente (ver
+         brincos_disponiveis.py v1.2.0). NOTA: este modulo ja
+         seguia o principio que virou a Regra de Ouro #9 (Sessao
+         076) antes mesmo dela ser formalizada - nenhuma mudanca
+         de logica necessaria hoje, so a modularizacao do topo/
+         rodape abaixo.
+     v1.3.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, ja calculado dinamicamente desde a v1.2.0) nem de
+         nenhuma outra logica desta tela - so a extracao do bloco
+         de HTML repetido.
+         v1.4.0: Sessao 095 (13/10/2026, 12:02 -03) - AVISO DE DOWNLOAD PADRAO no Imprimir Relatorio: sai a mensagem "confira a nova aba" (o PDF
+                 nao abre mais aba, e baixado) e entra a peca aviso_download. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Brincos Disponíveis</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .cartao-confirmacao { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; max-width: 820px; }
+
+        .bloco-conferencia { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+        .bloco-conferencia strong { color: #D4370A; }
+
+        .btn-imprimir-grande {
+            background: #D4370A; color: #ffffff; border: none; border-radius: 6px;
+            padding: 12px 28px; font-size: 15px; font-weight: bold; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-imprimir-grande:hover { opacity: 0.9; }
+        .btn-imprimir-grande:disabled { opacity: 0.6; cursor: wait; }
+
+        .aviso-status { margin-top: 14px; font-size: 13px; color: #555555; min-height: 18px; }
+        .aviso-status.sucesso { color: #2e7d32; font-weight: bold; }
+
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.5); border-top-color: #ffffff;
+            border-radius: 50%; animation: girar 0.7s linear infinite;
+        }
+        @keyframes girar { to { transform: rotate(360deg); } }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128203;</span> Brincos Disponíveis</h2>
+            </div>
+
+            <div class="cartao-confirmacao">
+                <div class="bloco-conferencia">
+                    <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}<br>
+                    <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}
+                </div>
+
+                <button id="btnImprimir" class="btn-imprimir-grande" onclick="imprimir()">
+                    &#128424;&#65039; Imprimir Relatório
+                </button>
+
+                <div id="avisoStatus" class="aviso-status"></div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        function imprimir() {
+            var btn = document.getElementById('btnImprimir');
+            if (btn.getAttribute('data-aviso-travado') === '1') { return; }
+            avisarDownload('Relatório de Brincos Disponíveis', 'brincos_disponiveis.pdf', btn);
+            window.location.href = '{{ url_pdf }}';
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_disponiveis_confirmar.html
+     ========================================================= -->

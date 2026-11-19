@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\consiste_backup_restore.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-04 13:40 -03
+     ATUALIZADO EM: 2026-09-04 13:40 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Tela do Consiste que lista os pedidos de Restore
+         PENDENTES de TODOS os Produtores ativos, juntados numa
+         lista so (Sessao 046, 04/09/2026 - ver backend/routers/
+         backup_restore.py, funcao _montar_pedidos_pendentes()).
+         So o perfil CONSISTE acessa e executa - e o UNICO lugar
+         do sistema onde um Restore de verdade acontece.
+
+         Cada linha mostra Produtor/Propriedade/quem pediu/motivo/
+         data desejada, e um formulario para escolher qual arquivo
+         de backup usar (pode nao ser exatamente a data pedida, se
+         aquele dia nao tiver backup disponivel) e confirmar a
+         execucao - via modal de confirmacao, mesmo componente ja
+         usado do lado Produtor (Sessao 045).
+
+         Se a lista vier vazia, mostra mensagem amigavel (nao e
+         erro - so significa que nao ha pedido pendente).
+
+         Variaveis esperadas do router (backup_restore.py):
+           pedidos - lista de SimpleNamespace(id_pedido,
+                     id_produtor, schema_nome, produtor_nome,
+                     propriedade_nome, usuario_nome, motivo,
+                     data_backup_desejada, criado_em,
+                     backups_disponiveis)
+
+     v1.0.0: Criacao (Sessao 046, 04/09/2026, 13:40 -03).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Backup / Restore</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .pagina-subtitulo { font-size: 13px; color: #777777; margin-bottom: 20px; }
+
+        .lista-pedidos { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
+        .cartao-pedido { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 22px; }
+
+        .cabecalho-pedido { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+        .cabecalho-pedido .produtor { font-size: 15px; font-weight: bold; color: #333333; }
+        .cabecalho-pedido .propriedade { font-size: 13px; color: #777777; margin-top: 2px; }
+        .cabecalho-pedido .quando { font-size: 12px; color: #999999; white-space: nowrap; }
+
+        .bloco-motivo { background: #f7f7f7; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #444444; margin-bottom: 16px; }
+        .bloco-motivo strong { color: #333333; }
+
+        .form-executar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+        .form-executar .campo { flex: 1; min-width: 180px; }
+        .form-executar label { display: block; font-size: 12px; font-weight: bold; color: #555555; margin-bottom: 6px; }
+        .form-executar select {
+            width: 100%; padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px;
+        }
+
+        .btn-restaurar {
+            background: #c62828; color: #ffffff; border: none; border-radius: 6px;
+            padding: 10px 18px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-restaurar:hover { background: #a82121; }
+
+        .sem-backup { font-size: 12px; color: #c62828; font-style: italic; }
+
+        .vazio { text-align: center; padding: 40px 20px; color: #888888; }
+        .vazio .icone { font-size: 40px; margin-bottom: 12px; }
+        .vazio .texto { font-size: 14px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% include 'consiste/consiste_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128190;</span> Backup / Restore</h2>
+            </div>
+            <div class="pagina-subtitulo">Pedidos de Restore pendentes de todos os Produtores ativos.</div>
+
+            {% if pedidos %}
+            <div class="lista-pedidos">
+                {% for pedido in pedidos %}
+                <div class="cartao-pedido">
+                    <div class="cabecalho-pedido">
+                        <div>
+                            <div class="produtor">{{ pedido.produtor_nome }}</div>
+                            <div class="propriedade">{{ pedido.propriedade_nome }}</div>
+                        </div>
+                        <div class="quando">Pedido por {{ pedido.usuario_nome }} em {{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') }}</div>
+                    </div>
+
+                    <div class="bloco-motivo">
+                        <strong>Deseja restaurar o backup de {{ pedido.data_backup_desejada.strftime('%d/%m/%Y') }}.</strong><br>
+                        Motivo: {{ pedido.motivo }}
+                    </div>
+
+                    {% if pedido.backups_disponiveis %}
+                    <form method="POST" action="/consiste/backup-restore/executar" class="form-executar"
+                          onsubmit="return confirmarAcao(this, 'Confirma o Restore do Schema de ' + '{{ pedido.produtor_nome }}' + '? Um backup do estado atual será feito automaticamente antes, por segurança.');">
+                        <input type="hidden" name="id_produtor" value="{{ pedido.id_produtor }}">
+                        <input type="hidden" name="id_pedido" value="{{ pedido.id_pedido }}">
+                        <div class="campo">
+                            <label for="nome_arquivo_backup_{{ pedido.id_pedido }}">Arquivo de backup a usar</label>
+                            <select id="nome_arquivo_backup_{{ pedido.id_pedido }}" name="nome_arquivo_backup" required>
+                                {% for backup in pedido.backups_disponiveis %}
+                                <option value="{{ backup.nome_arquivo }}" {{ 'selected' if backup.data == pedido.data_backup_desejada else '' }}>
+                                    {{ backup.data.strftime('%d/%m/%Y') }}{{ ' (data pedida)' if backup.data == pedido.data_backup_desejada else '' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-restaurar">&#8635; Executar Restore</button>
+                    </form>
+                    {% else %}
+                    <div class="sem-backup">Nenhum backup disponível para este Produtor no momento — não é possível executar.</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vazio">
+                <div class="icone">&#9989;</div>
+                <div class="texto">Nenhum pedido de Restore pendente no momento.</div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\consiste_backup_restore.html
+     ========================================================= -->

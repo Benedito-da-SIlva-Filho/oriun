@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\certificadora_trocar_master.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-25 13:08 -03
+     ATUALIZADO EM: 2026-06-26 11:52 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Formulario de troca do Master da Certificadora.
+         Plataforma Consiste — requer perfil CONSISTE.
+         Menu lateral via include consiste/consiste_menu.html.
+         Exibe o Master atual e campos para o novo Master.
+         Ao salvar: inativa o Master antigo e cadastra o novo.
+         Envia email automatico ao novo Master com senha provisoria.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Migrado para pasta consiste/.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Trocar Master</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include consiste_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        /* ---- Formulario ---- */
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 700px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-6  { grid-column: span 6; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; }
+        .form-group input:focus { outline: none; border-color: #D4370A; }
+        .form-group input:disabled { background: #f5f5f5; color: #666666; cursor: not-allowed; }
+        .upper { text-transform: uppercase; }
+
+        /* ---- Mensagens ---- */
+        .aviso-atencao { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .aviso-email { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #1b5e20; margin-bottom: 16px; }
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+
+        /* ---- Botoes ---- */
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <button onclick="history.back()" class="btn-voltar-topo">&#8592; Voltar</button>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — plataforma Consiste -->
+        {% include 'consiste/consiste_menu.html' %}
+
+        <div class="conteudo">
+            <div class="pagina-header">
+                <h2>&#8646; Trocar Master &#8212; {{ certificadora.nome_fantasia }}</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="form-container">
+
+                <!-- Master Atual — somente leitura -->
+                {% if master_atual %}
+                <div class="form-secao">Master Atual</div>
+                <div class="aviso-atencao">
+                    &#9888;&#65039; O Master atual sera <strong>inativado</strong> automaticamente ao confirmar a troca.
+                </div>
+                <div class="form-grid">
+                    <div class="form-group col-12">
+                        <label>Nome</label>
+                        <input type="text" value="{{ master_atual.nome }}" disabled>
+                    </div>
+                    <div class="form-group col-6">
+                        <label>Login</label>
+                        <input type="text" value="{{ master_atual.login }}" disabled>
+                    </div>
+                    <div class="form-group col-6">
+                        <label>Email</label>
+                        <input type="text" value="{{ master_atual.email }}" disabled>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Novo Master — campos para preencher -->
+                <form method="POST" action="/certificadoras/salvar-master">
+                    <input type="hidden" name="cert_id" value="{{ certificadora.id }}">
+
+                    <div class="form-secao">Novo Master</div>
+                    <div class="aviso-email">
+                        &#9993; Um email sera enviado automaticamente ao novo Master com login e senha provisoria.
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group col-12">
+                            <label>Nome Completo *</label>
+                            <input type="text" name="master_nome" required class="upper"
+                                placeholder="Nome completo do novo responsavel">
+                        </div>
+                        <div class="form-group col-6">
+                            <label>Login *</label>
+                            <input type="text" name="master_login" required
+                                placeholder="Login de acesso ao sistema">
+                        </div>
+                        <div class="form-group col-6">
+                            <label>Email *</label>
+                            <input type="email" name="master_email" required
+                                placeholder="email@certificadora.com.br">
+                        </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="/certificadoras/editar/{{ certificadora.id }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar">&#8646; Confirmar Troca</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informatica</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+
+        document.querySelectorAll('input.upper').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\certificadora_trocar_master.html
+     ========================================================= -->

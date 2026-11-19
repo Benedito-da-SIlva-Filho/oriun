@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincagem_consulta_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-20 12:00 -03
+     ATUALIZADO EM: 2026-10-26 16:00 -03
+     VERSAO: 2.14.0
+
+     DESCRICAO:
+         Redesenho completo (Sessao 062) a partir de mockups reais
+         do legado GERAS trazidos por Benedito ("Entrada Consulta
+         5001" + "Seleção de Animais para Brincagem"). Ver
+         DESCRICAO de backend/routers/brincagem_consulta.py para o
+         detalhamento completo de cada peca:
+           - Seletor de Data Brincagem (recarrega a pagina).
+           - Quadro "Total de Animais" da Data selecionada.
+           - Dropdown de Lote (com quantidade) - filtra a TABELA
+             via JS puro, sem nova requisicao ao servidor.
+           - Botao Alterar por linha (link para
+             brincagem_consulta_alterar.html).
+           - Checkbox por linha + botao "Vincular GTA" (v2.6.0).
+         Ordem das linhas vem pronta do servidor (v2.7.0): Sexo ->
+         Idade em Meses -> SISBOV (brincagem_consulta.py v2.9.0).
+
+     v1.0.0: Criacao do modulo (Sessao 061, 20/09/2026, 12:00 -03).
+     v2.0.0: Sessao 062 (20/09/2026, 12:30 -03) - Redesenho
+         completo (Data/Total/Lote/Alterar) - ver DESCRICAO acima.
+     v2.1.0: Sessao 066 (20/09/2026, 15:00 -03) - Nova coluna
+         "Alterado em" na tabela.
+     v2.2.0: Sessao 068 (20/09/2026, 15:20 -03) - Botoes novos:
+         "Imprimir Lote" (habilitado so com um Lote especifico
+         escolhido) e "Ver Inconformidades".
+     v2.3.0: Sessao 076 (21/09/2026, 10:00 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         (produtor_topo.html / produtor_rodape.html). url_voltar
+         continua vindo do router.
+     v2.4.0: Sessao 076 cont. (21/09/2026, 10:00 -03) -
+         window.confirm() nativo substituido pelo componente
+         produtor/modal_confirmacao.html v2.0.0 (Padrao 2,
+         assincrono). Botao de confirmacao mostra "Excluir".
+     v2.5.0: Sessao 076 cont. (21/09/2026, 10:00 -03) - BUG REAL:
+         apos excluir, o quadro "Total de Animais" e a quantidade
+         do Lote no dropdown continuavam com o numero antigo ate
+         o F5. Corrigido: o JS decrementa os dois na hora (e
+         remove do dropdown o Lote que chegar a 0).
+     v2.6.0: Sessao 077 (22/09/2026, 18:45 -03) - Checkbox por
+         linha (so em linha.pode_editar) + botao "Vincular GTA",
+         habilitado com pelo menos 1 marcado. Envia os ids
+         marcados via POST para vincular_gta.iniciar. A selecao
+         sobrevive ao filtro de Lote (decisao deliberada).
+     v2.7.0: Sessao 079 (24/09/2026, 08:20 -03) - Ajuste VISUAL da
+         tabela (pedido de Benedito):
+           - Nova ordem das colunas: SISBOV | Sexo | Idade em
+             Meses (NOVA) | Nascimento | Peso | Lote | Especie |
+             Raca | Gravado em | Alterado em.
+           - Peso chega inteiro do servidor (300, nao 300.00).
+           - Fonte da tabela 13px -> 12px, espaco entre colunas
+             reduzido (padding 12px -> 8px) e largura minima da
+             tabela 1180px -> 1000px.
+         Nenhuma mudanca de JS (filtro de Lote, Imprimir, Vincular
+         GTA, Excluir intactos) - os data-atributos das linhas
+         continuam os mesmos.
+     v2.8.0: Sessao 082 (29/09/2026, 20:05 -03) - Pacote 3A (Tipo de
+         Entrada + Numero de Controle):
+           - NOVO filtro TIPO (Compra / Nascimento), sempre
+             visivel (mesmo sem datas). Trocar o Tipo recarrega a
+             pagina e volta para a data mais recente daquele Tipo;
+             trocar a Data mantem o Tipo.
+           - Vincular GTA (botao + checkboxes) SO no Tipo Compra -
+             Nascimento nao vai para GTA.
+           - SO no Nascimento: NOVA coluna "Controle" (NAS) logo
+             depois do SISBOV.
+           - Imprimir Lote envia tambem o Tipo.
+           - Excluir: se o servidor mandar 'aviso' (Numero de
+             Controle zerado/liberado), mostra o aviso ao usuario.
+         Nenhuma outra mudanca (filtro de Lote, contadores,
+         Alterar).
+     v2.9.0: Sessao 083 (30/09/2026, 12:00 -03) - pedidos de
+         Benedito depois do teste do 3A (acompanha
+         brincagem_consulta.py v2.11.0):
+           - Filtro TIPO com DESTAQUE (fonte maior, borda e fundo
+             na cor da marca) e com a opcao em branco
+             "-- Selecione --". Entrando pelo card do Hub ele vem em
+             branco; sem Tipo, a tela mostra so o aviso "Selecione
+             o Tipo de Entrada" (sem tabela, sem contadores).
+           - Link Alterar leva junto o Lote filtrado (JS), para a
+             lista voltar com o mesmo Lote.
+           - Ao abrir, se o servidor mandar lote_inicial, o filtro
+             de Lote e reaplicado sozinho.
+         Nenhuma outra mudanca (Excluir, Imprimir, Vincular GTA,
+         Inconformidades).
+     v2.10.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Os 3 avisos do Excluir (Controle liberado/zerado, erro, falha de conexao) passa(m) a usar a janela de aviso do Orion,
+         so com OK (mostrarAviso(), modal_confirmacao.html v2.1.0),
+         no lugar do alert() do navegador. Nenhuma outra mudanca.
+     v2.11.0: Sessao 084 (02/10/2026, 13:20 -03) - linhas dos animais de
+         Notificacao do escritorio (brincagem_consulta.py v2.12.0,
+         linha.origem = 'notificacao'): no lugar dos 2 botoes cinza
+         "Alterar/Excluir" mostram um SELO - "Na Notificacao" (verde, ja
+         conferido no brete) ou "A conferir" (amarelo). Nenhuma outra
+         mudanca.
+     v2.11.1: Sessao 084 (02/10/2026, 13:40 -03) - pedido de Benedito: o selo
+         da Notificacao em MAIUSCULAS e SEM ACENTO (NA NOTIFICACAO / A
+         CONFERIR), como o resto da tabela. Nenhuma outra mudanca.
+         v2.12.0: Sessao 095 (13/10/2026, 11:50 -03) - AVISO DE DOWNLOAD PADRAO no Imprimir Lote: inclui a peca aviso_download; o botao deixa de abrir
+                 aba nova (window.open) e passa a baixar o arquivo na propria tela, com banner "Gerando" e banner
+                 verde dizendo onde o PDF ficou. REVERSAO: .bak_antes_aviso_download_s095.
+         v2.13.0: Sessao 106 - leitura reservada a GTA no brete (linha.reservada_gta) mostra o selo 'EM LEITURA - GTA X' no lugar de Alterar/Excluir. REVERSAO: .bak_antes_s106s.
+         v2.13.1: Sessao 106 - a leitura reservada mantem o botao Excluir (soltar GTA abandonada); so o Alterar fica bloqueado. REVERSAO: .bak_antes_s106t.
+         v2.14.0: Sessao 106 - Excluir so aparece no Nascimento (brinco de Compra lido no brete ja esta no animal); leitura reservada ganha 'Soltar da GTA'. REVERSAO: .bak_antes_s106u.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Consulta Brincagem</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 20px 24px; overflow-y: auto; }
+        .pagina-header { margin-bottom: 4px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+        .subtitulo { font-size: 13.5px; color: #888888; margin-bottom: 14px; }
+
+        .barra-filtros { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px; }
+        .filtro-grupo { display: flex; flex-direction: column; gap: 4px; }
+        .filtro-grupo label { font-size: 11px; font-weight: bold; color: #666666; text-transform: uppercase; }
+        .filtro-grupo select { padding: 9px 12px; border: 2px solid #cccccc; border-radius: 6px; font-size: 15px; color: #333333; font-family: Arial, sans-serif; min-width: 180px; }
+        .filtro-grupo select:focus { outline: none; border-color: #D4370A; }
+
+        /* v2.9.0 - filtro Tipo de Entrada em destaque */
+        .filtro-tipo-grupo label { font-size: 13px; color: #D4370A; }
+        .filtro-tipo-grupo select { font-size: 18px; font-weight: bold; border: 2px solid #D4370A; background: #FBE9E4; color: #7a1f04; min-width: 260px; padding: 10px 14px; }
+        .aviso-selecione-tipo { background: #FBE9E4; border: 2px dashed #D4370A; border-radius: 10px; padding: 36px; text-align: center; color: #7a1f04; font-size: 17px; font-weight: bold; }
+
+        .btn-imprimir-lote { padding: 9px 16px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-imprimir-lote:hover { background: #C0392B; }
+        .btn-imprimir-lote:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-inconformidades { padding: 9px 16px; background: #ffffff; border: 1px solid #f9a825; color: #8a6d00; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-inconformidades:hover { background: #fff8e1; }
+
+        /* v2.6.0 - botao "Vincular GTA" - mesmo padrao visual do
+           Imprimir Lote (acao primaria), com cor propria. */
+        .btn-vincular-gta { padding: 9px 16px; background: #1565C0; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-vincular-gta:hover { background: #0D47A1; }
+        .btn-vincular-gta:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 6px 20px; text-align: center; background: #ffffff; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 24px; font-weight: bold; color: #D4370A; }
+
+        .lista-vazia-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 40px; text-align: center; color: #aaaaaa; font-size: 14px; }
+
+        /* v2.7.0 - tabela mais compacta: fonte 12px, padding 8px,
+           largura minima 1000px. */
+        .tabela-scroll { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow-x: auto; }
+        .tabela-consulta { border-collapse: collapse; width: 100%; min-width: 1000px; font-size: 12px; }
+        .tabela-consulta thead th { position: sticky; top: 0; background: #f7f7f7; text-align: left; font-size: 10.5px; color: #666666; text-transform: uppercase; letter-spacing: 0.4px; padding: 9px 8px; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+        .tabela-consulta tbody td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; color: #333333; }
+        .tabela-consulta tbody tr:hover { background-color: #fafafa; }
+        .tabela-consulta tbody tr.excluindo { opacity: 0.4; }
+        .tabela-consulta tbody tr.oculto-por-lote { display: none; }
+        .col-sisbov { font-weight: bold; }
+        .col-peso { text-align: right; }
+        .col-check { width: 28px; text-align: center; }
+        .col-check input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #1565C0; }
+
+        .btn-acao-linha { padding: 5px 12px; background: #ffffff; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-alterar-linha { border: 1px solid #D4370A; color: #D4370A; margin-right: 6px; }
+        .btn-alterar-linha:hover { background: #D4370A; color: #ffffff; }
+        .btn-excluir-linha { border: 1px solid #c62828; color: #c62828; background: #ffffff; cursor: pointer; }
+        .btn-excluir-linha:hover { background: #c62828; color: #ffffff; }
+        .btn-acao-linha:disabled, .btn-acao-linha.desabilitado { border-color: #cccccc; color: #bbbbbb; background: #f5f5f5; cursor: not-allowed; pointer-events: none; }
+
+        /* v2.11.0 - selo das linhas de Notificacao (so consulta) */
+        .selo-notificacao { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap; text-transform: uppercase; }
+        .selo-notificacao.conferido { background: #e8f5e9; color: #1b5e20; }
+        .selo-notificacao.pendente { background: #fff8e1; color: #8a6d00; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128269;</span> Consulta Brincagem</h2>
+            </div>
+            <div class="subtitulo">{{ propriedade.nome if propriedade else '-' }}</div>
+
+            <div class="barra-filtros">
+                <div class="filtro-grupo filtro-tipo-grupo">
+                    <label>Tipo de Entrada *</label>
+                    <select id="filtro-tipo">
+                        <option value="" {{ 'selected' if not tipo_entrada else '' }}>-- Selecione --</option>
+                        {% for codigo, texto in tipos_entrada %}
+                        <option value="{{ codigo }}" {{ 'selected' if codigo == tipo_entrada else '' }}>{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if datas_disponiveis %}
+                <div class="filtro-grupo">
+                    <label>Data Brincagem</label>
+                    <select id="filtro-data">
+                        {% for data_opcao in datas_disponiveis %}
+                        <option value="{{ data_opcao }}" {{ 'selected' if data_opcao == data_selecionada else '' }}>{{ data_opcao }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="contador-caixa">
+                    <div class="rotulo">Total de Animais</div>
+                    <div class="valor" id="valor-total-animais">{{ total_animais }}</div>
+                </div>
+                <div class="filtro-grupo">
+                    <label>Lote</label>
+                    <select id="filtro-lote">
+                        <option value="">Todos os Lotes ({{ total_animais }})</option>
+                        {% for item in lotes_resumo %}
+                        <option value="{{ item.lote }}" data-qtde="{{ item.qtde }}">{{ item.lote }} ({{ item.qtde }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filtro-grupo">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn-imprimir-lote" id="btn-imprimir-lote" disabled title="Escolha um Lote específico para imprimir">&#128424;&#65039; Imprimir Lote</button>
+                </div>
+                <div class="filtro-grupo">
+                    <label>&nbsp;</label>
+                    <a href="{{ url_for('brincagem_consulta.inconformidades', id_propriedade=id_propriedade, data_brincagem=data_selecionada) }}" class="btn-inconformidades">&#9888;&#65039; Ver Inconformidades</a>
+                </div>
+                {% if tipo_entrada == 'COMPRA' %}
+                <div class="filtro-grupo">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn-vincular-gta" id="btn-vincular-gta" disabled title="Marque ao menos 1 animal na tabela">&#128279; Vincular GTA</button>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+
+            {% if linhas %}
+            <div class="tabela-scroll">
+                <table class="tabela-consulta">
+                    <thead>
+                        <tr>
+                            {% if tipo_entrada == 'COMPRA' %}
+                            <th class="col-check"></th>
+                            {% endif %}
+                            <th>SISBOV</th>
+                            {% if tipo_entrada == 'NASCIMENTO' %}
+                            <th>Controle</th>
+                            {% endif %}
+                            <th>Sexo</th>
+                            <th>Idade em Meses</th>
+                            <th>Nascimento</th>
+                            <th class="col-peso">Peso (kg)</th>
+                            <th>Lote</th>
+                            <th>Espécie</th>
+                            <th>Raça</th>
+                            <th>Gravado em</th>
+                            <th>Alterado em</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-tabela">
+                        {% for linha in linhas %}
+                        <tr data-id="{{ linha.id }}" data-lote="{{ linha.lote }}">
+                            {% if tipo_entrada == 'COMPRA' %}
+                            <td class="col-check">
+                                {% if linha.pode_editar %}
+                                <input type="checkbox" class="chk-vincular" value="{{ linha.id }}">
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            <td class="col-sisbov">{{ linha.sisbov }}</td>
+                            {% if tipo_entrada == 'NASCIMENTO' %}
+                            <td>{{ linha.controle }}</td>
+                            {% endif %}
+                            <td>{{ linha.sexo }}</td>
+                            <td>{{ linha.idade }}</td>
+                            <td>{{ linha.nascimento }}</td>
+                            <td class="col-peso">{{ linha.peso }}</td>
+                            <td>{{ linha.lote }}</td>
+                            <td>{{ linha.especie }}</td>
+                            <td>{{ linha.raca }}</td>
+                            <td>{{ linha.gravado_em }}</td>
+                            <td>{{ linha.alterado_em or '-' }}</td>
+                            <td style="white-space: nowrap;">
+                                {% if linha.pode_editar %}
+                                <a href="{{ url_for('brincagem_consulta.alterar', id_brincagem=linha.id, id_propriedade=id_propriedade) }}" class="btn-acao-linha btn-alterar-linha">Alterar</a>
+                                {% if tipo_entrada == 'NASCIMENTO' %}
+                                <button type="button" class="btn-acao-linha btn-excluir-linha btn-excluir" data-id="{{ linha.id }}" data-sisbov="{{ linha.sisbov }}">Excluir</button>
+                                {% endif %}
+                                {% elif linha.origem == 'notificacao' %}
+                                <span class="selo-notificacao {{ 'conferido' if linha.conferido else 'pendente' }}"
+                                      title="ANIMAL LANCADO NA NOTIFICACAO {{ linha.controle }} - SOME DESTA TELA QUANDO A NOTIFICACAO FOR IMPRESSA">{{ 'NA NOTIFICACAO' if linha.conferido else 'A CONFERIR' }}</span>
+                                {% elif linha.reservada_gta %}
+                                <span class="btn-acao-linha desabilitado" title="Brinco reservado à GTA {{ linha.reservada_gta }}, em leitura no brete (Leitor/Bastão). Termine a leitura da GTA.">EM LEITURA - GTA {{ linha.reservada_gta }}</span>
+                                <button type="button" class="btn-acao-linha btn-excluir-linha btn-soltar-gta" data-id="{{ linha.id }}" data-sisbov="{{ linha.sisbov }}" title="Solta esta leitura da GTA (o brinco continua lido e pode ir para outra GTA)">Soltar da GTA</button>
+                                {% else %}
+                                <span class="btn-acao-linha desabilitado" title="Já incluído em Comunicado oficial ou GTA">Alterar</span>
+                                <span class="btn-acao-linha desabilitado" title="Já incluído em Comunicado oficial ou GTA">Excluir</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% elif not tipo_entrada %}
+            <div class="aviso-selecione-tipo">&#128070; Selecione o Tipo de Entrada (Compra ou Nascimento) para ver os brincos.</div>
+            {% else %}
+            <div class="lista-vazia-container">Nenhum brinco deste Tipo de Entrada gravado ainda para esta Propriedade.</div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // ---- v2.8.0 - Trocar o Tipo recarrega a pagina e volta
+        // para a data mais recente daquele Tipo ----
+        var tipoAtual = '{{ tipo_entrada }}';
+        var filtroTipo = document.getElementById('filtro-tipo');
+        if (filtroTipo) {
+            filtroTipo.addEventListener('change', function() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('tipo_entrada', this.value);
+                url.searchParams.delete('data_brincagem');
+                window.location.href = url.toString();
+            });
+        }
+
+        // ---- Trocar Data recarrega a pagina (server-side) - v2.8.0:
+        // mantem o Tipo ----
+        var filtroData = document.getElementById('filtro-data');
+        if (filtroData) {
+            filtroData.addEventListener('change', function() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('data_brincagem', this.value);
+                url.searchParams.set('tipo_entrada', tipoAtual);
+                window.location.href = url.toString();
+            });
+        }
+
+        // ---- Trocar Lote filtra a tabela na hora (client-side,
+        // sem nova requisicao) e habilita/desabilita o botao
+        // Imprimir Lote (so com um Lote especifico escolhido) ----
+        var filtroLote = document.getElementById('filtro-lote');
+        var btnImprimirLote = document.getElementById('btn-imprimir-lote');
+        if (filtroLote) {
+            filtroLote.addEventListener('change', function() {
+                var loteEscolhido = this.value;
+                document.querySelectorAll('#corpo-tabela tr').forEach(function(linha) {
+                    if (!loteEscolhido || linha.dataset.lote === loteEscolhido) {
+                        linha.classList.remove('oculto-por-lote');
+                    } else {
+                        linha.classList.add('oculto-por-lote');
+                    }
+                });
+                if (btnImprimirLote) {
+                    btnImprimirLote.disabled = !loteEscolhido;
+                }
+            });
+        }
+        // ---- v2.9.0 - volta do Alterar: reaplica o Lote que
+        // estava filtrado (lote_inicial, vindo do servidor) ----
+        var loteInicial = {{ lote_inicial|tojson }};
+        if (filtroLote && loteInicial) {
+            var existeOpcao = Array.prototype.some.call(filtroLote.options, function(opcao) {
+                return opcao.value === loteInicial;
+            });
+            if (existeOpcao) {
+                filtroLote.value = loteInicial;
+                filtroLote.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // ---- v2.9.0 - link Alterar leva o Lote filtrado agora
+        // (vazio = Todos os Lotes) ----
+        document.querySelectorAll('a.btn-alterar-linha').forEach(function(link) {
+            link.addEventListener('click', function(evento) {
+                evento.preventDefault();
+                var url = new URL(this.href, window.location.origin);
+                url.searchParams.set('lote', filtroLote ? filtroLote.value : '');
+                window.location.href = url.toString();
+            });
+        });
+
+        if (btnImprimirLote) {
+            btnImprimirLote.addEventListener('click', function() {
+                if (this.disabled) return;
+                var url = new URL('{{ url_for("brincagem_consulta.imprimir") }}', window.location.origin);
+                url.searchParams.set('id_propriedade', '{{ id_propriedade }}');
+                url.searchParams.set('data_brincagem', '{{ data_selecionada }}');
+                url.searchParams.set('lote', filtroLote.value);
+                url.searchParams.set('tipo_entrada', tipoAtual);   // v2.8.0
+                avisarDownload('Relatório de Brincagem — Lote ' + filtroLote.value + ' (' + '{{ data_selecionada }}' + ')', null, this);
+                window.location.href = url.toString();
+            });
+        }
+
+        // ==========================================================
+        // v2.6.0 - Vincular GTA: checkbox por linha habilita/
+        // desabilita o botao. A selecao SOBREVIVE ao filtro de Lote.
+        // ==========================================================
+        var btnVincularGta = document.getElementById('btn-vincular-gta');
+        var checkboxesVincular = document.querySelectorAll('.chk-vincular');
+
+        function atualizarBotaoVincular() {
+            if (!btnVincularGta) return;   // v2.8.0 - botao so existe no Tipo Compra
+            var algumMarcado = Array.prototype.some.call(checkboxesVincular, function(chk) {
+                return chk.checked;
+            });
+            btnVincularGta.disabled = !algumMarcado;
+        }
+
+        checkboxesVincular.forEach(function(chk) {
+            chk.addEventListener('change', atualizarBotaoVincular);
+        });
+
+        if (btnVincularGta) {
+            btnVincularGta.addEventListener('click', function() {
+                var idsMarcados = Array.prototype.filter.call(checkboxesVincular, function(chk) {
+                    return chk.checked;
+                }).map(function(chk) { return chk.value; });
+
+                if (idsMarcados.length === 0) return;
+
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("vincular_gta.iniciar") }}';
+
+                var campoPropriedade = document.createElement('input');
+                campoPropriedade.type = 'hidden';
+                campoPropriedade.name = 'id_propriedade';
+                campoPropriedade.value = '{{ id_propriedade }}';
+                form.appendChild(campoPropriedade);
+
+                idsMarcados.forEach(function(id) {
+                    var campoId = document.createElement('input');
+                    campoId.type = 'hidden';
+                    campoId.name = 'ids';
+                    campoId.value = id;
+                    form.appendChild(campoId);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+
+        // ---- Excluir (AJAX, com confirmacao via modal_confirmacao.html
+        // v2.0.0, Padrao 2) ----
+
+        // v2.5.0 - apos excluir, atualiza na hora (sem F5) o quadro
+        // "Total de Animais" e a quantidade do Lote no dropdown.
+        function _atualizarContadoresAposExclusao(loteDaLinha) {
+            var elementoTotal = document.getElementById('valor-total-animais');
+            var totalAtual = parseInt(elementoTotal.textContent, 10) || 0;
+            var novoTotal = Math.max(0, totalAtual - 1);
+            elementoTotal.textContent = novoTotal;
+
+            if (!filtroLote) return;
+
+            var opcaoTodos = filtroLote.querySelector('option[value=""]');
+            if (opcaoTodos) {
+                opcaoTodos.textContent = 'Todos os Lotes (' + novoTotal + ')';
+            }
+
+            var valorLote = loteDaLinha || '(sem lote)';
+            var opcaoLote = filtroLote.querySelector('option[value="' + CSS.escape(valorLote) + '"]');
+            if (opcaoLote) {
+                var qtdeAtual = parseInt(opcaoLote.dataset.qtde, 10) || 0;
+                var novaQtde = Math.max(0, qtdeAtual - 1);
+
+                if (novaQtde === 0) {
+                    var estavaSelecionado = (filtroLote.value === valorLote);
+                    opcaoLote.remove();
+                    if (estavaSelecionado) {
+                        filtroLote.value = '';
+                        if (btnImprimirLote) { btnImprimirLote.disabled = true; }
+                        document.querySelectorAll('#corpo-tabela tr').forEach(function(linha) {
+                            linha.classList.remove('oculto-por-lote');
+                        });
+                    }
+                } else {
+                    opcaoLote.dataset.qtde = novaQtde;
+                    opcaoLote.textContent = valorLote + ' (' + novaQtde + ')';
+                }
+            }
+        }
+
+        function _executarExclusao(botao, id, linha, lote) {
+            linha.classList.add('excluindo');
+            botao.disabled = true;
+
+            fetch('{{ url_for("brincagem_consulta.excluir") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: parseInt(id, 10) })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.ok) {
+                    linha.remove();
+                    _atualizarContadoresAposExclusao(lote);
+                    atualizarBotaoVincular();
+                    // v2.8.0 - Numero de Controle zerado/liberado
+                    if (dados.aviso) { mostrarAviso(dados.aviso); }   // v2.10.0
+                } else {
+                    linha.classList.remove('excluindo');
+                    botao.disabled = false;
+                    mostrarAviso(dados.erro || 'Não foi possível excluir.');   // v2.10.0
+                }
+            })
+            .catch(function() {
+                linha.classList.remove('excluindo');
+                botao.disabled = false;
+                mostrarAviso('Erro de conexão ao excluir.');   // v2.10.0
+            });
+        }
+
+        // v2.14.0 - Soltar da GTA: a leitura continua, so deixa de ser reservada.
+        document.querySelectorAll('.btn-soltar-gta').forEach(function(botao) {
+            botao.addEventListener('click', function() {
+                var id = this.dataset.id;
+                var sisbov = this.dataset.sisbov;
+                confirmarAcaoAssincrona(
+                    function() {
+                        botao.disabled = true;
+                        fetch('{{ url_for("brincagem_consulta.soltar_gta") }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: parseInt(id, 10) })
+                        })
+                        .then(function(resp) { return resp.json(); })
+                        .then(function(dados) {
+                            if (dados.ok) { window.location.reload(); }
+                            else { botao.disabled = false; mostrarAviso(dados.erro || 'Não foi possível soltar.'); }
+                        })
+                        .catch(function() { botao.disabled = false; mostrarAviso('Erro de conexão.'); });
+                    },
+                    'Soltar o brinco ' + sisbov + ' da GTA? A leitura continua e o brinco pode ser vinculado a outra GTA.',
+                    'Soltar'
+                );
+            });
+        });
+
+        document.querySelectorAll('.btn-excluir').forEach(function(botao) {
+            botao.addEventListener('click', function() {
+                var id = this.dataset.id;
+                var sisbov = this.dataset.sisbov;
+                var linha = this.closest('tr');
+                var lote = linha.dataset.lote;
+
+                confirmarAcaoAssincrona(
+                    function() { _executarExclusao(botao, id, linha, lote); },
+                    'Excluir o brinco ' + sisbov + '? Esta ação não pode ser desfeita.',
+                    'Excluir'
+                );
+            });
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincagem_consulta_lista.html
+     ========================================================= -->

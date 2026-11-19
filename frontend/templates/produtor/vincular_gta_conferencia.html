@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\vincular_gta_conferencia.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-22 18:10 -03
+     ATUALIZADO EM: 2026-10-08 19:20 -03
+     VERSAO: 1.7.0
+
+     DESCRICAO:
+         Tela 03 (o coracao) do modulo Vincular GTA. Painel com
+         cada categoria da GTA (Especie/Sexo/Idade/Necessario) e
+         quantos animais estao MARCADOS nela.
+
+         CONFERENCIA ASSERTIVA (v1.5.0 - ver vincular_gta.py
+         v1.6.0):
+           - RESERVA AUTOMATICA: ao abrir, cada categoria ja vem
+             com exatamente a quantidade pedida marcada, pelos
+             MENORES SISBOVs. A seta abre a lista da categoria com
+             caixinhas - desmarcar um e marcar outro troca o
+             animal. "Sobram X" = livres para outra GTA.
+           - NRO MESES editavel por animal (vem calculado pelo
+             servidor). A faixa ao lado muda enquanto digita; ao
+             sair do campo (ou Enter) o animal vai para a
+             categoria certa e a reserva se refaz, preferindo os
+             animais ja marcados. No Confirmar o servidor grava
+             Nascimento e faixa JUNTOS.
+           - SEXO so leitura (decisao de Benedito).
+           - Aviso "confira a idade" em animal cuja faixa gravada
+             nao bate com o Nascimento (registro antigo).
+           - Grupo "Fora desta GTA": animais sem categoria na GTA
+             (podem entrar se o Nro Meses for corrigido).
+           - Grupo "Com pendencia": animais que NAO podem ser
+             vinculados (motivo vindo do servidor).
+           - Confirmar: janelinha padrao do Orion
+             (modal_confirmacao.html, Padrao 2) com GTA, qtde e
+             nome da Propriedade -> AJAX para salvar() -> janelinha
+             de resultado com OK (leva a proxima tela, informada
+             pelo servidor).
+           - Aviso ao sair com ajustes nao gravados.
+           - CONFERENCIA DE RESPONSABILIDADE (v1.5.1): caixa "Conferi
+             ... e assumo a responsabilidade" - so pode ser marcada
+             com tudo verde e total batendo; depois de marcada NAO
+             desmarca: a tela congela (caixinhas, Nro Meses e Juntar
+             Datas travados) e o Confirmar acende. Para mudar algo,
+             so pelo botao "Recomecar" (descarta tudo e recarrega a
+             tela do zero) - decisao de Benedito: "o cidadao tem que
+             prestar atencao; se nao prestou, recomeca do ZERO".
+
+         JUNTAR DATAS (v1.4.0): janelinha de 2 passos (Previa ->
+         Resultado com OK que recarrega a Conferencia). v1.5.0:
+         avisa que ajustes feitos na tela serao descartados.
+
+     v1.0.0: Criacao do modulo (Sessao 077, 22/09/2026, 18:10
+         -03).
+     v1.1.0: Sessao 077 cont. (22/09/2026, 21:20 -03) - Subtitulo
+         passa a mostrar a Data de Brincagem.
+     v1.2.0: Sessao 077 cont. (22/09/2026, 21:40 -03) - Cor de
+         falta/sobra trocada para o vermelho de alerta #c62828.
+     v1.3.0: Sessao 077 cont. (22/09/2026, 21:55 -03) - BUG REAL:
+         cor de .valor-bate/.valor-falta/.valor-sobra perdia para
+         .tabela-categorias td (especificidade) - regras
+         qualificadas .tabela-categorias td.valor-X.
+     v1.4.0: Sessao 078 (23/09/2026, 11:40 -03) - JUNTAR DATAS +
+         TRAVA DA ENTREGA (aviso vermelho global + Confirmar
+         bloqueado).
+     v1.5.0: Sessao 079 (24/09/2026, 18:30 -03) - CONFERENCIA
+         ASSERTIVA (desenho fechado com Benedito apos o 1o teste
+         real: Data com 99 animais x GTA de 50 sem como escolher).
+         Mudancas:
+           - Reserva automatica + caixinha por animal; total e
+             contagens passam a ser dos MARCADOS.
+           - Dropdown de Idade trocado por campo Nro Meses + faixa
+             ao vivo (idade + Nascimento sempre juntos no
+             servidor).
+           - Dropdown de Sexo e campo de motivo REMOVIDOS (sexo so
+             leitura).
+           - Aviso de "descasado", grupos "Fora desta GTA" e
+             "Com pendencia".
+           - Trava da Entrega deixou de ser aviso global: o animal
+             nessa situacao vira pendencia (os demais seguem).
+           - Confirmar com janelinha de resumo e janelinha de
+             resultado (antes ia direto para a Consulta
+             Brincagem).
+           - Aviso ao sair com ajustes nao gravados; aviso no
+             Juntar Datas de que os ajustes serao descartados.
+           - Dados do GTA chegam como dicionario simples (lidos
+             dentro da sessao do banco no router).
+     v1.5.1: Sessao 079 (24/09/2026, 19:00 -03) - Pedidos de
+         Benedito antes do 1o Confirmar real:
+           - Caixa de CONFERENCIA DE RESPONSABILIDADE (ver
+             DESCRICAO) + botao "Recomecar". Confirmar so acende com
+             a caixa marcada.
+           - Rotulos: "Necessario/Marcados" -> "GTA pede/
+             Separados"; "sobram X" -> "livres: X"; painel "TOTAL
+             MARCADO/TOTAL DA GTA" -> "TOTAL SEPARADO/GTA PEDE".
+           - Numeros das colunas e do painel bem maiores; verde e
+             vermelho FORTES com fundo na celula (o verde claro
+             antigo era dificil de ver).
+         Nenhuma mudanca de regra de negocio nem do que e enviado
+         ao servidor.
+     v1.6.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). Marca usada: alterado (ajustes ainda nao gravados).
+     v1.7.0: Sessao 091 (08/10/2026, 19:20 -03) - pedido de Benedito: o usuario
+         conferia sem ver os animais (so o botao cinza ▼ os mostrava, e
+         com 100 animais a lista empurrava a caixa de conferencia para
+         longe). Agora cada categoria tem o botao "Ver os N animais", que
+         abre uma janela com todos os animais em DUAS colunas (uma coluna no
+         celular), com caixinha e Nro Meses funcionando como antes, e
+         resumo ao vivo (GTA pede / marcados / livres). Fecha no Fechar, no
+         clique fora ou no Esc. O aviso da tela manda clicar em "Ver os
+         animais". Regras, gravacao e Juntar Datas intactos.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Vincular GTA {{ gta.numero_gta_completo }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 20px 24px; max-width: 1100px; margin-bottom: 20px; }
+
+        .tabela-categorias { width: 100%; border-collapse: collapse; }
+        .tabela-categorias th { text-align: left; padding: 8px 10px; font-size: 11.5px; color: #999999; font-weight: normal; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #f0f0f0; }
+                .tabela-categorias td { padding: 10px 10px; font-size: 13.5px; color: #333333; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        /* v1.5.1 - numeros grandes; verde/vermelho FORTES com fundo */
+        .tabela-categorias td.col-num { text-align: center; font-weight: bold; font-size: 20px; }
+        .tabela-categorias th.col-num { text-align: center; }
+        .valor-bate, .tabela-categorias td.valor-bate { color: #ffffff; background: #1b7a2b; }
+        .valor-falta, .tabela-categorias td.valor-falta { color: #ffffff; background: #c62828; }
+        .valor-sobra, .tabela-categorias td.valor-sobra { color: #ffffff; background: #c62828; }
+        .tabela-categorias td.col-obs { font-size: 12px; color: #888888; }
+
+        /* v1.7.0 - botao "Ver os N animais" e janela com a lista em 2 colunas */
+        .btn-ver-animais { padding: 7px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-ver-animais:hover { background: #fff3ef; }
+        .modal-animais-fundo { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-animais-caixa { background: #ffffff; border-radius: 10px; width: 100%; max-width: 1180px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .modal-animais-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #e0e0e0; }
+        .modal-animais-titulo { font-size: 16px; font-weight: bold; color: #333333; }
+        .modal-animais-sub { font-size: 12.5px; color: #666666; margin-top: 3px; }
+        .btn-fechar-animais { padding: 8px 18px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .modal-animais-corpo { overflow-y: auto; padding: 8px 20px 16px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; align-content: start; }
+        .modal-animais-corpo .item-animal { gap: 8px; }
+        .modal-animais-corpo .item-animal .sisbov { min-width: 140px; }
+        .modal-animais-corpo .item-animal .faixa { min-width: 90px; }
+        @media (max-width: 900px) { .modal-animais-corpo { grid-template-columns: 1fr; } }
+
+        /* v1.5.0 - linha de animal: caixinha | SISBOV | Nro Meses | faixa | sexo | avisos */
+        .item-animal { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid #ececec; flex-wrap: wrap; }
+        .item-animal:last-child { border-bottom: none; }
+        .item-animal.desmarcado { opacity: 0.6; }
+        .item-animal input[type="checkbox"] { width: 17px; height: 17px; accent-color: #D4370A; cursor: pointer; }
+        .item-animal .sisbov { font-weight: bold; font-family: monospace, monospace; font-size: 13px; min-width: 150px; }
+        .item-animal .rotulo-meses { font-size: 11.5px; color: #666666; }
+        .item-animal input.meses { width: 52px; padding: 5px 6px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; text-align: center; font-family: Arial, sans-serif; }
+        .item-animal input.meses:focus { outline: none; border-color: #D4370A; }
+        .item-animal input.meses.editado { border: 2px solid #1565C0; }
+        .item-animal .faixa { font-size: 12.5px; font-weight: bold; color: #1565C0; min-width: 110px; }
+        .item-animal .faixa.invalida { color: #c62828; }
+        .item-animal .sexo { font-size: 12.5px; color: #555555; min-width: 60px; }
+        .item-animal .aviso-descasado { font-size: 11.5px; font-weight: bold; color: #8a6d00; background: #fff8e1; border: 1px solid #f9a825; border-radius: 4px; padding: 2px 6px; }
+        .item-animal .motivo-pendencia { font-size: 12px; font-weight: bold; color: #c62828; }
+
+        .bloco-extra { margin-top: 14px; border: 1px solid #e0e0e0; border-radius: 8px; }
+        .bloco-extra-titulo { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; font-size: 13px; font-weight: bold; color: #555555; cursor: pointer; }
+        .bloco-extra-titulo:hover { background: #fafafa; }
+        .bloco-extra.pendencia .bloco-extra-titulo { color: #c62828; }
+        .bloco-extra-corpo { display: none; padding: 0 14px 10px; }
+        .bloco-extra-corpo.aberto { display: block; }
+
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; text-align: center; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .painel-resumo .valor { font-size: 34px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.bate { color: #1b7a2b; }
+        .painel-resumo .valor.destaque { color: #D4370A; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 12px 18px; border-radius: 6px; font-size: 13.5px; font-weight: bold; color: #c62828; margin-top: 16px; display: none; }
+
+        .aviso-pendencias { background: #ffebee; border-left: 6px solid #c62828; padding: 12px 18px; border-radius: 6px; font-size: 13.5px; font-weight: bold; color: #c62828; margin-bottom: 16px; max-width: 1100px; line-height: 1.5; }
+
+        /* v1.5.1 - caixa de conferencia de responsabilidade */
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 12px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro input[type="checkbox"]:disabled { cursor: not-allowed; }
+        .confirma-quadro label { font-size: 13.5px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+        .confirma-quadro.conferido { background: #e8f5e9; border-color: #1b7a2b; }
+        .confirma-quadro.conferido label { color: #1b5e20; }
+        .btn-recomecar { padding: 10px 20px; background: #ffffff; color: #555555; border: 1px solid #888888; border-radius: 6px; font-size: 14px; cursor: pointer; display: none; }
+        .btn-recomecar:hover { background: #888888; color: #ffffff; }
+        .btn-juntar:disabled { border-color: #cccccc; color: #aaaaaa; background: #f5f5f5; cursor: not-allowed; }
+        .item-animal input:disabled { cursor: not-allowed; background: #eeeeee; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; align-items: center; }
+        .aviso-confirmar { font-size: 12px; color: #888888; margin-right: auto; }
+        .btn-confirmar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-confirmar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+
+        /* v1.4.0 - Botao "Juntar Datas": acao secundaria (contorno azul). */
+        .btn-juntar { padding: 10px 24px; background: #ffffff; color: #1565C0; border: 1px solid #1565C0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-juntar:hover { background: #1565C0; color: #ffffff; }
+
+        /* ---------------------------------------------------
+           Janelinhas (Juntar Datas e Resultado). Overlay, caixa e
+           botoes vem PRONTOS de modal_confirmacao.html (classes
+           modal-confirmacao-*); aqui so o que e proprio delas.
+           --------------------------------------------------- */
+        #modalJuntarOverlay .modal-confirmacao-caixa { max-width: 480px; text-align: left; }
+        #modalJuntarOverlay .modal-confirmacao-btn-confirmar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; opacity: 1; }
+        .juntar-titulo { font-size: 17px; font-weight: bold; color: #333333; margin-bottom: 6px; }
+        .juntar-texto { font-size: 13px; color: #666666; line-height: 1.5; margin-bottom: 16px; }
+        .juntar-aviso-ajustes { font-size: 12.5px; font-weight: bold; color: #8a6d00; background: #fff8e1; border-left: 5px solid #f9a825; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; display: none; }
+        .juntar-bloco { margin-bottom: 14px; }
+        .juntar-rotulo { font-size: 12px; font-weight: bold; color: #333333; margin-bottom: 6px; }
+        .juntar-lista { border: 1px solid #e0e0e0; border-radius: 6px; max-height: 190px; overflow-y: auto; }
+        .juntar-linha { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; font-size: 13.5px; color: #333333; border-bottom: 1px solid #f0f0f0; }
+        .juntar-linha:last-child { border-bottom: none; }
+        label.juntar-linha { cursor: pointer; }
+        label.juntar-linha:hover { background: #fafafa; }
+        .juntar-linha input[type="checkbox"] { width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; accent-color: #1565C0; cursor: pointer; }
+        .juntar-linha-fixa { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 6px; font-weight: bold; }
+        .juntar-qtde { color: #666666; font-size: 12.5px; }
+        .juntar-vazio { font-size: 12.5px; color: #999999; font-style: italic; padding: 8px 12px; }
+        #juntarNovaData { padding: 10px 11px; border: 1px solid #cccccc; border-radius: 6px; font-size: 15px; color: #333333; width: 160px; font-family: Arial, sans-serif; }
+        #juntarNovaData:focus { outline: none; border-color: #D4370A; }
+        .juntar-dica { font-size: 12px; color: #888888; margin-top: 5px; }
+        .juntar-previa { background: #e3f2fd; border-left: 5px solid #1565C0; border-radius: 6px; padding: 10px 14px; font-size: 13.5px; color: #0D47A1; font-weight: bold; margin-bottom: 14px; display: none; }
+        .juntar-erro { background: #ffebee; border-left: 5px solid #c62828; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #c62828; font-weight: bold; margin-bottom: 14px; display: none; }
+        #juntarPasso2 { text-align: center; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128279;</span> Vincular GTA {{ gta.numero_gta_completo }}</h2>
+            </div>
+            <div class="subtitulo">{{ total_selecionados }} animal(is) nesta Conferência, Brincagem de {{ data_brincagem_br }} &#8212; a GTA pede {{ gta.qtde_animais }} no total.{% if data_entrega_br %} Entrega da GTA: {{ data_entrega_br }}.{% endif %}</div>
+
+            {% if qtde_pendencias %}
+            <div class="aviso-pendencias">
+                &#9888;&#65039; {{ qtde_pendencias }} animal(is) com pendência NÃO podem ser vinculados &#8212; veja o grupo "Com pendência" abaixo.
+            </div>
+            {% endif %}
+
+            <div class="form-container">
+
+                <table class="tabela-categorias">
+                    <thead>
+                        <tr>
+                            <th>Espécie</th>
+                            <th>Sexo</th>
+                            <th>Idade</th>
+                            <th class="col-num">GTA pede</th>
+                            <th class="col-num">Separados</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-categorias"></tbody>
+                </table>
+
+                <div class="bloco-extra" id="bloco-fora">
+                    <div class="bloco-extra-titulo" id="titulo-fora"></div>
+                    <div class="bloco-extra-corpo" id="corpo-fora"></div>
+                </div>
+
+                <div class="bloco-extra pendencia" id="bloco-pendencia">
+                    <div class="bloco-extra-titulo" id="titulo-pendencia"></div>
+                    <div class="bloco-extra-corpo" id="corpo-pendencia"></div>
+                </div>
+
+                <div class="painel-resumo">
+                    <div>
+                        <div class="rotulo">TOTAL SEPARADO</div>
+                        <div class="valor" id="total-selecionado">-</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">GTA PEDE</div>
+                        <div class="valor destaque">{{ gta.qtde_animais }}</div>
+                    </div>
+                </div>
+
+                <div class="erro" id="erro-confirmar"></div>
+
+                <!-- v1.5.1 - conferencia de responsabilidade -->
+                <div class="confirma-quadro" id="quadro-conferencia">
+                    <input type="checkbox" id="chk-conferencia" disabled>
+                    <label for="chk-conferencia" id="label-conferencia">Conferi os animais separados, as idades e a GTA, e assumo a responsabilidade por este vínculo.</label>
+                </div>
+
+                <div class="form-botoes">
+                    <span class="aviso-confirmar" id="aviso-confirmar"></span>
+                    <button type="button" class="btn-recomecar" id="btn-recomecar">Recomeçar</button>
+                    {% if outras_datas or qtde_pendencias %}
+                    <button type="button" class="btn-juntar" id="btn-juntar">Juntar Datas</button>
+                    {% endif %}
+                    <button type="button" class="btn-confirmar" id="btn-confirmar" disabled>Confirmar vínculo</button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <!-- =====================================================
+         Janelinha "Juntar Datas" (2 passos).
+         ===================================================== -->
+    <div id="modalJuntarOverlay" class="modal-confirmacao-overlay">
+        <div class="modal-confirmacao-caixa">
+
+            <!-- ---------- Passo 1 ---------- -->
+            <div id="juntarPasso1">
+                <div class="juntar-titulo">Juntar Datas de Brincagem</div>
+                <div class="juntar-texto">Todos os animais livres das datas marcadas passam para a Nova Data e entram nesta Conferência. Só a Data de Brincagem muda &#8212; nada mais.</div>
+                <div class="juntar-aviso-ajustes" id="juntarAvisoAjustes">&#9888;&#65039; Os ajustes feitos nesta tela (marcações e Nro Meses) ainda não foram gravados e serão descartados ao juntar.</div>
+
+                <div class="juntar-bloco">
+                    <div class="juntar-rotulo">Data desta Conferência</div>
+                    <div class="juntar-linha juntar-linha-fixa">
+                        <span>{{ data_brincagem_br }}</span>
+                        <span class="juntar-qtde">{{ total_selecionados }} animal(is)</span>
+                    </div>
+                </div>
+
+                <div class="juntar-bloco">
+                    <div class="juntar-rotulo">Outras datas com animais livres para vincular GTA</div>
+                    <div class="juntar-lista">
+                        {% if outras_datas %}
+                            {% for item in outras_datas %}
+                            <label class="juntar-linha">
+                                <span><input type="checkbox" class="chk-juntar" value="{{ item.data_iso }}" data-qtde="{{ item.quantidade }}">{{ item.data_br }}</span>
+                                <span class="juntar-qtde">{{ item.quantidade }} animal(is)</span>
+                            </label>
+                            {% endfor %}
+                        {% else %}
+                            <div class="juntar-vazio">Nenhuma outra data com animais livres.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="juntar-bloco">
+                    <div class="juntar-rotulo">Nova Data Brincagem (digite dd/mm/aaaa)</div>
+                    <input type="text" id="juntarNovaData" maxlength="10" autocomplete="off" inputmode="numeric" value="{{ data_brincagem_br if data_brincagem_iso else '' }}">
+                    {% if data_entrega_br %}
+                    <div class="juntar-dica">Não pode ser anterior à Entrega da GTA: {{ data_entrega_br }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="juntar-previa" id="juntarPrevia"></div>
+                <div class="juntar-erro" id="juntarErro"></div>
+
+                <div class="modal-confirmacao-acoes">
+                    <button type="button" class="modal-confirmacao-btn-cancelar" id="juntarBtnCancelar">Cancelar</button>
+                    <button type="button" class="modal-confirmacao-btn-confirmar" id="juntarBtnConfirmar" disabled>Confirmar</button>
+                </div>
+            </div>
+
+            <!-- ---------- Passo 2 ---------- -->
+            <div id="juntarPasso2" style="display: none;">
+                <div class="modal-confirmacao-icone">&#9989;</div>
+                <div class="modal-confirmacao-texto" id="juntarResultado"></div>
+                <div class="modal-confirmacao-acoes">
+                    <button type="button" class="modal-confirmacao-btn-confirmar" id="juntarBtnOk">OK</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =====================================================
+         v1.5.0 - Janelinha de RESULTADO do vinculo.
+         ===================================================== -->
+    <div id="modalResultadoOverlay" class="modal-confirmacao-overlay">
+        <div class="modal-confirmacao-caixa">
+            <div class="modal-confirmacao-icone">&#9989;</div>
+            <div class="modal-confirmacao-texto" id="resultadoTexto"></div>
+            <div class="modal-confirmacao-acoes">
+                <button type="button" class="modal-confirmacao-btn-confirmar" id="resultadoBtnOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- v1.7.0 - janela "Ver os N animais" -->
+    <div class="modal-animais-fundo" id="modal-animais">
+        <div class="modal-animais-caixa" role="dialog" aria-modal="true">
+            <div class="modal-animais-topo">
+                <div>
+                    <div class="modal-animais-titulo" id="modal-animais-titulo"></div>
+                    <div class="modal-animais-sub" id="modal-animais-sub"></div>
+                </div>
+                <button type="button" class="btn-fechar-animais" id="btn-fechar-animais">Fechar</button>
+            </div>
+            <div class="modal-animais-corpo" id="modal-animais-corpo"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // ==========================================================
+        // BLOCO 1 - Dados vindos do servidor (vincular_gta.py
+        // v1.6.0 - conferencia())
+        // ==========================================================
+        var idGta = {{ gta.id }};
+        var numeroGta = {{ gta.numero_gta_completo | tojson }};
+        var totalGta = {{ gta.qtde_animais }};
+        var nomePropriedade = {{ nome_propriedade | tojson }};
+        var categoriasGta = {{ categorias | tojson }};
+        var animais = {{ animais | tojson }};
+        var idadesDisponiveis = {{ idades_disponiveis | tojson }};
+        var dataEntregaIso = '{{ data_entrega_iso }}';
+        var dataAtualIso = '{{ data_brincagem_iso }}';
+
+        // Estado de tela de cada animal (nao vem do servidor).
+        animais.forEach(function(a) {
+            a.marcado = false;
+            a.nro_meses_original = a.nro_meses;
+            a.editado = false;
+            a.meses_invalido = false;
+        });
+
+        var categoriaAberta = null;
+        var foraAberto = false;
+        var pendenciaAberto = false;
+        var alterado = false;     // ajustes ainda nao gravados
+        var conferido = false;    // v1.5.1 - caixa de responsabilidade marcada (tela congelada)
+
+        // ==========================================================
+        // BLOCO 2 - Regras de idade e categoria
+        // ==========================================================
+
+        // Faixa (tb_4006) de um Nro Meses: meses x 30 dias dentro de
+        // dias_min..dias_max - mesma conta do servidor.
+        function faixaDoMeses(meses) {
+            var dias = meses * 30;
+            for (var i = 0; i < idadesDisponiveis.length; i++) {
+                var f = idadesDisponiveis[i];
+                if (dias >= f.dias_min && dias <= f.dias_max) { return f; }
+            }
+            return null;
+        }
+
+        function faixaPorId(id) {
+            return idadesDisponiveis.find(function(i) { return i.id === id; }) || null;
+        }
+
+        // Chave Especie|Sexo|Idade do animal (mesma normalizacao do
+        // servidor). Nro Meses incorreto = sem chave.
+        function chaveAnimal(a) {
+            if (a.meses_invalido) { return ''; }
+            var faixa = faixaPorId(a.id_idade_meses);
+            return a.especie_norm + '|' + a.sexo + '|' + (faixa ? faixa.normalizada : '');
+        }
+
+        function candidatosDaCategoria(cat) {
+            return animais.filter(function(a) { return !a.pendencia && chaveAnimal(a) === cat.chave; });
+        }
+
+        function categoriaDoAnimal(a) {
+            if (a.pendencia) { return null; }
+            var chave = chaveAnimal(a);
+            return categoriasGta.find(function(c) { return c.chave === chave; }) || null;
+        }
+
+        // ==========================================================
+        // BLOCO 3 - Reserva automatica: em cada categoria marca
+        // exatamente o necessario, pelos menores SISBOVs. Com
+        // preferirMarcados=true (depois de editar Nro Meses), os ja
+        // marcados vem na frente - a escolha manual do usuario e
+        // mantida sempre que couber.
+        // ==========================================================
+        function reservar(preferirMarcados) {
+            animais.forEach(function(a) {
+                if (!categoriaDoAnimal(a)) { a.marcado = false; }
+            });
+            categoriasGta.forEach(function(cat) {
+                var cands = candidatosDaCategoria(cat).slice().sort(function(x, y) {
+                    if (preferirMarcados && x.marcado !== y.marcado) { return x.marcado ? -1 : 1; }
+                    return x.sisbov < y.sisbov ? -1 : (x.sisbov > y.sisbov ? 1 : 0);
+                });
+                cands.forEach(function(a, indice) { a.marcado = indice < cat.necessario; });
+            });
+        }
+
+        // ==========================================================
+        // BLOCO 4 - Montagem da linha de um animal (usada nas
+        // categorias e no grupo "Fora desta GTA").
+        // ==========================================================
+        function linhaAnimal(a, comCaixinha) {
+            var linha = document.createElement('div');
+            linha.className = 'item-animal' + (comCaixinha && !a.marcado ? ' desmarcado' : '');
+
+            var faixa = a.meses_invalido ? null : faixaPorId(a.id_idade_meses);
+            var html = '';
+            if (comCaixinha) {
+                html += '<input type="checkbox" class="chk-animal" data-id="' + a.id + '"' + (a.marcado ? ' checked' : '') + (conferido ? ' disabled' : '') + '>';
+            }
+            html += '<span class="sisbov">' + a.sisbov + '</span>';
+            html += '<span class="rotulo-meses">Nro Meses</span>';
+            html += '<input type="text" class="meses' + (a.editado ? ' editado' : '') + '" data-id="' + a.id +
+                    '" maxlength="2" inputmode="numeric" value="' + (a.nro_meses === null ? '' : a.nro_meses) + '"' + (conferido ? ' disabled' : '') + '>';
+            html += '<span class="faixa' + (faixa ? '' : ' invalida') + '" id="faixa-' + a.id + '">' +
+                    (faixa ? faixa.descricao : 'Nro Meses incorreto') + '</span>';
+            html += '<span class="sexo">' + (a.sexo === 'FEMEA' ? 'Fêmea' : 'Macho') + '</span>';
+            if (a.descasado && !a.editado) {
+                html += '<span class="aviso-descasado" title="A faixa gravada não bate com o Nascimento">&#9888;&#65039; confira a idade</span>';
+            }
+            linha.innerHTML = html;
+            return linha;
+        }
+
+        // ==========================================================
+        // BLOCO 5 - renderizar(): tabela de categorias, grupos
+        // extras, totais e liga/desliga o Confirmar.
+        // ==========================================================
+        function renderizar() {
+            var corpo = document.getElementById('corpo-categorias');
+            corpo.innerHTML = '';
+            var tudoBate = true;
+
+            categoriasGta.forEach(function(cat) {
+                var cands = candidatosDaCategoria(cat);
+                var marcados = cands.filter(function(a) { return a.marcado; }).length;
+                var diff = marcados - cat.necessario;
+                var classe = diff === 0 ? 'valor-bate' : (diff > 0 ? 'valor-sobra' : 'valor-falta');
+                if (diff !== 0) { tudoBate = false; }
+
+                var obs = '';
+                if (cands.length < cat.necessario) {
+                    obs = '<span style="color:#c62828; font-weight:bold;">faltam ' + (cat.necessario - cands.length) + '</span>';
+                } else if (cands.length > marcados) {
+                    obs = 'livres: ' + (cands.length - marcados);
+                }
+
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + cat.especie + '</td>' +
+                    '<td>' + cat.sexo + '</td>' +
+                    '<td>' + cat.idade_meses + '</td>' +
+                    '<td class="col-num">' + cat.necessario + '</td>' +
+                    '<td class="col-num ' + classe + '">' + marcados + '</td>' +
+                    '<td class="col-obs">' + obs + '</td>' +
+                    '<td style="text-align: center;"><button type="button" class="btn-ver-animais" data-chave="' + cat.chave + '">' +
+                        (cands.length === 1 ? 'Ver 1 animal' : 'Ver os ' + cands.length + ' animais') + '</button></td>';
+                corpo.appendChild(tr);
+            });
+
+            // v1.7.0 - janela com os animais da categoria aberta
+            renderizarModalAnimais();
+
+            // ---- Grupo "Fora desta GTA" ----
+            var fora = animais.filter(function(a) { return !a.pendencia && !categoriaDoAnimal(a); });
+            var blocoFora = document.getElementById('bloco-fora');
+            blocoFora.style.display = fora.length ? 'block' : 'none';
+            document.getElementById('titulo-fora').innerHTML =
+                '<span>Fora desta GTA (' + fora.length + ') &#8212; não entram no vínculo; corrija o Nro Meses se algum deveria entrar</span><span>' + (foraAberto ? '&#9650;' : '&#9660;') + '</span>';
+            var corpoFora = document.getElementById('corpo-fora');
+            corpoFora.className = 'bloco-extra-corpo' + (foraAberto ? ' aberto' : '');
+            corpoFora.innerHTML = '';
+            fora.forEach(function(a) { corpoFora.appendChild(linhaAnimal(a, false)); });
+
+            // ---- Grupo "Com pendencia" ----
+            var pend = animais.filter(function(a) { return a.pendencia; });
+            var blocoPend = document.getElementById('bloco-pendencia');
+            blocoPend.style.display = pend.length ? 'block' : 'none';
+            document.getElementById('titulo-pendencia').innerHTML =
+                '<span>&#9888;&#65039; Com pendência (' + pend.length + ') &#8212; não podem ser vinculados</span><span>' + (pendenciaAberto ? '&#9650;' : '&#9660;') + '</span>';
+            var corpoPend = document.getElementById('corpo-pendencia');
+            corpoPend.className = 'bloco-extra-corpo' + (pendenciaAberto ? ' aberto' : '');
+            corpoPend.innerHTML = '';
+            pend.forEach(function(a) {
+                var linha = document.createElement('div');
+                linha.className = 'item-animal';
+                linha.innerHTML = '<span class="sisbov">' + a.sisbov + '</span><span class="motivo-pendencia">' + a.pendencia + '</span>';
+                corpoPend.appendChild(linha);
+            });
+
+            // ---- Totais, conferencia e Confirmar (v1.5.1) ----
+            var totalMarcado = animais.filter(function(a) { return a.marcado; }).length;
+            var campoTotal = document.getElementById('total-selecionado');
+            campoTotal.textContent = totalMarcado;
+
+            var pode = tudoBate && totalMarcado === totalGta;
+            campoTotal.classList.toggle('bate', pode);
+
+            // Caixa de conferencia: so libera com tudo batendo; uma vez
+            // marcada, fica marcada e travada (so o Recomecar desfaz).
+            var chkConf = document.getElementById('chk-conferencia');
+            chkConf.checked = conferido;
+            chkConf.disabled = conferido || !pode;
+            document.getElementById('quadro-conferencia').classList.toggle('conferido', conferido);
+
+            document.getElementById('btn-confirmar').disabled = !(pode && conferido);
+            document.getElementById('btn-recomecar').style.display = conferido ? 'inline-block' : 'none';
+            var btnJuntarTela = document.getElementById('btn-juntar');
+            if (btnJuntarTela) { btnJuntarTela.disabled = conferido; }
+
+            var aviso = '';
+            if (!pode) {
+                aviso = 'Separe exatamente o que a GTA pede (todas as categorias verdes, total ' + totalGta + ') para liberar a conferência.';
+            } else if (!conferido) {
+                aviso = 'Clique em "Ver os animais", confira e marque a caixa de responsabilidade para liberar o Confirmar.';
+            } else {
+                aviso = 'Tela conferida e travada. Para mudar algo, use Recomeçar (descarta tudo).';
+            }
+            document.getElementById('aviso-confirmar').textContent = aviso;
+
+            ligarEventos();
+        }
+
+        // ==========================================================
+        // v1.7.0 - Janela "Ver os N animais": lista da categoria aberta
+        // em 2 colunas. Refeita a cada render; a rolagem e preservada.
+        // ==========================================================
+        function renderizarModalAnimais() {
+            var fundo = document.getElementById('modal-animais');
+            var cat = categoriasGta.find(function(c) { return c.chave === categoriaAberta; });
+            if (!cat) { fundo.style.display = 'none'; return; }
+            var corpo = document.getElementById('modal-animais-corpo');
+            var rolagem = corpo.scrollTop;
+            var cands = candidatosDaCategoria(cat);
+            var marcados = cands.filter(function(a) { return a.marcado; }).length;
+            document.getElementById('modal-animais-titulo').textContent =
+                cat.especie + ' \u00B7 ' + cat.sexo + ' \u00B7 ' + cat.idade_meses + ' \u2014 ' + cands.length + (cands.length === 1 ? ' animal' : ' animais');
+            document.getElementById('modal-animais-sub').textContent =
+                'A GTA pede ' + cat.necessario + ' \u00B7 Marcados ' + marcados + ' \u00B7 Livres ' + (cands.length - marcados);
+            corpo.innerHTML = '';
+            if (cands.length === 0) {
+                corpo.innerHTML = '<span style="color:#999999; font-size:12.5px; padding-top:10px;">Nenhum animal nesta categoria.</span>';
+            }
+            cands.forEach(function(a) { corpo.appendChild(linhaAnimal(a, true)); });
+            fundo.style.display = 'flex';
+            corpo.scrollTop = rolagem;
+        }
+
+        // ==========================================================
+        // BLOCO 6 - Eventos da tabela (religados a cada render)
+        // ==========================================================
+        function ligarEventos() {
+            document.querySelectorAll('.btn-ver-animais').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    categoriaAberta = btn.dataset.chave;
+                    renderizar();
+                });
+            });
+
+            // Caixinha: marca/desmarca so aquele animal.
+            document.querySelectorAll('.chk-animal').forEach(function(chk) {
+                chk.addEventListener('change', function() {
+                    var a = animais.find(function(x) { return x.id === parseInt(chk.dataset.id, 10); });
+                    a.marcado = chk.checked;
+                    alterado = true;
+                    renderizar();
+                });
+            });
+
+            // Nro Meses: so digitos; faixa ao vivo enquanto digita;
+            // aplica ao sair do campo (ou Enter).
+            document.querySelectorAll('input.meses').forEach(function(campo) {
+                campo.addEventListener('input', function() {
+                    campo.value = campo.value.replace(/\D/g, '').slice(0, 2);
+                    var span = document.getElementById('faixa-' + campo.dataset.id);
+                    var faixa = campo.value === '' ? null : faixaDoMeses(parseInt(campo.value, 10));
+                    span.textContent = faixa ? faixa.descricao : 'Nro Meses incorreto';
+                    span.classList.toggle('invalida', !faixa);
+                });
+                campo.addEventListener('keydown', function(evento) {
+                    if (evento.key === 'Enter') { evento.preventDefault(); campo.blur(); }
+                });
+                campo.addEventListener('change', function() {
+                    var a = animais.find(function(x) { return x.id === parseInt(campo.dataset.id, 10); });
+                    var faixa = campo.value === '' ? null : faixaDoMeses(parseInt(campo.value, 10));
+                    if (faixa) {
+                        a.nro_meses = parseInt(campo.value, 10);
+                        a.id_idade_meses = faixa.id;
+                        a.meses_invalido = false;
+                    } else {
+                        a.nro_meses = campo.value === '' ? null : parseInt(campo.value, 10);
+                        a.meses_invalido = true;
+                    }
+                    a.editado = (a.nro_meses !== a.nro_meses_original);
+                    alterado = true;
+                    reservar(true);
+                    renderizar();
+                });
+            });
+        }
+
+        // ---- v1.5.1 - Conferencia de responsabilidade: marca uma vez
+        // so (so libera com tudo batendo - ver renderizar()). ----
+        document.getElementById('chk-conferencia').addEventListener('change', function() {
+            if (this.checked) {
+                conferido = true;
+                categoriaAberta = null;
+            }
+            renderizar();
+        });
+
+        // ---- v1.5.1 - Recomecar: descarta tudo e recarrega do zero ----
+        document.getElementById('btn-recomecar').addEventListener('click', function() {
+            confirmarAcaoAssincrona(function() {
+                alterado = false;
+                window.location.reload();
+            }, 'Descartar tudo o que foi feito nesta tela e recomeçar a conferência do zero?', 'Recomeçar');
+        });
+
+        document.getElementById('titulo-fora').addEventListener('click', function() {
+            foraAberto = !foraAberto;
+            renderizar();
+        });
+        document.getElementById('titulo-pendencia').addEventListener('click', function() {
+            pendenciaAberto = !pendenciaAberto;
+            renderizar();
+        });
+
+        // ==========================================================
+        // BLOCO 7 - Confirmar: janelinha com resumo -> AJAX salvar()
+        // -> janelinha de resultado. Envia SO os marcados e SO os
+        // Nro Meses editados (o servidor reconfere tudo).
+        // ==========================================================
+        var erroConfirmar = document.getElementById('erro-confirmar');
+
+        function enviarVinculo() {
+            var btn = document.getElementById('btn-confirmar');
+            btn.disabled = true;
+            btn.textContent = 'Gravando...';
+            erroConfirmar.style.display = 'none';
+
+            var selecionados = animais.filter(function(a) { return a.marcado; }).map(function(a) { return a.id; });
+            var ajustesMeses = animais.filter(function(a) { return a.marcado && a.editado; })
+                .map(function(a) { return { id: a.id, nro_meses: a.nro_meses }; });
+
+            fetch('{{ url_for("vincular_gta.salvar") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_gta: idGta, selecionados: selecionados, ajustes_meses: ajustesMeses })
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                if (resultado.status !== 200) {
+                    erroConfirmar.textContent = '\u274C ' + (resultado.dados.erro || 'Não foi possível confirmar o vínculo.');
+                    erroConfirmar.style.display = 'block';
+                    btn.textContent = 'Confirmar vínculo';
+                    btn.disabled = false;
+                    return;
+                }
+                alterado = false;
+                document.getElementById('resultadoTexto').textContent =
+                    'Vínculo gravado: GTA ' + resultado.dados.numero_gta + ' — ' + resultado.dados.qtde + ' animal(is).';
+                document.getElementById('resultadoBtnOk').dataset.destino = resultado.dados.destino;
+                document.getElementById('modalResultadoOverlay').classList.add('aberto');
+            })
+            .catch(function() {
+                erroConfirmar.textContent = '\u274C Erro de conexão ao confirmar. Nada foi confirmado — tente novamente.';
+                erroConfirmar.style.display = 'block';
+                btn.textContent = 'Confirmar vínculo';
+                btn.disabled = false;
+            });
+        }
+
+        document.getElementById('btn-confirmar').addEventListener('click', function() {
+            if (!conferido) { return; }
+            var qtde = animais.filter(function(a) { return a.marcado; }).length;
+            var editados = animais.filter(function(a) { return a.marcado && a.editado; }).length;
+            var mensagem = 'Vincular ' + qtde + ' animal(is) à GTA ' + numeroGta + ' na ' + nomePropriedade + '?' +
+                (editados ? ' ' + editados + ' animal(is) terão a idade (Nascimento e faixa) atualizada.' : '') +
+                ' Esta gravação baixa os brincos do estoque e coloca os animais no rebanho.';
+            confirmarAcaoAssincrona(enviarVinculo, mensagem, 'Vincular');
+        });
+
+        document.getElementById('resultadoBtnOk').addEventListener('click', function() {
+            window.location.href = this.dataset.destino;
+        });
+
+        // ==========================================================
+        // BLOCO 8 - Aviso ao sair com ajustes nao gravados
+        // ==========================================================
+        window.addEventListener('beforeunload', function(evento) {
+            if (alterado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+        // v1.6.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return alterado; },
+                function() { alterado = false; }
+            );
+        });
+
+        // Abertura: reserva automatica pelos menores SISBOVs.
+        // v1.7.0 - fechar a janela dos animais: botao, clique fora ou Esc
+        function fecharModalAnimais() { categoriaAberta = null; renderizar(); }
+        document.getElementById('btn-fechar-animais').addEventListener('click', fecharModalAnimais);
+        document.getElementById('modal-animais').addEventListener('click', function(e) {
+            if (e.target === this) { fecharModalAnimais(); }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && categoriaAberta !== null) { fecharModalAnimais(); }
+        });
+
+        reservar(false);
+        renderizar();
+
+        // ==========================================================
+        // BLOCO 9 - JUNTAR DATAS (v1.4.0)
+        //   9.1 utilitarios de data | 9.2 previa | 9.3 abrir/fechar
+        //   9.4 confirmar (AJAX juntar_datas) e resultado
+        // ==========================================================
+        var campoNovaData   = document.getElementById('juntarNovaData');
+        var boxPrevia       = document.getElementById('juntarPrevia');
+        var boxErroJuntar   = document.getElementById('juntarErro');
+        var btnJuntarConf   = document.getElementById('juntarBtnConfirmar');
+        var checksJuntar    = document.querySelectorAll('.chk-juntar');
+
+        // ---- 9.1 utilitarios de data ----
+        campoNovaData.addEventListener('input', function() {
+            var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+            var formatado = digitos;
+            if (digitos.length > 4) {
+                formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+            } else if (digitos.length > 2) {
+                formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+            }
+            this.value = formatado;
+            atualizarPreviaJuntar();
+        });
+
+        // 'dd/mm/aaaa' -> 'aaaa-mm-dd' SO se a data existir de verdade.
+        function dataBrParaIso(texto) {
+            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) { return null; }
+            var partes = texto.split('/');
+            var dia = parseInt(partes[0], 10);
+            var mes = parseInt(partes[1], 10);
+            var ano = parseInt(partes[2], 10);
+            var d = new Date(ano, mes - 1, dia);
+            if (d.getFullYear() !== ano || d.getMonth() !== mes - 1 || d.getDate() !== dia) { return null; }
+            return partes[2] + '-' + partes[1] + '-' + partes[0];
+        }
+
+        function dataIsoParaBr(iso) {
+            return iso.split('-').reverse().join('/');
+        }
+
+        // ---- 9.2 previa ----
+        function mostrarErroJuntar(texto) {
+            boxPrevia.style.display = 'none';
+            boxErroJuntar.textContent = texto;
+            boxErroJuntar.style.display = 'block';
+            btnJuntarConf.disabled = true;
+        }
+
+        function atualizarPreviaJuntar() {
+            boxErroJuntar.style.display = 'none';
+            boxPrevia.style.display = 'none';
+            btnJuntarConf.disabled = true;
+
+            var texto = campoNovaData.value;
+            var novaIso = (texto.length === 10) ? dataBrParaIso(texto) : null;
+
+            // Nova Data igual a uma data da lista: entra sozinha
+            // (marcada e travada) para nao sobrar animal "orfao".
+            checksJuntar.forEach(function(chk) {
+                if (novaIso && chk.value === novaIso) {
+                    if (chk.dataset.auto !== '1') {
+                        chk.dataset.antes = chk.checked ? '1' : '0';
+                        chk.dataset.auto = '1';
+                    }
+                    chk.checked = true;
+                    chk.disabled = true;
+                } else if (chk.dataset.auto === '1') {
+                    chk.checked = (chk.dataset.antes === '1');
+                    chk.disabled = false;
+                    chk.dataset.auto = '';
+                }
+            });
+
+            if (texto.length < 10) { return; }
+
+            if (!novaIso) {
+                mostrarErroJuntar('Nova Data incorreta! Use o formato dd/mm/aaaa.');
+                return;
+            }
+            if (dataEntregaIso && novaIso < dataEntregaIso) {
+                mostrarErroJuntar('A Nova Data não pode ser anterior à Entrega da GTA (' + dataIsoParaBr(dataEntregaIso) + ').');
+                return;
+            }
+
+            var qtdeJuntada = 0;
+            var algumaMarcada = false;
+            checksJuntar.forEach(function(chk) {
+                if (chk.checked) {
+                    algumaMarcada = true;
+                    qtdeJuntada += parseInt(chk.dataset.qtde, 10) || 0;
+                }
+            });
+
+            if (!algumaMarcada && novaIso === dataAtualIso) {
+                mostrarErroJuntar('Marque ao menos 1 data ou digite uma Nova Data diferente da atual.');
+                return;
+            }
+
+            var totalFinal = animais.length + qtdeJuntada;
+            boxPrevia.textContent = 'A Data ' + texto + ' vai ficar com ' + totalFinal + ' animal(is) livre(s) nesta Conferência.';
+            boxPrevia.style.display = 'block';
+            btnJuntarConf.disabled = false;
+        }
+
+        checksJuntar.forEach(function(chk) {
+            chk.addEventListener('change', atualizarPreviaJuntar);
+        });
+
+        // ---- 9.3 abrir/fechar ----
+        var overlayJuntar = document.getElementById('modalJuntarOverlay');
+        var btnJuntar = document.getElementById('btn-juntar');
+
+        if (btnJuntar) {
+            btnJuntar.addEventListener('click', function() {
+                document.getElementById('juntarPasso1').style.display = 'block';
+                document.getElementById('juntarPasso2').style.display = 'none';
+                document.getElementById('juntarAvisoAjustes').style.display = alterado ? 'block' : 'none';
+                overlayJuntar.classList.add('aberto');
+                atualizarPreviaJuntar();
+                campoNovaData.focus();
+                campoNovaData.select();
+            });
+        }
+
+        document.getElementById('juntarBtnCancelar').addEventListener('click', function() {
+            overlayJuntar.classList.remove('aberto');
+        });
+
+        // OK do resultado: recarrega a Conferencia (a sessao ja tem
+        // a selecao nova). Ajustes nao gravados foram avisados antes.
+        document.getElementById('juntarBtnOk').addEventListener('click', function() {
+            alterado = false;
+            window.location.reload();
+        });
+
+        // ---- 9.4 confirmar (grava de verdade no servidor) ----
+        btnJuntarConf.addEventListener('click', function() {
+            if (btnJuntarConf.disabled) { return; }
+
+            var datasMarcadas = [];
+            checksJuntar.forEach(function(chk) {
+                if (chk.checked) { datasMarcadas.push(chk.value); }
+            });
+
+            btnJuntarConf.disabled = true;
+
+            fetch('{{ url_for("vincular_gta.juntar_datas") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_gta: idGta, datas: datasMarcadas, nova_data: campoNovaData.value })
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                if (resultado.status !== 200) {
+                    mostrarErroJuntar(resultado.dados.erro || 'Não foi possível juntar as datas.');
+                    btnJuntarConf.disabled = false;
+                    return;
+                }
+                document.getElementById('juntarResultado').textContent =
+                    'Pronto! A Data ' + resultado.dados.nova_data + ' agora tem ' +
+                    resultado.dados.total + ' animal(is) livre(s) nesta Conferência.';
+                document.getElementById('juntarPasso1').style.display = 'none';
+                document.getElementById('juntarPasso2').style.display = 'block';
+            })
+            .catch(function() {
+                mostrarErroJuntar('Erro de conexão ao juntar as datas. Tente novamente.');
+                btnJuntarConf.disabled = false;
+            });
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\vincular_gta_conferencia.html
+     ========================================================= -->

@@ -1,0 +1,65 @@
+
+# -*- coding: utf-8 -*-
+# =========================================================
+# PROJETO: Orion
+# PASTA: C:\orion
+# MODULO: requirements.txt
+# AUTOR: Benedito Silva Filho
+# CRIADO EM: 2026-06-20 19:29 -03
+# ATUALIZADO EM: 2026-08-04 12:53 -03
+# VERSAO: 1.3.0
+#
+# DESCRICAO:
+#     Dependencias do projeto Orion.
+#     v1.0.0: Criacao do arquivo.
+#     v1.1.0: Sessao 011.1 - Adicionado xhtml2pdf, para gerar o
+#             relatorio em PDF do Proprietario (dados + lista de
+#             Propriedades vinculadas ativas). Converte HTML/CSS
+#             direto em PDF, sem dependencias externas ao pip
+#             (ao contrario de weasyprint, que exige GTK no
+#             Windows).
+#     v1.2.0: Sessao 032 - Adicionado dnspython, para o fluxo de
+#             Convite Publico (/convite) confirmar que o dominio
+#             de um e-mail informado tem registro MX real (evita
+#             cadastro "fantasma", com e-mail bem formatado mas
+#             de dominio inexistente, que nunca receberia a senha
+#             provisoria de acesso). Usado por
+#             backend/utils/validadores.py (email_dominio_existe).
+#     v1.3.0: Sessao 111 - Adicionado Pillow, para as fotos da Morte
+#             (backend/utils/morte_fotos.py: confere que o arquivo e
+#             imagem de verdade, corrige a rotacao do celular e reduz).
+# =========================================================
+
+# Servidor web
+flask==3.1.1            # framework web principal
+waitress==3.0.2         # servidor Python para Windows
+
+# Banco de dados
+psycopg2-binary==2.9.11 # driver do PostgreSQL para Python
+sqlalchemy==2.0.51      # ponte entre Python e PostgreSQL
+
+# Seguranca
+flask-login==0.6.3      # controle de sessao e login
+werkzeug==3.1.3         # criptografia de senhas
+
+# Variaveis de ambiente
+python-dotenv==1.0.1    # le o arquivo .env
+
+# Requisicoes HTTP
+httpx==0.27.0           # para chamar a API SISBOV 2.0
+
+# Claude API - leitura inteligente da GTA
+anthropic==0.28.0       # OCR inteligente dos documentos
+
+# Relatorios em PDF
+xhtml2pdf==0.2.16       # converte HTML/CSS em PDF (relatorio de Proprietario)
+
+# Validacao de e-mail (Convite Publico)
+dnspython==2.7.0        # confere registro MX real do dominio do e-mail
+
+# Fotos da Morte (reduzir e conferir a imagem)
+Pillow>=11.0.0          # biblioteca de imagens (ja vem com o reportlab; declarada aqui para nao depender disso)
+
+# =========================================================
+# FIM DE ARQUIVO: requirements.txt
+# =========================================================

@@ -1,0 +1,78 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\create_log_operacoes.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-03 15:30 -03
+-- ATUALIZADO EM: 2026-09-03 15:30 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   v1.0.0: Cria as 2 tabelas do mecanismo "Desfazer por
+--   Operacao" (Log de Operacoes) em TODOS os schemas de Produtor
+--   existentes (produtor_NNNNN) - mesma logica de loop ja usada
+--   para ALTER TABLE multi-tenant, adaptada para CREATE TABLE.
+--
+--   Alinhamento fechado com Benedito (Sessao 045, retomada
+--   15:00-15:30): mecanismo generico e reaproveitavel por
+--   qualquer modulo (piloto: Cancelamento de Brincos). Cada
+--   operacao que grava dados registra 1 linha em
+--   tb_log_operacoes (o "recibo") + 1 linha por mudanca em
+--   tb_log_operacoes_itens (o detalhe: qual tabela, qual linha,
+--   valor antes e depois). "Desfazer" le esses registros e
+--   reverte so aquilo.
+--
+--   Regras de negocio fechadas:
+--   - Janela de 24h para desfazer (calculada a partir de
+--     criado_em).
+--   - Bloqueia (nao sobrescreve) se o dado atual nao bate mais
+--     com o "dados_depois" gravado - alguma coisa mexeu depois.
+--   - Pode desfazer quem fez a operacao (id_usuario) OU quem tem
+--     Cargo TITULAR, ADMINISTRADOR ou ADMINISTRATIVO (valores
+--     reais da coluna usuario_vinculo.cargo, tudo maiusculo).
+--
+--   tb_log_operacoes vive dentro do schema do Produtor (mesma
+--   logica de tb_3007/tb_3008/tb_7017) - isolamento garantido
+--   pelo proprio schema, sem coluna id_produtor.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format('
+            CREATE TABLE IF NOT EXISTS %I.tb_log_operacoes (
+                id              SERIAL PRIMARY KEY,
+                id_usuario      INTEGER NOT NULL REFERENCES public.usuarios(id),
+                id_propriedade  INTEGER NOT NULL REFERENCES public.propriedades(id),
+                modulo          VARCHAR(40) NOT NULL,
+                descricao       VARCHAR(255) NOT NULL,
+                criado_em       TIMESTAMP NOT NULL DEFAULT now(),
+                desfeito_em     TIMESTAMP,
+                desfeito_por    INTEGER REFERENCES public.usuarios(id)
+            );
+        ', schema_rec.schema_name);
+
+        EXECUTE format('
+            CREATE TABLE IF NOT EXISTS %I.tb_log_operacoes_itens (
+                id              SERIAL PRIMARY KEY,
+                id_operacao     INTEGER NOT NULL REFERENCES %I.tb_log_operacoes(id),
+                tabela          VARCHAR(60) NOT NULL,
+                id_registro     INTEGER NOT NULL,
+                tipo_mudanca    VARCHAR(10) NOT NULL,
+                dados_antes     JSONB,
+                dados_depois    JSONB
+            );
+        ', schema_rec.schema_name, schema_rec.schema_name);
+
+        RAISE NOTICE 'Tabelas de Log de Operacoes criadas em %', schema_rec.schema_name;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\create_log_operacoes.sql
+-- =========================================================

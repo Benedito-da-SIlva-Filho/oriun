@@ -1,0 +1,70 @@
+-- =========================================================
+-- SCRIPT DE LIMPEZA — Parceiro de teste (Roselene Carvalho de Oliveira)
+-- Schema: produtor_00001
+-- CPF/CNPJ: 78628687149
+-- Motivo: liberar o CPF para repetir o teste do resolver_parceiro()
+--         (validar a correção do campo Região, gta_compra.py v2.7.0)
+-- Sessão 035 — 19/08/2026
+-- =========================================================
+
+-- =========================================================
+-- PASSO 0 — CONFERÊNCIA ANTES (rode e confira o resultado
+-- antes de continuar para o DELETE)
+-- =========================================================
+
+SELECT * FROM produtor_00001.tb_parceiros
+WHERE cpf_cnpj = '78628687149';
+
+SELECT pp.* FROM produtor_00001.tb_parceiros_propriedades pp
+JOIN produtor_00001.tb_parceiros p ON p.id = pp.id_parceiro
+WHERE p.cpf_cnpj = '78628687149';
+
+SELECT log.* FROM produtor_00001.tb_log_conferencia_parceiro log
+JOIN produtor_00001.tb_parceiros p ON p.id = log.id_parceiro
+WHERE p.cpf_cnpj = '78628687149';
+
+
+-- =========================================================
+-- PASSO 1 — DELETE (ordem: filhas primeiro, pai por último)
+-- Rode os 3 DELETEs em sequência, dentro da mesma sessão.
+-- =========================================================
+
+-- 1) tb_log_conferencia_parceiro (referencia id_parceiro e,
+--    opcionalmente, id_parceiro_propriedade)
+DELETE FROM produtor_00001.tb_log_conferencia_parceiro
+WHERE id_parceiro IN (
+    SELECT id FROM produtor_00001.tb_parceiros
+    WHERE cpf_cnpj = '78628687149'
+);
+
+-- 2) tb_parceiros_propriedades (referencia id_parceiro)
+DELETE FROM produtor_00001.tb_parceiros_propriedades
+WHERE id_parceiro IN (
+    SELECT id FROM produtor_00001.tb_parceiros
+    WHERE cpf_cnpj = '78628687149'
+);
+
+-- 3) tb_parceiros (tabela pai, por último)
+DELETE FROM produtor_00001.tb_parceiros
+WHERE cpf_cnpj = '78628687149';
+
+
+-- =========================================================
+-- PASSO 2 — CONFERÊNCIA DEPOIS (as 3 consultas devem
+-- retornar ZERO linhas)
+-- =========================================================
+
+SELECT * FROM produtor_00001.tb_parceiros
+WHERE cpf_cnpj = '78628687149';
+
+SELECT pp.* FROM produtor_00001.tb_parceiros_propriedades pp
+JOIN produtor_00001.tb_parceiros p ON p.id = pp.id_parceiro
+WHERE p.cpf_cnpj = '78628687149';
+
+SELECT log.* FROM produtor_00001.tb_log_conferencia_parceiro log
+JOIN produtor_00001.tb_parceiros p ON p.id = log.id_parceiro
+WHERE p.cpf_cnpj = '78628687149';
+
+-- =========================================================
+-- FIM DE ARQUIVO: limpeza_parceiro_teste_roselene.sql
+-- =========================================================

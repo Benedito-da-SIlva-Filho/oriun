@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\usuario_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-07 15:20 -03
+     ATUALIZADO EM: 2026-10-14 12:24 -03
+     VERSAO: 1.5.0
+
+     DESCRICAO:
+         Formulario "Meu Usuário" — cadastro de novo membro da
+         equipe do Produtor logado, E edicao de um membro ja
+         existente (v1.2.0). So acessivel a cargos TITULAR/
+         ADMINISTRADOR (checado no backend).
+         Regra de UX (Sessao 033, aplicada por ser tela NOVA):
+         aviso de alteracoes nao salvas (beforeunload) + botao
+         Voltar (ja no topo, padrao de todas as telas).
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Sessao 034 (continuacao 9, 13/08/2026, 19:10 -03) -
+             Cracha "PRODUTOR" removido do topo para este perfil
+             (mesma decisao de produtor_home.html v1.1.0 - ver
+             changelog la para o motivo completo).
+         v1.2.0: Sessao (26/08/2026, 10:43 -03) - Caso real:
+             Catarina (equipe do Claudenor) cadastrada sem e-mail,
+             sem forma de corrigir depois (produtor_usuarios.py
+             v1.1.0). Tres mudancas:
+             (1) Campo E-mail (obrigatorio) adicionado ao
+                 formulario, junto de Nome/Login/Cargo.
+             (2) Template passa a servir tambem o modo Edicao
+                 (usuario_edit preenchido, vindo de
+                 produtor_usuarios.editar()): titulo, texto do
+                 botao e valores dos campos mudam conforme
+                 usuario_edit existe ou nao - mesmo padrao ja usado
+                 em produtor_cadastro.html (CONSISTE).
+             (3) Campo Login fica sem o atributo "name" quando em
+                 edicao (readonly, so exibido pra referencia) -
+                 nao e submetido, entao nunca chega alterado ao
+                 servidor. Decisao de Benedito (26/08/2026): so o
+                 proprio dono da conta troca o proprio login, em
+                 /trocar-senha - nunca um Administrativo/Titular
+                 editando por fora.
+             O bloco "aviso" (senha inicial 12345) so aparece na
+             criacao de um usuario novo - na edicao nao faz sentido
+             (a senha do usuario existente nao muda por aqui).
+         v1.3.0: Sessao 076 (21/09/2026, 21:53 -03) - TOPO e RODAPE
+             substituidos por comandos de INCLUDE das pecas-mestras
+             produtor_topo.html / produtor_rodape.html. Voltar do
+             topo (antes fixo para /produtor/home) passado via um
+             comando de atribuicao antes do include - mesmo destino
+             de sempre, sem mudanca de comportamento. O botao
+             "Voltar" SEPARADO do cabecalho da pagina (id=
+             "link-voltar", aponta para produtor_usuarios.lista,
+             com seu proprio intercept de "alteracoes nao salvas")
+             NAO mexido - continua identico, funciona junto com o
+             Voltar do topo, um em cada lugar da tela.
+     v1.4.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). A funcao interceptarSaida() (confirm nos 2 links: Voltar do
+         cabecalho e Cancelar) foi trocada pelo vigia, que cobre
+         tambem o Voltar do topo, o menu e o Sair. Incluida a peca
+         modal_confirmacao.html.
+     v1.5.0: Sessao 096 (14/10/2026) - EQUIPE DA PROPRIEDADE
+         (acompanha produtor_usuarios.py v1.2.0): campo Celular
+         (vira o login) no lugar do Login digitado, com mascara;
+         E-mail opcional; cargo sem Titular; aviso da senha 12345
+         trocado por explicacao do WhatsApp; nota dizendo que o
+         acesso vale para todos os produtores da propriedade; campos
+         preservados quando ha erro; ajustes para celular.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'Editar' if usuario_edit else 'Novo' }} Usuário</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+        .btn-voltar { padding: 8px 16px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar:hover { background: #888888; color: #ffffff; }
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 700px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-6  { grid-column: span 6; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; }
+        .form-group input[readonly] { background: #f5f5f5; color: #777777; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .form-group small { font-size: 11px; color: #888888; }
+        .upper { text-transform: uppercase; }
+        .aviso { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #92400e; margin-top: 16px; }
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        .nota-escopo { background: #e3f2fd; border-left: 4px solid #1976d2; padding: 10px 14px; border-radius: 6px; font-size: 13px; color: #0d47a1; margin-bottom: 16px; max-width: 700px; }
+
+        /* v-equipe: celular */
+        @media (max-width: 700px) {
+            .conteudo { padding: 12px; }
+            .col-6 { grid-column: span 12; }
+            .form-container { padding: 16px; }
+            .pagina-header { flex-wrap: wrap; gap: 8px; }
+            .pagina-header-direita { flex-wrap: wrap; gap: 10px; }
+            .tabela-container { overflow-x: auto; }
+            table { min-width: 520px; }
+            .form-botoes { flex-direction: column-reverse; }
+            .btn-salvar, .btn-cancelar { width: 100%; text-align: center; padding: 14px; font-size: 16px; }
+            .form-group input, .form-group select { padding: 13px 12px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/home' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128100; {{ 'Editar' if usuario_edit else 'Novo' }} Colaborador &#8212; Equipe</h2>
+                <a href="{{ url_for('produtor_usuarios.lista') }}" class="btn-voltar" id="link-voltar">&#8592; Voltar</a>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if nome_propriedade %}
+            <div class="nota-escopo">&#127968; O acesso vale para todos os produtores da propriedade <strong>{{ nome_propriedade }}</strong>.</div>
+            {% endif %}
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('produtor_usuarios.salvar') }}" id="form-usuario-produtor">
+
+                    <input type="hidden" name="id" value="{{ usuario_edit.id if usuario_edit else '' }}">
+
+                    <div class="form-secao">Dados do Usuário</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-12">
+                            <label>Nome Completo *</label>
+                            <input type="text" name="nome" required maxlength="100" class="upper" placeholder="Nome completo"
+                                value="{{ usuario_edit.nome if usuario_edit else (nome_tentativa or '') }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            {% if usuario_edit %}
+                            <label>Celular (login)</label>
+                            <input type="text" value="{{ usuario_edit.login }}" readonly>
+                            <small>O login não pode ser alterado por aqui — só o próprio usuário pode trocá-lo.</small>
+                            {% else %}
+                            <label>Celular (será o login) *</label>
+                            <input type="tel" name="celular" id="celular" required maxlength="19" inputmode="numeric" autocomplete="off" placeholder="(34) 99999-9999"
+                                value="{{ celular_tentativa or '' }}">
+                            <small>DDD + número. A senha provisória vai para este número pelo WhatsApp.</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>E-mail (opcional)</label>
+                            <input type="email" name="email" maxlength="100" placeholder="email@exemplo.com.br"
+                                value="{{ usuario_edit.email if usuario_edit else (email_tentativa or '') }}">
+                            <small>Serve para recuperar a senha em "Esqueci minha senha".</small>
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Cargo *</label>
+                            <select name="cargo" required>
+                                <option value="">Selecione...</option>
+                                {% for cargo in cargos_validos %}
+                                <option value="{{ cargo }}" {{ 'selected' if (vinculo_edit and vinculo_edit.cargo == cargo) or (cargo_tentativa == cargo) else '' }}>
+                                    {{ cargo.replace('_', ' ').title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </div>
+
+                    {% if not usuario_edit %}
+                    <div class="aviso">
+                        &#128273; O Orion gera uma <strong>senha provisória</strong>. Depois de cadastrar,
+                        aparece o botão para enviar login e senha pelo <strong>WhatsApp</strong>.
+                        A pessoa cria uma senha nova no primeiro acesso.
+                    </div>
+                    {% endif %}
+
+                    <div class="form-botoes">
+                        <a href="{{ url_for('produtor_usuarios.lista') }}" class="btn-cancelar" id="link-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar">{{ 'Salvar Alterações' if usuario_edit else 'Cadastrar' }}</button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('recolhido');
+        }
+
+        document.querySelectorAll('input.upper').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+
+        // Mascara do celular: (DD) 9XXXX-XXXX
+        var campoCelular = document.getElementById('celular');
+        if (campoCelular) {
+            function aplicarMascaraCelular() {
+                var d = campoCelular.value.replace(/\D/g, '');
+                if (d.length > 11 && d.indexOf('55') === 0) { d = d.slice(2); }
+                d = d.slice(0, 11);
+                var t = d;
+                if (d.length > 6) { t = '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7); }
+                else if (d.length > 2) { t = '(' + d.slice(0, 2) + ') ' + d.slice(2); }
+                campoCelular.value = t;
+            }
+            campoCelular.addEventListener('input', aplicarMascaraCelular);
+            aplicarMascaraCelular();
+        }
+
+        // ---- Aviso de alteracoes nao salvas (Regra UX Sessao 033,
+        // obrigatoria em toda tela NOVA) ----
+        var formularioSujo = false;
+        var formulario = document.getElementById('form-usuario-produtor');
+
+        formulario.addEventListener('input', function() {
+            formularioSujo = true;
+        });
+
+        formulario.addEventListener('submit', function() {
+            formularioSujo = false; // envio legitimo, nao avisa
+        });
+
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioSujo) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+
+        // v1.4.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return formularioSujo; },
+                function() { formularioSujo = false; }
+            );
+        });
+
+        // Celular: menu lateral comeca recolhido
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 700) {
+                var s = document.getElementById('sidebar');
+                if (s) { s.classList.add('recolhido'); }
+            }
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\usuario_cadastro.html
+     ========================================================= -->

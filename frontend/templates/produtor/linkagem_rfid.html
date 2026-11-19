@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\linkagem_rfid.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-10 18:30 -03
+     ATUALIZADO EM: 2026-11-10 19:15 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Tela "Linkagem RFID e Brinco" (backend/routers/linkagem_rfid.py): liga o RFID ao brinco SISBOV de animal em estoque
+         que ainda nao tem RFID. Cursor sempre no RFID primeiro (bastao); o RFID e conferido na hora; depois le-se o brinco SISBOV
+         (15 digitos) e o par grava na hora. Uma tela so, serve para quem usa Leitor ou Bastao. Visual e quadro de sucesso
+         iguais aos da Troca de RFID.
+
+     v1.0.0: Criacao (Sessao 120, 10/11/2026, 18:30 -03). Pacote 1. REVERSAO: remover este arquivo.
+     v1.1.0: Sessao 120 (10/11/2026, 19:15 -03) - Tela no modelo da Leitura da Brincagem com Bastao: RFID e SISBOV lado a lado, Dados do Animal (conferencia), Lote Novo e Peso opcionais, botao Gravar (ou Enter) e lista dos animais ligados ao lado. Aviso de peso (ganho ou queda estranha) e peso fora de 100 a 1000 kg na hora. Backend: linkagem_rfid.py 1.1.0. REVERSAO: .bak_antes_s120_peso_lote.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Linkagem RFID e Brinco</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .conteudo { flex: 1; padding: 20px 24px; overflow-y: auto; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+        .subtitulo { font-size: 13.5px; color: #888888; margin: 2px 0 10px; }
+
+        .bloco { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 20px; margin-bottom: 14px; max-width: 1000px; }
+        .bloco h3 { font-size: 15px; color: #D4370A; margin-bottom: 4px; }
+        .bloco .explica { font-size: 12.5px; color: #888888; margin-bottom: 12px; }
+
+        .linha-campo { display: flex; gap: 10px; align-items: center; }
+        .campo { flex: 1; font-size: 18px; letter-spacing: 1px; padding: 9px 12px; border: 1px solid #cccccc; border-radius: 6px; font-family: Consolas, monospace; }
+        .campo:focus { outline: none; border-color: #D4370A; }
+        .campo:disabled { background: #f3f3f3; color: #aaaaaa; }
+        .btn { background: #D4370A; color: #ffffff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn:hover { filter: brightness(0.92); }
+        .btn-claro { background: #ffffff; color: #555555; border: 1px solid #cccccc; }
+        .btn-claro:hover { background: #f5f5f5; filter: none; }
+
+        .msg { margin-top: 10px; padding: 9px 12px; border-radius: 6px; font-size: 13.5px; display: none; }
+        .msg.erro { display: block; background: #FDECEA; color: #B71C1C; border: 1px solid #F5C6C2; }
+        .msg-faixa { text-align: center; font-size: 17px; font-weight: bold; padding: 12px 16px; margin: 4px 0 10px; }
+
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 8px; }
+        .acoes { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+        .contador { margin-left: auto; font-size: 14px; color: #555555; }
+        .contador b { font-size: 20px; color: #D4370A; }
+
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa-ok { background: #ffffff; border-radius: 10px; padding: 32px; max-width: 420px; text-align: center; }
+        .modal-caixa-ok .icone-sucesso { font-size: 46px; margin-bottom: 12px; }
+        .modal-caixa-ok h3 { font-size: 18px; color: #2e7d32; margin-bottom: 8px; }
+        .modal-caixa-ok .linha-sucesso { display: flex; align-items: stretch; justify-content: center; gap: 24px; }
+        .modal-caixa-ok .linha-sucesso .btn-modal-sair { padding: 10px 40px; display: flex; align-items: center; justify-content: center; }
+        .modal-caixa-ok .sisbov-gravado { font-size: 15px; color: #333333; display: inline-grid; grid-template-columns: auto auto; gap: 6px 14px; text-align: left; }
+        .modal-caixa-ok .sisbov-gravado b { font-weight: normal; font-family: Consolas, monospace; }
+        .btn-modal-sair { padding: 10px 32px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-modal-sair:hover { background: #C0392B; }
+
+        /* v1.1.0 - modelo da Leitura da Brincagem com Bastao */
+        .conteudo { display: flex; gap: 18px; align-items: flex-start; }
+        .coluna-form { flex: 1; min-width: 0; }
+        .coluna-lidos { width: 350px; flex-shrink: 0; }
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 3px 16px; text-align: center; background: #ffffff; margin-bottom: 8px; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 20px; font-weight: bold; color: #D4370A; }
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px 20px; }
+        .form-secao { font-size: 16px; font-weight: bold; color: #D4370A; margin: 12px 0 8px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+        .form-grid + .form-grid { margin-top: 10px; }
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; }
+        .col-6 { grid-column: span 6; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #333333; }
+        .form-group input { padding: 6px 12px; border: 2px solid #cccccc; border-radius: 6px; font-size: 19px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus { outline: none; border-color: #D4370A; }
+        .form-group input:disabled, .form-group input[readonly] { background-color: #f0f0f0; color: #555555; cursor: default; }
+        .campo-grande input { font-size: 28px; font-weight: bold; padding: 8px 14px; letter-spacing: 1px; font-family: Consolas, monospace; }
+        .campo-grande input:disabled { color: #aaaaaa; }
+        .campo-grande input.ok { border-color: #2e7d32; color: #1b5e20; background: #E8F5E9; }
+        .aviso-peso { display: none; margin-top: 8px; background: #fff8e1; border-left: 8px solid #f9a825; color: #7a5b00; font-weight: bold; font-size: 18px; padding: 6px 16px; border-radius: 6px; }
+        .erro-faixa { display: none; background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin: 10px 0 0; }
+        .form-botoes { display: flex; gap: 12px; margin-top: 12px; justify-content: flex-end; }
+        .btn-gravar { padding: 10px 28px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gravar:hover { background: #C0392B; }
+        .btn-gravar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-gravar:focus { outline: 3px solid #1565C0; outline-offset: 3px; }
+        .btn-limpar { padding: 12px 20px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-limpar:hover { background: #888888; color: #ffffff; }
+        .painel-lidos { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 16px; display: flex; flex-direction: column; max-height: calc(100vh - 190px); }
+        .painel-lidos h3 { font-size: 15px; color: #333333; margin-bottom: 12px; }
+        .lista-lidos { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .lista-vazia { color: #aaaaaa; font-size: 13px; text-align: center; padding: 20px 0; }
+        .item-lido { border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; }
+        .item-lido .sisbov { font-weight: bold; color: #333333; font-size: 15px; }
+        .item-lido .rfid { color: #6a1fb0; font-size: 11.5px; font-weight: bold; }
+        .item-lido .detalhe { color: #888888; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="coluna-form">
+                <div class="pagina-header"><h2><span class="icone-titulo">&#128279;</span> Linkagem RFID e Brinco</h2></div>
+                <div class="subtitulo"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }}</div>
+
+                <div class="contador-caixa"><div class="rotulo">LIGADOS (sessão)</div><div class="valor" id="contador">0</div></div>
+
+                <div class="form-container">
+                    <div class="form-secao">Identificação</div>
+                    <div class="form-grid">
+                        <div class="form-group campo-grande col-6">
+                            <label for="campo-rfid">RFID *</label>
+                            <input type="text" id="campo-rfid" maxlength="15" inputmode="numeric" autocomplete="off" placeholder="Leia o RFID...">
+                        </div>
+                        <div class="form-group campo-grande col-6">
+                            <label for="campo-sisbov">SISBOV *</label>
+                            <input type="text" id="campo-sisbov" maxlength="15" inputmode="numeric" autocomplete="off" placeholder="Leia o brinco..." disabled>
+                        </div>
+                    </div>
+                    <div class="erro-faixa" id="msg-erro"></div>
+
+                    <div class="form-secao">Dados do Animal</div>
+                    <div class="form-grid">
+                        <div class="form-group col-3"><label>Sexo</label><input type="text" id="f-sexo" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Raça</label><input type="text" id="f-raca" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Nro Meses</label><input type="text" id="f-meses" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Nascimento</label><input type="text" id="f-nascimento" readonly tabindex="-1"></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group col-3"><label>Manejo</label><input type="text" id="f-manejo" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Lote Atual</label><input type="text" id="f-lote" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Último peso</label><input type="text" id="f-peso-anterior" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Liberação de abate</label><input type="text" id="f-liberacao" readonly tabindex="-1"></div>
+                    </div>
+
+                    <div class="form-secao">Aproveite para atualizar (opcional)</div>
+                    <div class="form-grid">
+                        <div class="form-group col-6"><label for="campo-lote">Lote Novo</label><input type="text" id="campo-lote" maxlength="30" autocomplete="off" disabled></div>
+                        <div class="form-group col-6"><label for="campo-peso">Peso (kg) &#8212; máx. 1000</label><input type="text" id="campo-peso" inputmode="decimal" autocomplete="off" disabled></div>
+                    </div>
+                    <div class="aviso-peso" id="aviso-peso">&#9888;&#65039; Atenção: Verifique o Peso</div>
+
+                    <div class="form-botoes">
+                        <button type="button" class="btn-limpar" id="btn-limpar">Limpar Tela</button>
+                        <button type="button" class="btn-gravar" id="btn-gravar" disabled>Gravar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coluna-lidos">
+                <div class="painel-lidos">
+                    <h3>Animais Ligados (sessão)</h3>
+                    <div class="lista-lidos" id="lista-lidos">
+                        <div class="lista-vazia" id="lista-vazia">Nenhuma ligação ainda.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <div class="modal-fundo" id="modal-sucesso">
+        <div class="modal-caixa-ok">
+            <div class="icone-sucesso">&#9989;</div>
+            <h3>RFID Ligado ao Brinco</h3>
+            <div class="linha-sucesso">
+                <div class="sisbov-gravado" id="modal-dados"></div>
+                <button type="button" class="btn-modal-sair" id="btn-modal-sair">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROPRIEDADE = {{ id_propriedade|tojson }};
+        var URL_CHECAR  = {{ url_for('linkagem_rfid.checar_rfid')|tojson }};
+        var URL_BUSCAR  = {{ url_for('linkagem_rfid.buscar')|tojson }};
+        var URL_GRAVAR  = {{ url_for('linkagem_rfid.gravar')|tojson }};
+        var TAMANHO = 15;
+        var PESO_MIN = 100, PESO_MAX = 1000;   // mesma regra do Leitor de Peso
+
+        var campoRfid = document.getElementById('campo-rfid');
+        var campoSisbov = document.getElementById('campo-sisbov');
+        var campoLote = document.getElementById('campo-lote');
+        var campoPeso = document.getElementById('campo-peso');
+        var btnGravar = document.getElementById('btn-gravar');
+        var rfidConferido = '';
+        var animalAtual = null;
+        var gmdAviso = 3, quedaAviso = 5;
+        var ligados = 0;
+        var ocupado = false;
+
+        function el(id) { return document.getElementById(id); }
+        function erro(texto) {
+            var caixa = el('msg-erro');
+            caixa.style.display = texto ? 'block' : 'none';
+            caixa.textContent = texto || '';
+        }
+        function soDigitos(campo) { campo.value = campo.value.replace(/\D/g, ''); }
+
+        function postar(url, corpo) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            }).then(function(resp) {
+                return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; });
+            });
+        }
+
+        var CAMPOS_FICHA = ['f-sexo', 'f-raca', 'f-meses', 'f-nascimento', 'f-manejo', 'f-lote', 'f-peso-anterior', 'f-liberacao'];
+        function limparFicha() { CAMPOS_FICHA.forEach(function(id) { el(id).value = ''; }); }
+        function mostrarFicha(a) {
+            el('f-sexo').value = a.sexo || '';
+            el('f-raca').value = a.raca || '';
+            el('f-meses').value = (a.idade_meses === null || a.idade_meses === undefined) ? '' : a.idade_meses;
+            el('f-nascimento').value = a.nascimento || '';
+            el('f-manejo').value = a.manejo || '';
+            el('f-lote').value = a.lote || '';
+            el('f-peso-anterior').value = (a.peso_anterior === null || a.peso_anterior === undefined) ? '' : a.peso_anterior.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg';
+            el('f-liberacao').value = a.liberacao_abate || '';
+        }
+
+        // volta ao 1o passo: cursor no RFID
+        function reiniciar() {
+            rfidConferido = ''; animalAtual = null; ocupado = false;
+            campoRfid.value = ''; campoSisbov.value = ''; campoLote.value = ''; campoPeso.value = '';
+            campoRfid.classList.remove('ok'); campoSisbov.classList.remove('ok');
+            campoRfid.disabled = false; campoSisbov.disabled = true; campoLote.disabled = true; campoPeso.disabled = true;
+            btnGravar.disabled = true;
+            el('aviso-peso').style.display = 'none';
+            limparFicha(); erro('');
+            campoRfid.focus();
+        }
+
+        // 1o passo: RFID com 15 digitos -> confere na hora
+        function conferirRfid() {
+            soDigitos(campoRfid);
+            var rfid = campoRfid.value;
+            erro('');
+            if (rfid.length < TAMANHO || ocupado) { return; }
+            ocupado = true; campoRfid.disabled = true;
+            postar(URL_CHECAR, { id_propriedade: ID_PROPRIEDADE, rfid: rfid })
+            .then(function(r) {
+                ocupado = false;
+                if (r.status === 200 && r.dados.sucesso) {
+                    rfidConferido = rfid;
+                    campoRfid.classList.add('ok');
+                    campoSisbov.disabled = false; campoSisbov.value = '';
+                    campoSisbov.focus();
+                    return;
+                }
+                erro(r.dados.erro || 'RFID não aceito.');
+                campoRfid.disabled = false; campoRfid.select();
+            })
+            .catch(function() {
+                ocupado = false;
+                erro('Não foi possível conferir o RFID. Verifique sua conexão.');
+                campoRfid.disabled = false;
+            });
+        }
+
+        // 2o passo: brinco SISBOV com 15 digitos -> mostra os dados do animal para conferir
+        function buscarAnimal() {
+            soDigitos(campoSisbov);
+            var sisbov = campoSisbov.value;
+            if (!rfidConferido || sisbov.length < TAMANHO || ocupado || animalAtual) { return; }
+            ocupado = true; erro('');
+            postar(URL_BUSCAR, { id_propriedade: ID_PROPRIEDADE, rfid: rfidConferido, sisbov: sisbov })
+            .then(function(r) {
+                ocupado = false;
+                if (r.status === 200 && r.dados.sucesso) {
+                    animalAtual = r.dados.animal;
+                    gmdAviso = r.dados.gmd_aviso; quedaAviso = r.dados.queda_aviso_pct;
+                    mostrarFicha(animalAtual);
+                    campoSisbov.classList.add('ok'); campoSisbov.disabled = true;
+                    campoLote.disabled = false; campoPeso.disabled = false;
+                    btnGravar.disabled = false;
+                    campoPeso.focus();
+                    return;
+                }
+                erro(r.dados.erro || 'Não foi possível buscar o animal.');
+                campoSisbov.select();
+            })
+            .catch(function() {
+                ocupado = false;
+                erro('Não foi possível buscar o animal. Verifique sua conexão.');
+            });
+        }
+
+        // peso: valida na hora (100 a 1000 kg) e avisa ganho ou queda estranha (nunca bloqueia o aviso)
+        function lerPeso() { return parseFloat(campoPeso.value.replace(',', '.')); }
+        function conferirPeso() {
+            var aviso = el('aviso-peso');
+            aviso.style.display = 'none';
+            if (!campoPeso.value.trim()) { erro(''); return; }
+            var p = lerPeso();
+            if (isNaN(p) || p <= PESO_MIN || p > PESO_MAX) { erro('Peso incorreto, verifique.'); return; }
+            erro('');
+            if (animalAtual && animalAtual.peso_anterior) {
+                var ant = animalAtual.peso_anterior, dias = animalAtual.dias_peso_anterior;
+                var queda = ((ant - p) / ant) * 100;
+                var gmd = (dias && dias > 0) ? (p - ant) / dias : null;
+                if (queda >= quedaAviso || (gmd !== null && gmd > gmdAviso)) { aviso.style.display = 'block'; }
+            }
+        }
+
+        function itemLista(d) {
+            var div = document.createElement('div');
+            div.className = 'item-lido';
+            var detalhe = [d.sexo, d.manejo ? 'Manejo ' + d.manejo : '', d.lote, d.peso ? d.peso + ' kg' : '', d.hora].filter(function(x) { return x; }).join(' · ');
+            div.innerHTML = '<span class="sisbov"></span><span class="rfid"></span><span class="detalhe"></span>';
+            div.children[0].textContent = d.sisbov;
+            div.children[1].textContent = 'RFID ' + d.rfid;
+            div.children[2].textContent = detalhe;
+            return div;
+        }
+
+        // Gravar: liga o par (+ Lote Novo e Peso, se vieram)
+        function gravar() {
+            if (ocupado || !animalAtual || !rfidConferido) { return; }
+            if (campoPeso.value.trim()) {
+                var p = lerPeso();
+                if (isNaN(p) || p <= PESO_MIN || p > PESO_MAX) { erro('Peso incorreto, verifique.'); campoPeso.focus(); return; }
+            }
+            ocupado = true; btnGravar.disabled = true; erro('');
+            postar(URL_GRAVAR, {
+                id_propriedade: ID_PROPRIEDADE, rfid: rfidConferido, sisbov: animalAtual.sisbov,
+                lote: campoLote.value, peso: campoPeso.value
+            })
+            .then(function(r) {
+                if (r.status === 200 && r.dados.sucesso) {
+                    var d = r.dados;
+                    ligados += 1; el('contador').textContent = ligados;
+                    var vazia = el('lista-vazia'); if (vazia) { vazia.remove(); }
+                    el('lista-lidos').insertBefore(itemLista(d), el('lista-lidos').firstChild);
+                    el('modal-dados').innerHTML = '<span>SISBOV</span><b>' + d.sisbov + '</b><span>RFID</span><b>' + d.rfid + '</b>';
+                    reiniciar();
+                    el('modal-sucesso').classList.add('aberto');
+                    el('btn-modal-sair').focus();
+                    return;
+                }
+                ocupado = false; btnGravar.disabled = false;
+                erro(r.dados.erro || 'Não foi possível gravar.');
+            })
+            .catch(function() {
+                ocupado = false; btnGravar.disabled = false;
+                erro('Não foi possível gravar. Verifique sua conexão.');
+            });
+        }
+
+        campoRfid.addEventListener('input', conferirRfid);
+        campoRfid.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); conferirRfid(); } });
+        campoSisbov.addEventListener('input', function() { soDigitos(campoSisbov); erro(''); if (campoSisbov.value.length === TAMANHO) { buscarAnimal(); } });
+        campoSisbov.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscarAnimal(); } });
+        campoPeso.addEventListener('input', conferirPeso);
+        campoPeso.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); gravar(); } });
+        campoLote.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); gravar(); } });
+        btnGravar.addEventListener('click', gravar);
+        el('btn-limpar').addEventListener('click', reiniciar);
+
+        // Sair (ou Enter) fecha o quadro de sucesso e devolve o cursor ao RFID
+        function fecharSucesso() { el('modal-sucesso').classList.remove('aberto'); campoRfid.focus(); }
+        el('btn-modal-sair').addEventListener('click', fecharSucesso);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && el('modal-sucesso').classList.contains('aberto')) { e.preventDefault(); fecharSucesso(); }
+        });
+
+        campoRfid.focus();
+    </script>
+
+    <!-- quadro de sucesso fecha sozinho em 3 segundos, com contagem no Sair (peca unica da Brincagem) -->
+    <script src="/static/js/auto_fechar_gravacao.js"></script>
+    <script>AutoFecharGravacao.iniciar({ modal: 'modal-sucesso', botao: 'btn-modal-sair', segundos: 3 });</script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\linkagem_rfid.html
+     ========================================================= -->

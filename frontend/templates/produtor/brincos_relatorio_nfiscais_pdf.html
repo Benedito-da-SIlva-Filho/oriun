@@ -1,0 +1,240 @@
+<!--
+=========================================================
+PROJETO: Orion
+PASTA: C:\orion\frontend\templates\produtor
+MODULO: frontend\templates\produtor\brincos_relatorio_nfiscais_pdf.html
+AUTOR: Benedito Silva Filho
+CRIADO EM: 2026-09-02 10:00 -03
+ATUALIZADO EM: 2026-09-02 10:59 -03
+VERSAO: 1.4.0
+
+DESCRICAO:
+    Template PDF (motor xhtml2pdf/reportlab) da relacao
+    individual de brincos DISPONIVEIS de um lote de Entrada de
+    Brincos (tb_3007), lendo tb_7017_entrada_brincos_rfid.
+    Reproduz o layout do relatorio "REGISTRO DE ENTRADA DE
+    BRINCOS" do GERAS (referencia trazida por Benedito), com
+    SISBOV puro de 15 digitos, SEM digito verificador/hifen
+    (decisao ja fechada e reconfirmada na Sessao 044).
+
+    PADRAO REUTILIZAVEL No2 aplicado:
+      - Orientacao RETRATO (Portrait) - dimensoes explicitas
+        (size: 21cm 29.7cm), diferente do Relatorio Resumo (esse
+        e Paisagem). Confirmado por Benedito, Sessao 044: este
+        relatorio especifico e Retrato.
+      - Largura de coluna definida SO no style="width: X%" de
+        cada <th> do thead (colgroup nao tem nenhum efeito neste
+        motor - nao usado neste arquivo). Percentual (em vez de
+        pt fixo) escolhido aqui de proposito, para a tabela de
+        Ind/Codigo se adaptar proporcionalmente a largura menor
+        do Retrato sem precisar recalcular pt manualmente.
+      - <table repeat="1"> (atributo HTML, nao CSS) para repetir
+        o cabecalho da tabela de Ind/Codigo em cada pagina -
+        <thead> sozinho NAO repete neste motor (bug real
+        encontrado e corrigido no teste interno desta sessao).
+
+    v1.0.0: Criacao (Sessao 044, 02/09/2026, 10:00 -03).
+    v1.1.0: Sessao 044 (02/09/2026, 10:35 -03) - Ajustes pedidos
+        por Benedito apos teste real: (1) orientacao trocada de
+        Paisagem para Retrato (size: 29.7cm 21cm -> 21cm 29.7cm);
+        (2) titulo do relatorio trocado de "REGISTRO DE ENTRADA
+        DE BRINCOS" para "BRINCOS DISPONÍVEIS".
+    v1.2.0: Sessao 044 (02/09/2026, 10:45 -03) - Bug real
+        encontrado em teste de producao (PDF real aberto no
+        Adobe): rotulos "Nota Fiscal:" e "Qtde Brincos:"
+        quebravam em 2 linhas mesmo com white-space:nowrap no
+        CSS (nowrap nao e respeitado de forma confiavel pelo
+        motor reportlab/xhtml2pdf dentro de celula de tabela
+        estreita - limitacao real do motor, nao erro de CSS).
+        Corrigido abreviando os rotulos para "N.Fiscal:" e
+        "Brincos:" (decisao de Benedito) e alargando a coluna de
+        rotulo de 10% para 12%.
+    v1.3.0: Sessao 044 (02/09/2026, 10:50 -03) - Mesmo ajuste
+        aplicado aos rotulos "Nome Produtor:" e "Nome
+        Propriedade:", que tambem quebravam em 2 linhas (mesma
+        causa da v1.2.0). Abreviados para "Produtor:" e
+        "Propriedade:". NOVA REGRA PERMANENTE de Benedito (ESG -
+        economia de papel/toner/energia/tempo de impressao):
+        rotulos de cabecalho de QUALQUER relatorio PDF do Orion
+        devem caber em 1 linha - abreviar o rotulo quando
+        necessario, quebra de linha so quando estritamente
+        inevitavel. Regra registrada na memoria de longo prazo do
+        Piloto, vale para todo PDF futuro do Orion, nao so este.
+    v1.4.0: Sessao 044 (02/09/2026, 10:59 -03) - Bug real (ESG):
+        com 100 brincos disponiveis (25 linhas), o rodape "Total
+        N.Fiscal/Total Disponivel" transbordava para uma 2a
+        pagina sozinho - 1 folha de papel inteira gasta por causa
+        de 1 linha. Corrigido reduzindo espacamento vertical em
+        toda a cadeia (titulo, tabelas de cabecalho, titulo da
+        relacao, linhas da tabela de brincos) e removendo a linha
+        "Impressao: ..." do topo. Rodape agora e 1 unica linha
+        com Total N.Fiscal + Total Disponivel (proximos, alinhados
+        a esquerda) + Impressao (canto inferior direito, fonte
+        menor/cinza) - decisao de Benedito.
+=========================================================
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 21cm 29.7cm;
+        margin: 1.2cm;
+    }
+    * { font-family: Helvetica, Arial, sans-serif; }
+    body { font-size: 9pt; }
+
+    .titulo-relatorio {
+        text-align: center;
+        font-size: 12pt;
+        font-weight: bold;
+        color: #D4370A;
+        margin-bottom: 3pt;
+    }
+
+    table.cabecalho-dados {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2pt;
+    }
+    table.cabecalho-dados td {
+        border: none;
+        padding: 0.5pt 4pt;
+        font-size: 9pt;
+    }
+    table.cabecalho-dados td.rotulo {
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .titulo-relacao {
+        text-align: center;
+        font-size: 9.5pt;
+        font-weight: bold;
+        background: #FBE9E4;
+        border: 1px solid #D4370A;
+        padding: 2pt;
+        margin: 3pt 0;
+    }
+
+    table.brincos {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2pt;
+    }
+    table.brincos th {
+        background: #D4370A;
+        color: #FFFFFF;
+        border: 1px solid #A82C08;
+        padding: 2pt 4pt;
+        font-size: 8pt;
+        text-align: center;
+    }
+    table.brincos td {
+        border: 1px solid #CCCCCC;
+        padding: 1.5pt 4pt;
+        font-size: 8pt;
+    }
+    table.brincos td.ind { text-align: right; }
+    table.brincos td.codigo { text-align: left; }
+    table.brincos tr:nth-child(even) td { background: #FBF0EC; }
+
+    table.totais {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 4pt;
+    }
+    table.totais td {
+        border: none;
+        padding: 3pt 4pt;
+        font-size: 9pt;
+        font-weight: bold;
+    }
+    table.totais td.total-nf { text-align: left; width: 25%; }
+    table.totais td.total-disp { text-align: left; width: 35%; }
+    table.totais td.impressao-rodape {
+        text-align: right;
+        width: 40%;
+        font-weight: normal;
+        font-size: 8pt;
+        color: #555555;
+    }
+</style>
+</head>
+<body>
+
+    <div class="titulo-relatorio">BRINCOS DISPONÍVEIS</div>
+
+    <table class="cabecalho-dados">
+        <tr>
+            <td class="rotulo" style="width: 12%;">Produtor:</td>
+            <td style="width: 85%;">{{ cabecalho.produtor_nome if cabecalho else '-' }}</td>
+        </tr>
+        <tr>
+            <td class="rotulo" style="width: 12%;">Propriedade:</td>
+            <td>{{ cabecalho.propriedade_nome if cabecalho else '-' }}</td>
+        </tr>
+    </table>
+
+    <div class="titulo-relacao">RELAÇÃO DE BRINCOS - [ {{ total_disponivel }} ] DISPONIVEIS</div>
+
+    <table class="cabecalho-dados">
+        <tr>
+            <td class="rotulo" style="width: 12%;">N.Fiscal:</td>
+            <td style="width: 15%;">{{ lote.nota_fiscal }}</td>
+            <td class="rotulo" style="width: 12%;">Fornecedor:</td>
+            <td style="width: 63%;">{{ fornecedor_nome }}</td>
+        </tr>
+        <tr>
+            <td class="rotulo" style="width: 12%;">Brincos:</td>
+            <td>{{ lote.qtde_entrada }}</td>
+            <td class="rotulo">Responsável:</td>
+            <td>{{ responsavel_nome }}</td>
+        </tr>
+    </table>
+
+    <table class="brincos" repeat="1">
+        <thead>
+            <tr>
+                <th style="width: 6%;">Ind</th>
+                <th style="width: 19%;">Código</th>
+                <th style="width: 6%;">Ind</th>
+                <th style="width: 19%;">Código</th>
+                <th style="width: 6%;">Ind</th>
+                <th style="width: 19%;">Código</th>
+                <th style="width: 6%;">Ind</th>
+                <th style="width: 19%;">Código</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in linhas %}
+            <tr>
+                {% for ind, codigo in linha %}
+                <td class="ind">{{ ind }}</td>
+                <td class="codigo">{{ codigo }}</td>
+                {% endfor %}
+                {% for _ in range(4 - linha|length) %}
+                <td class="ind">&nbsp;</td>
+                <td class="codigo">&nbsp;</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totais">
+        <tr>
+            <td class="total-nf">Total N.Fiscal: {{ lote.qtde_entrada }}</td>
+            <td class="total-disp">Total Disponivel: {{ total_disponivel }}</td>
+            <td class="impressao-rodape">Impressão: {{ data_impressao }}</td>
+        </tr>
+    </table>
+
+</body>
+</html>
+<!--
+=========================================================
+FIM DE ARQUIVO: frontend\templates\produtor\brincos_relatorio_nfiscais_pdf.html
+=========================================================
+-->

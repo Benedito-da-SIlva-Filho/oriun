@@ -1,0 +1,273 @@
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\modal_confirmacao.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 16:40 -03
+     ATUALIZADO EM: 2026-09-30 14:35 -03
+     VERSAO: 2.1.0
+
+     DESCRICAO:
+         Componente REAPROVEITAVEL de modal de confirmacao, com a
+         cara visual do Orion - substitui o popup feio e generico do
+         navegador (window.confirm()), que Benedito achou "estranho"
+         em teste real do botao Desfazer (Sessao 045).
+
+         Incluido via diretiva "include" do Jinja em qualquer tela
+         que precise de confirmacao antes de uma acao importante
+         (Desfazer, exclusao, cancelamento, etc.) - so precisa
+         incluir este arquivo uma vez, antes do fechamento do body.
+
+         v2.0.0 (Sessao 076): o componente agora atende DOIS
+         padroes de tela, sem dar "jeitinho" em nenhum dos dois -
+         decisao de Benedito de deixar o modelo abrangente para
+         qualquer uso futuro parecido, nao so o caso de hoje:
+
+         PADRAO 1 - formulario tradicional (tela recarrega apos o
+         envio, ex.: Desfazer em Operacoes Recentes). Sem mudanca
+         de uso:
+           1. No formulario, troque:
+              onsubmit="return confirm('Mensagem...')"
+              por:
+              onsubmit="return confirmarAcao(this, 'Mensagem...')"
+              ("this" passa o proprio formulario - a funcao guarda
+              a referencia e so envia se o Usuario confirmar,
+              nunca envia direto)
+
+         PADRAO 2 - acao silenciosa/assincrona (tela NAO recarrega,
+         ex.: Excluir na Consulta Brincagem - AJAX por baixo dos
+         panos). NOVO nesta versao:
+           1. No botao (nao formulario), troque:
+              onclick="minhaFuncaoQueExclui()"
+              por:
+              onclick="confirmarAcaoAssincrona(minhaFuncaoQueExclui, 'Mensagem...')"
+              (passa a FUNCAO em si, sem executa-la ainda - o modal
+              so a executa se o Usuario confirmar)
+
+         Os dois padroes aceitam um 3o parametro OPCIONAL -
+         textoBotaoConfirmar - para trocar o texto do botao
+         vermelho ("Confirmar" por padrao) por algo mais especifico
+         da acao (ex.: "Excluir", "Desfazer", "Cancelar Cadastro") -
+         pensado para os casos futuros que Benedito mencionou, sem
+         precisar editar este arquivo de novo a cada novo uso.
+
+         Nao depende de nenhuma variavel do router - e 100% HTML/CSS/
+         JS autocontido, funciona em qualquer tela que ja siga o
+         padrao visual do Orion (cores fixas no proprio arquivo, nao
+         usa a variavel cor_primaria de proposito - mensagem de
+         confirmacao deve ser sempre no tom "atencao/vermelho",
+         independente da cor de marca da tela).
+
+         v1.0.0: Criacao (Sessao 045, 03/09/2026, 16:40 -03), a
+         partir do pedido de Benedito em teste real do botao
+         Desfazer - trocar o popup nativo do navegador por um modal
+         com o layout do Orion.
+         v2.0.0: Sessao 076 (21/09/2026, 10:00 -03) - Adicionado o
+         Padrao 2 (confirmarAcaoAssincrona()), para telas que usam
+         AJAX/fetch em vez de formulario tradicional (motivado pelo
+         Excluir da Consulta Brincagem). Texto do botao de
+         confirmar agora e customizavel (3o parametro opcional em
+         ambas as funcoes). confirmarAcao() (Padrao 1) mantida com
+         a MESMA assinatura de chamada de antes - nenhuma tela
+         existente (Operacoes Recentes, Cancelamento de Brincos)
+         precisa de nenhuma alteracao para continuar funcionando.
+         v2.0.1: Sessao 079 (24/09/2026, 13:15 -03) - Regra de Ouro
+         #10: a DESCRICAO citava a variavel de cor com os
+         delimitadores de expressao do Jinja escritos literalmente
+         dentro deste comentario - nao quebrava (expressao valida,
+         o motor so imprimia a cor dentro do comentario), mas era
+         uma bomba-relogio. Texto reescrito sem os delimitadores
+         (tambem trocada a mencao literal da tag de fechamento do
+         body por texto). Achado pela varredura de todos os
+         templates. NENHUMA mudanca de HTML/CSS/JS.
+         v2.1.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de
+         Benedito: acabar com as janelas do navegador ("localhost
+         diz", "Existem dados nao salvos", "Sair do site?"). DUAS
+         funcoes NOVAS, sem mudar como as antigas sao chamadas:
+
+         PADRAO 3 - AVISO so com o botao OK (troca o alert() do
+         navegador):
+              mostrarAviso('Mensagem...')
+              mostrarAviso('Mensagem...', 'Entendi', funcaoDepoisDoOk)
+           (2o e 3o parametros opcionais)
+
+         PADRAO 4 - VIGIA DE SAIDA: com dados nao salvos, QUALQUER
+         link da tela (Cancelar, Voltar, Home, menu, Sair) abre esta
+         janela ("Ficar na tela" / "Sair sem salvar") em vez de sair
+         direto. Chamado UMA vez por tela:
+              vigiarSaidaPorLinks(funcaoQueDizSeTemAlteracao,
+                                  funcaoAntesDeSair)
+           funcaoAntesDeSair (opcional) e onde a tela zera a propria
+           marca de "alterado", para o aviso do navegador nao
+           aparecer em seguida. Ignora links "#", javascript:, nova
+           aba e download, e links que a tela ja tratou sozinha.
+           ATENCAO: fechar a aba, apertar F5 ou a seta de voltar do
+           navegador continua com o aviso do PROPRIO navegador - e
+           regra de seguranca do Chrome, nenhum site consegue trocar.
+
+         Ajustes internos (sem mudanca para quem ja usa):
+           - o botao Cancelar e o icone ganharam id (o Aviso esconde
+             o Cancelar e usa outro icone; Padrao 1 e 2 sempre
+             reabrem com Cancelar e o icone de sempre);
+           - Confirmar/Cancelar passam a limpar a acao pendente ANTES
+             de executa-la - assim uma acao que abre outra janela na
+             sequencia (ex.: Excluir que termina com um Aviso) nao e
+             apagada no caminho.
+     ========================================================= -->
+
+<div id="modalConfirmacaoOverlay" class="modal-confirmacao-overlay">
+    <div class="modal-confirmacao-caixa">
+        <div id="modalConfirmacaoIcone" class="modal-confirmacao-icone">&#9888;&#65039;</div>
+        <div id="modalConfirmacaoTexto" class="modal-confirmacao-texto"></div>
+        <div class="modal-confirmacao-acoes">
+            <button type="button" id="modalConfirmacaoBtnCancelar" class="modal-confirmacao-btn-cancelar" onclick="modalConfirmacaoCancelar()">Cancelar</button>
+            <button type="button" id="modalConfirmacaoBtnConfirmar" class="modal-confirmacao-btn-confirmar" onclick="modalConfirmacaoConfirmar()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-confirmacao-overlay {
+        display: none;
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 9999;
+        align-items: center; justify-content: center;
+    }
+    .modal-confirmacao-overlay.aberto { display: flex; }
+
+    .modal-confirmacao-caixa {
+        background: #ffffff; border-radius: 10px; padding: 28px;
+        max-width: 420px; width: 90%; text-align: center;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+    }
+    .modal-confirmacao-icone { font-size: 32px; margin-bottom: 10px; }
+    .modal-confirmacao-texto { font-size: 14px; color: #333333; line-height: 1.6; margin-bottom: 22px; }
+
+    .modal-confirmacao-acoes { display: flex; gap: 12px; justify-content: center; }
+    .modal-confirmacao-btn-cancelar {
+        background: #f0f0f0; color: #555555; border: 1px solid #cccccc; border-radius: 6px;
+        padding: 10px 22px; font-size: 14px; cursor: pointer;
+    }
+    .modal-confirmacao-btn-cancelar:hover { background: #e5e5e5; }
+    .modal-confirmacao-btn-confirmar {
+        background: #D4370A; color: #ffffff; border: none; border-radius: 6px;
+        padding: 10px 22px; font-size: 14px; font-weight: bold; cursor: pointer;
+    }
+    .modal-confirmacao-btn-confirmar:hover { opacity: 0.9; }
+</style>
+
+<script>
+    // v2.0.0 - guarda a acao pendente de confirmacao (so 1 por vez -
+    // nao ha caso real de 2 modais abertos simultaneamente nesta
+    // app). Agora e um objeto com "tipo" ('form' ou 'callback') em
+    // vez de guardar so o formulario - permite os 2 padroes de uso
+    // sem duplicar logica do modal em si.
+    var _modalConfirmacaoAcaoPendente = null;
+
+    // v2.1.0 - 3o parametro opcional "opcoes": somenteOk (esconde o
+    // Cancelar), textoCancelar e icone. Sem opcoes = igual a v2.0.1.
+    function _modalConfirmacaoAbrir(mensagem, textoBotaoConfirmar, opcoes) {
+        opcoes = opcoes || {};
+        var btnCancelar = document.getElementById('modalConfirmacaoBtnCancelar');
+        document.getElementById('modalConfirmacaoTexto').textContent = mensagem;
+        document.getElementById('modalConfirmacaoBtnConfirmar').textContent = textoBotaoConfirmar || 'Confirmar';
+        btnCancelar.textContent = opcoes.textoCancelar || 'Cancelar';
+        btnCancelar.style.display = opcoes.somenteOk ? 'none' : '';
+        document.getElementById('modalConfirmacaoIcone').innerHTML = opcoes.icone || '&#9888;&#65039;';
+        document.getElementById('modalConfirmacaoOverlay').classList.add('aberto');
+        document.getElementById('modalConfirmacaoBtnConfirmar').focus();
+    }
+
+    // ---------------------------------------------------
+    // PADRAO 1 - formulario tradicional (tela recarrega apos o
+    // envio). Chamada no onsubmit do formulario: NUNCA deixa o
+    // submit nativo acontecer (sempre retorna false) - abre o
+    // modal e guarda o formulario para enviar so se o Usuario
+    // clicar em "Confirmar". Assinatura de chamada IDENTICA a
+    // v1.0.0 - nenhuma tela existente precisa mudar.
+    // ---------------------------------------------------
+    function confirmarAcao(form, mensagem, textoBotaoConfirmar) {
+        _modalConfirmacaoAcaoPendente = { tipo: 'form', form: form };
+        _modalConfirmacaoAbrir(mensagem, textoBotaoConfirmar);
+        return false;
+    }
+
+    // ---------------------------------------------------
+    // PADRAO 2 (NOVO, v2.0.0) - acao silenciosa/assincrona (tela
+    // NAO recarrega - AJAX/fetch por baixo dos panos, ex.: Excluir
+    // na Consulta Brincagem). Chamada no onclick de um BOTAO (nao
+    // formulario): recebe a FUNCAO a executar (sem parenteses -
+    // nao executa ainda) - o modal so a chama de verdade se o
+    // Usuario clicar em "Confirmar".
+    // ---------------------------------------------------
+    function confirmarAcaoAssincrona(callback, mensagem, textoBotaoConfirmar) {
+        _modalConfirmacaoAcaoPendente = { tipo: 'callback', callback: callback };
+        _modalConfirmacaoAbrir(mensagem, textoBotaoConfirmar);
+    }
+
+    // ---------------------------------------------------
+    // PADRAO 3 (NOVO, v2.1.0) - AVISO so com OK. Substitui o
+    // alert() do navegador. aoFechar (opcional) roda depois do OK.
+    // ---------------------------------------------------
+    function mostrarAviso(mensagem, textoBotao, aoFechar) {
+        _modalConfirmacaoAcaoPendente = { tipo: 'callback', callback: aoFechar || function() {} };
+        _modalConfirmacaoAbrir(mensagem, textoBotao || 'OK', { somenteOk: true, icone: '&#8505;&#65039;' });
+    }
+
+    // ---------------------------------------------------
+    // PADRAO 4 (NOVO, v2.1.0) - VIGIA DE SAIDA. Com dados nao
+    // salvos (temAlteracoes() = true), qualquer link da tela abre
+    // esta janela em vez de sair direto. Confirmou: antesDeSair()
+    // (a tela zera a marca de alterado) e vai para o link.
+    // ---------------------------------------------------
+    function vigiarSaidaPorLinks(temAlteracoes, antesDeSair) {
+        document.addEventListener('click', function(evento) {
+            if (evento.defaultPrevented) return;
+            var link = evento.target.closest ? evento.target.closest('a[href]') : null;
+            if (!link) return;
+            var destino = link.getAttribute('href') || '';
+            if (destino === '' || destino.charAt(0) === '#' || destino.indexOf('javascript:') === 0) return;
+            if (link.target === '_blank' || link.hasAttribute('download')) return;
+            if (!temAlteracoes()) return;
+
+            evento.preventDefault();
+            _modalConfirmacaoAcaoPendente = {
+                tipo: 'callback',
+                callback: function() {
+                    if (antesDeSair) { antesDeSair(); }
+                    window.location.href = link.href;
+                }
+            };
+            _modalConfirmacaoAbrir(
+                'Existem dados não salvos nesta tela. Deseja realmente sair sem salvar?',
+                'Sair sem salvar',
+                { textoCancelar: 'Ficar na tela' }
+            );
+        });
+    }
+
+    // v2.1.0 - limpa a acao pendente ANTES de executar (ver changelog)
+    function modalConfirmacaoConfirmar() {
+        document.getElementById('modalConfirmacaoOverlay').classList.remove('aberto');
+
+        var acao = _modalConfirmacaoAcaoPendente;
+        _modalConfirmacaoAcaoPendente = null;
+        if (!acao) return;
+
+        if (acao.tipo === 'form') {
+            acao.form.submit();
+        } else if (acao.tipo === 'callback') {
+            acao.callback();
+        }
+    }
+
+    function modalConfirmacaoCancelar() {
+        document.getElementById('modalConfirmacaoOverlay').classList.remove('aberto');
+        _modalConfirmacaoAcaoPendente = null;
+    }
+</script>
+
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\modal_confirmacao.html
+     ========================================================= -->

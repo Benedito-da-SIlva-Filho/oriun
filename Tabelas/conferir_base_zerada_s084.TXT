@@ -1,0 +1,44 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\conferir_base_zerada_s084.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-01 12:26 -03
+-- ATUALIZADO EM: 2026-10-01 12:26 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Conferencia (SOMENTE LEITURA) do script zerar_base_teste_s084.sql.
+--   Lista toda tabela COM DADOS nos 4 schemas de Produtor e no
+--   public. Depois de zerar, so devem aparecer os CADASTROS.
+--
+--   ESPERADO no produtor_00004 (os mesmos numeros do inventario
+--   de antes): tb_4005_racas 108, tb_parceiros 12,
+--   tb_parceiros_propriedades 12, tb_versao_schema 1,
+--   tb_backup_restore_pedido 2.
+--   ESPERADO no public (inalterado): certificadoras 1,
+--   convite_prospects 6, produtores 9, propriedade_produtor 12,
+--   propriedade_proprietario 10, propriedades 11, proprietarios 8,
+--   protocolos 4, tb_1007_motivo_mortes 44.
+--   Nos outros 3 schemas: so racas, parceiros e afins (nenhuma
+--   tabela de movimentacao). Se aparecer movimentacao (tb_2001,
+--   tb_3007, tb_4001_gta, tb_5001_brincagem, tb_7017 etc.), me
+--   avise.
+--
+--   v1.0.0: Criacao (Sessao 084, 01/10/2026, 12:26 -03).
+-- =========================================================
+
+SELECT * FROM (
+  SELECT table_schema, table_name,
+         (xpath('/row/c/text()',
+                query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text::int AS linhas
+  FROM information_schema.tables
+  WHERE table_type = 'BASE TABLE'
+    AND table_schema IN ('produtor_00001', 'produtor_00004', 'produtor_00005', 'produtor_00010', 'public')
+) t
+WHERE linhas > 0
+ORDER BY table_schema, table_name;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\conferir_base_zerada_s084.sql
+-- =========================================================

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_saida_excluir.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-22 12:45 -03
+     ATUALIZADO EM: 2026-10-22 12:45 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Excluir GTA de Saida (gta_saida.py, rota excluir): mostra a GTA, os motivos que
+         impedem a exclusao (animais vinculados ou Comunicado) ou a caixa de confirmacao,
+         e a tela de resultado. A linha inteira da GTA fica no Log de Operacoes.
+
+     v1.0.0: Criacao (Sessao 103).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Excluir GTA de Sa&iacute;da</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1100px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-1  { grid-column: span 1; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+        .campo-destaque input { font-size: 17px; font-weight: bold; }
+        .campo-uf-negrito { font-size: 17px; font-weight: bold; }
+
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; }
+        .divisor-vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .caixa-qtde-gta { background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .caixa-qtde-gta label { font-size: 17px; font-weight: bold; color: #7a1f04; }
+        .caixa-qtde-gta input { width: 120px; font-size: 26px; font-weight: bold; text-align: center; padding: 10px; border: 1px solid #D4370A; border-radius: 6px; }
+        .contador-restante { font-size: 20px; font-weight: bold; }
+        .contador-restante.ok { color: #2e7d32; }
+        .contador-restante.falta { color: #D4370A; }
+
+        .tabela-animais { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .tabela-animais th { text-align: left; font-size: 12px; color: #666666; padding: 8px 6px; border-bottom: 2px solid #e0e0e0; }
+        .tabela-animais th.col-acao { width: 10%; text-align: center; }
+        .tabela-animais td { padding: 6px; border-bottom: 1px solid #f0f0f0; }
+        .tabela-animais input, .tabela-animais select { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; width: 100%; font-family: Arial, sans-serif; }
+        .btn-excluir-linha { background: #ffffff; border: 1px solid #c62828; color: #c62828; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+        .btn-excluir-linha:hover { background: #c62828; color: #ffffff; }
+        .btn-adicionar-linha { padding: 8px 18px; background: #ffffff; border: 1px dashed #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .btn-adicionar-linha:hover { background: #FBE9E4; }
+        .btn-adicionar-linha:disabled { border-color: #cccccc; color: #aaaaaa; background: #f5f5f5; cursor: not-allowed; }
+        .btn-adicionar-linha:disabled:hover { background: #f5f5f5; }
+
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 20px; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-resumo .valor { font-size: 19px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.total { color: #D4370A; }
+
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro label { font-size: 13px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        /* v1.2.0 - avisos (vermelho do padrao), banner de sucesso e botoes Alterar/Excluir */
+        .aviso-topo { background: #D32F2F; border-left: 6px solid #8e0000; color: #ffffff; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 12px; max-width: 1100px; }
+        .aviso-topo ul { margin: 8px 0 8px 22px; font-weight: normal; }
+        .banner-ok { background: #e8f5e9; border-left: 6px solid #2e7d32; color: #1b5e20; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 12px; max-width: 1100px; }
+        .btn-alterar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-alterar:hover { background: #C0392B; }
+        .btn-perigo { padding: 10px 24px; background: #ffffff; border: 2px solid #c62828; color: #c62828; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-perigo:hover { background: #c62828; color: #ffffff; }
+    
+        .aviso-topo { background: #D32F2F; border-left: 6px solid #8e0000; color: #ffffff; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 12px; max-width: 1100px; }
+        .banner-ok { background: #e8f5e9; border-left: 6px solid #2e7d32; color: #1b5e20; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 12px; max-width: 1100px; }
+        .confirmacao-revisao { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #ffffff; background: #D4370A; border: 3px solid #7a1f04; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+        .confirmacao-revisao input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #7a1f04; }
+        .btn-excluir-gta { padding: 10px 24px; background: #c62828; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-excluir-gta:hover { background: #8e0000; }
+        .btn-excluir-gta:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_detalhe if not concluido else url_lista %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128465;&#65039;</span> Excluir GTA de Sa&iacute;da &#8212; {{ gta.numero_gta_completo }}</h2>
+            </div>
+
+            {% if erro %}
+            <div class="aviso-topo">&#9888;&#65039; {{ erro }}</div>
+            {% endif %}
+
+            <div class="form-container">
+
+                {% if concluido %}
+                <div class="banner-ok">&#10003; GTA {{ gta.numero_gta_completo }} exclu&iacute;da. A linha inteira ficou guardada no Log de Opera&ccedil;&otilde;es (quem excluiu e quando). N&atilde;o existe desfazer: para voltar, cadastre a GTA de novo.</div>
+                <div class="form-botoes">
+                    <a href="{{ url_lista }}" class="btn-cancelar">Voltar &agrave; lista</a>
+                </div>
+                {% else %}
+                <div class="form-secao">GTA que ser&aacute; exclu&iacute;da</div>
+                <div class="bloco-conferencia" style="max-width: 560px;">
+                    <div class="linha"><span class="rotulo">N&uacute;mero</span><span class="valor">{{ gta.numero_gta_completo }}</span></div>
+                    <div class="linha"><span class="rotulo">Emiss&atilde;o</span><span class="valor">{{ gta.data_emissao }}</span></div>
+                    <div class="linha"><span class="rotulo">Validade</span><span class="valor">{{ gta.data_validade }}</span></div>
+                    <div class="linha"><span class="rotulo">Quantidade na GTA</span><span class="valor">{{ gta.qtde_animais }}</span></div>
+                </div>
+
+                {% if motivos %}
+                <div class="aviso-topo" style="margin-top: 18px;">&#9888;&#65039; Esta GTA n&atilde;o pode ser exclu&iacute;da agora:
+                    <ul style="margin: 8px 0 0 22px; font-weight: normal;">{% for m in motivos %}<li>{{ m }}</li>{% endfor %}</ul>
+                </div>
+                <div class="form-botoes">
+                    <a href="{{ url_detalhe }}" class="btn-cancelar">Voltar</a>
+                </div>
+                {% else %}
+                <div class="aviso-topo" style="margin-top: 18px;">&#9888;&#65039; A exclus&atilde;o n&atilde;o tem desfazer. A linha inteira da GTA fica guardada no Log de Opera&ccedil;&otilde;es como prova de quem excluiu.</div>
+                <form method="POST" action="{{ url_acao }}" autocomplete="off">
+                    <label class="confirmacao-revisao"><input type="checkbox" name="confirmo" value="1" id="chk-confirmo"> Confirmo a exclus&atilde;o desta GTA.</label>
+                    <div class="form-botoes">
+                        <a href="{{ url_detalhe }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-excluir-gta" id="btn-excluir" disabled>Excluir GTA</button>
+                    </div>
+                </form>
+                {% endif %}
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+        var chk = document.getElementById('chk-confirmo');
+        var btn = document.getElementById('btn-excluir');
+        if (chk && btn) {
+            chk.addEventListener('change', function() { btn.disabled = !chk.checked; });
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_saida_excluir.html
+     ========================================================= -->

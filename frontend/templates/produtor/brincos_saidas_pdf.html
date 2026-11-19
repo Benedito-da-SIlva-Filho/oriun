@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_saidas_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 11:32 -03
+     ATUALIZADO EM: 2026-09-03 11:55 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         PDF do Relatorio de Brincos Saidas (PADRAO REUTILIZAVEL
+         No2 - motor xhtml2pdf). 1 secao por Lote de origem, fluxo
+         CONTINUO (sem quebra de pagina forcada entre lotes),
+         seguindo as regras ja fechadas de ESG (espacamento
+         compacto) e as regras tecnicas do motor xhtml2pdf:
+           - size: 29.7cm 21cm (paisagem - "landscape" nao
+             funciona neste motor)
+           - table-layout fixed, larguras via style width% no <th>
+           - repeat="1" na tag <table> para repetir cabecalho
+             entre paginas (secoes longas, como o modo Sequencial
+             com centenas de SISBOVs)
+           - so 1 <table> por div .caixa-dados (2 tabelas irmas
+             causam bug de padding no topo) - por isso o bloco de
+             informacoes do Lote fica FORA da .caixa-dados, como
+             texto simples, e a .caixa-dados contem so a tabela de
+             dados (grid ou tabela, conforme o modo)
+           - celulas vazias preenchidas com &nbsp; (celula vazia
+             de verdade quebra o calculo de largura de coluna)
+
+         2 layouts de tabela, conforme modo_tabela (definido no
+         router, por secao):
+           - modo_tabela=False (Sequencial): grid de 5 colunas, so
+             SISBOV, replica exata do relatorio_de_saidas.pdf
+             trazido por Benedito (Sessao 045).
+           - modo_tabela=True (Cancelados/Periodo): tabela de 3
+             colunas (SISBOV | Motivo | Data Saída) - cada linha
+             conta seu proprio motivo/data (Benedito, Sessao 045).
+
+         Variaveis esperadas do router:
+           cabecalho          - SimpleNamespace(propriedade_nome,
+                                municipio, uf, produtor_nome)
+           secoes              - lista de SimpleNamespace por Lote:
+                                sequencia, solicitacao_nro,
+                                nota_fiscal, qtde_entrada,
+                                data_entrada (ja formatada),
+                                codigo_inicial, codigo_final,
+                                total_secao, modo_tabela,
+                                linhas (se modo_tabela=False - lista
+                                de listas de ate 5 SISBOVs) OU
+                                linhas_tabela (se modo_tabela=True -
+                                lista de SimpleNamespace(sisbov,
+                                motivo, data_saida))
+           total_geral          - int, total de brincos no relatorio
+           titulo_relatorio      - rotulo do tipo escolhido (para o
+                                subtitulo do PDF)
+           modo_tabela           - bool geral (usado so no rodape,
+                                para o rotulo do total)
+           data_impressao         - string ja formatada
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 11:32 -03).
+     v1.1.0: Sessao 045 (03/09/2026, 11:55 -03) - Ajuste pedido por
+         Benedito, em teste real: orientacao trocada de Paisagem
+         (29.7cm x 21cm) para Retrato (21cm x 29.7cm). Retestado
+         internamente nos 4 cenarios (grid, tabela, secao vazia,
+         volume alto com virada de pagina) apos a mudanca - grid de
+         5 colunas continua legivel mesmo com a largura menor;
+         unico efeito colateral e a linha "Propriedade | Produtor"
+         quebrar em 2 linhas quando o nome da Propriedade e bem
+         longo (não é um bug - so reflete a largura menor do
+         retrato, sem estourar o cartao nem cortar texto).
+     ========================================================= -->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 21cm 29.7cm;
+        margin: 1.2cm;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 8pt; color: #222222; }
+
+    .cabecalho-doc { margin-bottom: 10px; }
+    .cabecalho-doc .titulo-relatorio { font-size: 13pt; font-weight: bold; color: #D4370A; }
+    .cabecalho-doc .subtitulo { font-size: 9pt; color: #555555; margin-top: 2px; }
+    .cabecalho-doc .linha-produtor { font-size: 9pt; margin-top: 6px; }
+    .cabecalho-doc .linha-produtor strong { color: #D4370A; }
+
+    .info-lote {
+        font-size: 8pt; margin-top: 14px; margin-bottom: 4px;
+        border-top: 1px solid #cccccc; padding-top: 6px;
+    }
+    .info-lote strong { color: #D4370A; }
+
+    .caixa-dados { margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { border: none; padding: 2px 4px; font-size: 8pt; text-align: left; }
+    th { background-color: #FBE9E4; color: #D4370A; font-weight: bold; border-bottom: 1px solid #D4370A; }
+    td { border-bottom: 1px solid #eeeeee; }
+
+    .total-secao { font-size: 8pt; font-weight: bold; text-align: right; margin-top: 2px; margin-bottom: 4px; }
+
+    .rodape-total {
+        margin-top: 14px; border-top: 1px solid #D4370A; padding-top: 6px;
+        font-size: 9pt; font-weight: bold; color: #D4370A;
+    }
+    .rodape-impressao { font-size: 7pt; color: #999999; text-align: right; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+    <div class="cabecalho-doc">
+        <div class="titulo-relatorio">Relatório de Saída de Brincos</div>
+        <div class="subtitulo">{{ titulo_relatorio }}</div>
+        <div class="linha-produtor">
+            <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}
+        </div>
+    </div>
+
+    {% for secao in secoes %}
+    <div class="info-lote">
+        <strong>Sequência:</strong> {{ secao.sequencia or '-' }}
+        &nbsp;&nbsp;<strong>Solicitação nº:</strong> {{ secao.solicitacao_nro or '-' }}
+        &nbsp;&nbsp;<strong>Nota Fiscal:</strong> {{ secao.nota_fiscal or '-' }}
+        &nbsp;&nbsp;<strong>Qtde Entrada:</strong> {{ secao.qtde_entrada }}
+        &nbsp;&nbsp;<strong>Data Entrada:</strong> {{ secao.data_entrada }}<br>
+        <strong>Sisbov Inicial:</strong> {{ secao.codigo_inicial }}
+        &nbsp;&nbsp;<strong>Sisbov Final:</strong> {{ secao.codigo_final }}
+    </div>
+
+    {% if secao.modo_tabela %}
+    <!-- Layout de TABELA: SISBOV | Motivo | Data Saída (modos Cancelados/Periodo) -->
+    <div class="caixa-dados">
+        <table repeat="1">
+            <thead>
+                <tr>
+                    <th style="width: 34%;">SISBOV</th>
+                    <th style="width: 33%;">Motivo</th>
+                    <th style="width: 33%;">Data Saída</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in secao.linhas_tabela %}
+                <tr>
+                    <td>{{ item.sisbov }}</td>
+                    <td>{{ item.motivo }}</td>
+                    <td>{{ item.data_saida }}</td>
+                </tr>
+                {% endfor %}
+                {% if not secao.linhas_tabela %}
+                <tr><td colspan="3">&nbsp;Nenhum brinco encontrado para este filtro neste lote.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <!-- Layout de GRID: 5 colunas, so o SISBOV (modo Sequencial) -->
+    <div class="caixa-dados">
+        <table repeat="1">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Sisbov</th>
+                    <th style="width: 20%;">Sisbov</th>
+                    <th style="width: 20%;">Sisbov</th>
+                    <th style="width: 20%;">Sisbov</th>
+                    <th style="width: 20%;">Sisbov</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for linha in secao.linhas %}
+                <tr>
+                    {% for col in range(5) %}
+                    <td>{{ (linha[col] if col < linha|length else '&nbsp;') | safe }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                {% if not secao.linhas %}
+                <tr><td colspan="5">&nbsp;Nenhum brinco encontrado para este filtro neste lote.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="total-secao">Total Solicitação {{ secao.solicitacao_nro or '-' }}: {{ secao.total_secao }}</div>
+    {% endfor %}
+
+    {% if not secoes %}
+    <div class="info-lote">Nenhum brinco encontrado para o filtro selecionado.</div>
+    {% endif %}
+
+    <div class="rodape-total">Total de Brincos {{ 'Saídos' if modo_tabela else 'Utilizados' }}: {{ total_geral }}</div>
+    <div class="rodape-impressao">Impressão: {{ data_impressao }}</div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_saidas_pdf.html
+     ========================================================= -->

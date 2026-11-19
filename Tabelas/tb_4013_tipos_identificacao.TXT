@@ -1,0 +1,56 @@
+-- =============================================================
+-- PROJETO: Orion SISBOV
+-- PASTA: database/scripts/catalogos
+-- MODULO: tb_4013_tipos_identificacao
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 25/07/2026 08:34 -03
+-- ATUALIZADO EM: 25/07/2026 08:34 -03
+-- VERSAO: 1.0.0
+-- DESCRICAO: Catalogo de Tipos de Identificacao (Simples/Dupla).
+--            Origem: GR4013 (GERAS) - pasta 4-Animais.
+--            Atributo do proprio animal. Schema publico.
+--            Trigger dedicada (nao compartilhada).
+-- CHANGELOG:
+--   v1.0.0 - 25/07/2026 - Criacao inicial (tabela + trigger + seed) - Benedito Silva Filho
+-- =============================================================
+
+-- 1) TABELA
+CREATE TABLE public.tb_4013_tipos_identificacao (
+    id              SERIAL PRIMARY KEY,
+    codigo_geras    SMALLINT NOT NULL UNIQUE,
+    descricao       VARCHAR(100) NOT NULL,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.tb_4013_tipos_identificacao IS 'Catalogo de Tipos de Identificacao - origem GR4013 (GERAS)';
+
+-- 2) TRIGGER DEDICADA (atualizado_em)
+CREATE OR REPLACE FUNCTION public.trg_tb_4013_tipos_identificacao_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_4013_tipos_identificacao_atualizado_em
+BEFORE UPDATE ON public.tb_4013_tipos_identificacao
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_tb_4013_tipos_identificacao_atualizado_em();
+
+-- 3) SEED (dados reais do GR4013.TXT, confirmados por Benedito)
+INSERT INTO public.tb_4013_tipos_identificacao (codigo_geras, descricao) VALUES
+(1, 'Simples - Brinco Padrão SISBOV'),
+(2, 'Dupla - Brinco Padrão SISBOV + Brinco Botton'),
+(3, 'Dupla - Brinco Padrão SISBOV + Tatuagem'),
+(4, 'Dupla - Brinco Padrão SISBOV + Marca a Fogo perna direita'),
+(5, 'Dupla - Brinco Padrão SISBOV + Chip Eletrônico');
+
+-- FIM DE ARQUIVO
+
+     1 Simples - Brinco Padrão SISBOV
+     2 Dupla - Brinco Padrão SISBOV + Brinco Botton
+     3 Dupla - Brinco Padrão SISBOV + Tatuagem
+     4 Dupla - Brinco Padrão SISBOV + Marca a Fogo perna direita
+     5 Dupla - Brinco Padrão SISBOV + Chip Eletrônico

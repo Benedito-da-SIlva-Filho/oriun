@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\morte_fotos.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-01 18:00 -03
+     ATUALIZADO EM: 2026-11-03 13:50 -03
+     VERSAO: 1.0.1
+
+     DESCRICAO:
+         Morte - Fotos: ate 2 por animal do Controle Interno (backend/routers/morte_fotos.py, rota fotos). Opcional; anexar, trocar e excluir.
+
+     v1.0.0: Criacao (Sessao 111).
+     v1.0.1: Sessao 113 (03/11/2026, 13:50 -03) - Tela Fotos da Morte: brinco maior, texto em 3 linhas alinhadas e Data da Morte de cada animal.  REVERSAO: .bak_antes_s113_fotos.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Morte de Animais</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-roxo { display: inline-block; padding: 7px 14px; border: none; border-radius: 6px; background: #6A1B9A; color: #fff; font-size: 12.5px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-roxo:hover { background: #4A148C; }
+        .btn-roxo:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-peq { padding: 4px 10px; border: 1px solid #888; border-radius: 6px; background: #fff; color: #555; font-size: 11.5px; cursor: pointer; }
+        .btn-peq.exc { border-color: #c62828; color: #c62828; }
+        .quadro { background: #F3E5F5; border: 1px solid #CE93D8; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; color: #333; line-height: 1.7; }
+        .quadro b { color: #4A148C; }
+        .faixa-sem { background: #D32F2F; color: #fff; padding: 9px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; }
+        .faixa-erro-f { background: #D32F2F; color: #fff; padding: 9px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; display: none; }
+        .tabela-box { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; }
+        .tab-fotos { width: 100%; border-collapse: collapse; }
+        .tab-fotos th { text-align: left; padding: 10px 14px; font-size: 12px; color: #999; font-weight: normal; border-bottom: 1px solid #eee; }
+        .tab-fotos td { padding: 10px 14px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        .tab-fotos .sisbov { font-weight: bold; font-family: monospace, monospace; font-size: 19px; letter-spacing: 0.5px; }
+        .quadro .linha-q { display: block; line-height: 1.6; }
+        .vaga { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .vaga img { width: 86px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+        .vaga .sem { color: #c62828; font-size: 12px; font-weight: bold; }
+        .vaga input[type=file] { display: none; }
+        .nota { font-size: 12.5px; color: #777; margin: 10px 2px; }
+</style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#9904;</span> Fotos da Morte</div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }}</div>
+
+            <div class="quadro">
+                <span class="linha-q">Controle Interno <b>{{ cab.texto }}</b>{% if cab.notificacao %} &#8212; Notifica&ccedil;&atilde;o <b>N&ordm; {{ cab.notificacao }}</b>{% endif %}</span>
+                <span class="linha-q">At&eacute; 2 fotos por animal (o animal e o brinco, ou uma s&oacute; com os dois). Opcional: pode anexar, trocar ou excluir depois, mesmo com a Notifica&ccedil;&atilde;o gerada.</span>
+                <span class="linha-q">As fotos aparecem aqui, n&atilde;o no documento oficial.</span>
+            </div>
+
+            <div class="faixa-sem" id="faixa-sem" style="display:none"></div>
+            <div class="faixa-erro-f" id="faixa-erro"></div>
+
+            <div class="tabela-box">
+                <table class="tab-fotos">
+                    <thead><tr><th>SISBOV</th><th>Manejo</th><th>Sexo</th><th>Data da Morte</th><th>Foto 1</th><th>Foto 2</th></tr></thead>
+                    <tbody>
+                        {% for l in linhas %}
+                        <tr data-animal="{{ l.id }}">
+                            <td class="sisbov">{{ l.sisbov }}</td>
+                            <td>{{ l.manejo }}</td>
+                            <td>{{ l.sexo }}</td>
+                            <td>{{ l.data_morte }}</td>
+                            {% for ordem in (1, 2) %}
+                            <td>
+                                <div class="vaga" data-ordem="{{ ordem }}" data-foto="{{ l.fotos[ordem] or '' }}">
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="nota">Fotos de celular s&atilde;o reduzidas automaticamente (m&aacute;ximo 12 MB por foto).</div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+    {% include 'produtor/modal_confirmacao.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROP = {{ id_propriedade }};
+        var URL_ENVIAR = "{{ url_enviar }}", URL_VER = "{{ url_ver }}", URL_EXCLUIR = "{{ url_excluir }}";
+
+        function el(id) { return document.getElementById(id); }
+        function erro(t) { var f = el('faixa-erro'); f.textContent = t || ''; f.style.display = t ? 'block' : 'none'; }
+
+        function contarSem() {
+            var sem = 0;
+            document.querySelectorAll('.vaga[data-ordem="1"]').forEach(function (v) {
+                var tr = v.closest('tr');
+                var temAlguma = tr.querySelector('.vaga[data-ordem="1"]').getAttribute('data-foto') || tr.querySelector('.vaga[data-ordem="2"]').getAttribute('data-foto');
+                if (!temAlguma) { sem += 1; }
+            });
+            var f = el('faixa-sem');
+            if (sem > 0) { f.textContent = 'Sem foto: ' + sem + ' animal(is) deste Controle ainda n\u00e3o t\u00eam nenhuma foto.'; f.style.display = 'block'; }
+            else { f.style.display = 'none'; }
+        }
+
+        function desenhar(vaga) {
+            var idFoto = vaga.getAttribute('data-foto');
+            var ordem = vaga.getAttribute('data-ordem');
+            var idAnimal = vaga.closest('tr').getAttribute('data-animal');
+            vaga.innerHTML = '';
+            var input = document.createElement('input');
+            input.type = 'file'; input.accept = 'image/*';
+            input.addEventListener('change', function () { if (input.files && input.files[0]) { enviar(vaga, idAnimal, ordem, input.files[0]); } });
+            vaga.appendChild(input);
+            if (idFoto) {
+                var img = document.createElement('img');
+                img.src = URL_VER + '/' + idFoto + '?id_propriedade=' + ID_PROP + '&t=' + Date.now();
+                img.title = 'Abrir a foto';
+                img.addEventListener('click', function () { window.open(URL_VER + '/' + idFoto + '?id_propriedade=' + ID_PROP, '_blank'); });
+                vaga.appendChild(img);
+                var trocar = document.createElement('button'); trocar.type = 'button'; trocar.className = 'btn-peq'; trocar.textContent = 'Trocar';
+                trocar.addEventListener('click', function () { input.click(); });
+                vaga.appendChild(trocar);
+                var exc = document.createElement('button'); exc.type = 'button'; exc.className = 'btn-peq exc'; exc.textContent = 'Excluir';
+                exc.addEventListener('click', function () { confirmarAcaoAssincrona(function () { excluir(vaga, idFoto); }, 'Excluir esta foto?', 'Excluir'); });
+                vaga.appendChild(exc);
+            } else {
+                var anexar = document.createElement('button'); anexar.type = 'button'; anexar.className = 'btn-roxo'; anexar.textContent = 'Anexar foto';
+                anexar.addEventListener('click', function () { input.click(); });
+                vaga.appendChild(anexar);
+                var sem = document.createElement('span'); sem.className = 'sem'; sem.textContent = ordem === '1' ? 'sem foto' : '';
+                vaga.appendChild(sem);
+            }
+        }
+
+        function enviar(vaga, idAnimal, ordem, arquivo) {
+            erro('');
+            var fd = new FormData();
+            fd.append('id_propriedade', ID_PROP); fd.append('id_saida_animal', idAnimal); fd.append('ordem', ordem); fd.append('arquivo', arquivo);
+            vaga.style.opacity = '0.5';
+            fetch(URL_ENVIAR, { method: 'POST', credentials: 'same-origin', body: fd })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+                .then(function (x) {
+                    vaga.style.opacity = '1';
+                    if (!x.ok || !x.d.ok) { erro(x.d.erro || 'Não foi possível enviar a foto.'); return; }
+                    vaga.setAttribute('data-foto', String(x.d.id_foto));
+                    desenhar(vaga); contarSem();
+                })
+                .catch(function () { vaga.style.opacity = '1'; erro('Não foi possível enviar a foto. Confira a conexão e tente de novo.'); });
+        }
+
+        function excluir(vaga, idFoto) {
+            erro('');
+            fetch(URL_EXCLUIR, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+                                 body: JSON.stringify({ id_propriedade: ID_PROP, id_foto: idFoto }) })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+                .then(function (x) {
+                    if (!x.ok || !x.d.ok) { erro(x.d.erro || 'Não foi possível excluir.'); return; }
+                    vaga.setAttribute('data-foto', ''); desenhar(vaga); contarSem();
+                })
+                .catch(function () { erro('Não foi possível excluir. Tente de novo.'); });
+        }
+
+        document.querySelectorAll('.vaga').forEach(desenhar);
+        contarSem();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\morte_fotos.html
+     ========================================================= -->

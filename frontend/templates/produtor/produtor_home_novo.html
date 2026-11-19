@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_home_novo.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-07 09:45 -03
+     ATUALIZADO EM: 2026-11-12 14:25 -03
+     VERSAO: 1.24.1
+     v1.24.0: Sessao 121 (11/11/2026) - Pendencia 'Reidentificacao - Notificacao a enviar' (soma e lista de pendencias). REVERSAO: .bak_antes_s121_reidentificacao.
+     v1.24.1: Sessao 122 (2026-11-12 14:25 -03) - Auditoria Etapa 1: aviso de cargo sem acesso agora mostra o cargo do usuario e diz quem resolve (Titular). REVERSAO: .bak_antes_s122_msgs.
+     v1.23.0: Sessao 114 (04/11/2026) - Card Pesagens abre o Hub de Pesos (Leitor de Peso). REVERSAO: .bak_antes_s114_pesos.
+     v1.22.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Home NOVO do Produtor/Fazenda, em rota paralela
+         (/produtor/home-novo). O Home atual (produtor_home.html)
+         continua de pe como rede de seguranca ate a troca
+         definitiva. Visual novo, so com numeros e textos da nossa
+         base: nada do mock do Gemini (3.450 cab., 18 alertas,
+         7 e-GTAs, etc.) entra aqui.
+
+         v1.0.0: Sessao 089 (07/10/2026, 09:45 -03) - Etapa 1 do Home
+             novo. Topo, menu e rodape copiados do produtor_home.html
+             (Regra de Ouro #5). Alerta dos 30 dias e os 3 quadros
+             (Animais, Entradas, Liberados para abate) com os MESMOS
+             numeros do Home atual (variaveis alertas_notificacao e
+             resumo, vindas do router). No quadro Liberados para
+             abate, o grupo antes chamado Livres passa a se chamar
+             U.E. e a ordem e CTH, U.E. e Total (decisao de
+             Benedito: os animais fora da Cota Hilton sao U.E.; os
+             CTH tambem podem ir para U.E., mas tem bonus a mais).
+             Modulos: Entradas abre o Hub novo de Entrada
+             (/produtor/hub-novo/entrada) e Brincagem abre o Hub de
+             Brincagem; Saidas e Pesagens ainda nao tem tela e
+             aparecem so como visual (Em breve). Nenhuma tabela
+             nova, nenhuma conta nova.
+         v1.1.0: Sessao 089 (07/10/2026, 10:20 -03) - O cartao Brincagem
+             deixa de abrir o Hub de Brincagem antigo (imagens grandes) e
+             passa a abrir o Hub novo, no visual agrupado
+             (/produtor/hub-novo/brincagem). Nenhuma outra mudanca.
+         v1.2.0: Sessao 089 (07/10/2026, 10:45 -03) - Etapa 2: FAZENDA
+             ESCOLHIDA. Com 2 ou mais fazendas, abaixo dos quadros aparece a
+             tabela de fazendas (Fazenda, UF, Animais e Pendencias, com o
+             Produtor quando a mesma fazenda tem mais de um) e o botao
+             Selecionar Fazenda. Escolhida a fazenda, uma faixa mostra
+             Fazenda e Produtor, os 3 quadros passam a mostrar so os numeros
+             dela e o botao Todas as fazendas volta a visao do grupo. Com 1
+             so fazenda, ela ja entra escolhida, sem tabela e sem botao.
+             Variaveis novas do router: selecionado, multiplas_fazendas,
+             fazendas. Alerta dos 30 dias, Modulos, menu e topo: sem mudanca.
+
+         v1.3.0: Sessao 089 (07/10/2026, 11:05 -03) - Quadros do topo
+             reorganizados (decisao de Benedito, porque a lista de fazendas
+             do quadro Animais repetia a tabela): (1) ANIMAIS mostra so o
+             total e, na visao do grupo, a frase "em N fazendas" (a lista
+             saiu). (2) O quadro ENTRADAS virou PENDENCIAS: numero grande com
+             o total (Comunicados a gerar + Comunicados a imprimir +
+             Notificacoes a imprimir), as linhas por tipo como atalhos, a
+             frase "em N de M fazendas" na visao do grupo e, dentro do quadro,
+             a linha das Notificacoes com prazo de 30 dias vencendo ou
+             vencido (ja contadas nas Notificacoes a imprimir, por isso nao
+             somam no total). Tudo zerado: "Tudo em dia". Altura dos quadros
+             de 196 para 220 px. A faixa de alerta do topo continua. Usa a
+             variavel nova alertas_quadro do router (auth.py v1.17.1).
+
+         v1.4.0: Sessao 089 (07/10/2026, 11:20 -03) - CORES, com paleta
+             contida (pedido de Benedito: dar animo sem virar arco-iris).
+             Cada cor tem um significado: vermelho da marca para acoes e
+             identidade (botoes, icones dos modulos); verde para o que esta
+             liberado ou em dia; ambar para pendencia; vermelho forte so
+             para prazo de 30 dias vencido; cinza-azulado para o que e so
+             informacao. Faixa colorida no topo de cada quadro (Animais
+             cinza-azulado, Pendencias ambar, Liberados para abate verde),
+             numero do quadro Pendencias ambar (vermelho se houver prazo
+             vencido), numero dos Liberados verde, UF em etiqueta cinza e
+             botao Selecionar Fazenda cheio. Os tres tipos de pendencia da
+             tabela passam a usar o mesmo tom ambar. Icones e botoes dos
+             modulos passam todos para o tom da marca (antes eram 4 cores).
+             Nenhuma mudanca de dados, textos ou links.
+
+         v1.5.0: Sessao 089 (07/10/2026, 12:30 -03) - AUDITORIA ERAS. Nova
+             coluna Auditoria na tabela de fazendas (depois da UF): sem
+             codigo ERAS mostra um traco; em dia fica em branco; vencendo
+             (amarelo), vencida ou a menos de uma semana (vermelho) e sem
+             registro (ambar, contatar a Certificadora) mostram a etiqueta da
+             situacao; se a ULTIMA vistoria foi NAO CONFORME aparece tambem a
+             etiqueta vermelha Nao conforme, mesmo em dia. A celula inteira
+             abre a tela da fazenda em Auditorias ERAS (com origem home, para
+             o Voltar voltar ao Home). Com fazenda escolhida (ou usuario de 1
+             so fazenda) a mesma situacao aparece na faixa do topo, para o
+             aviso nunca sumir. Falha na busca: etiqueta indisponivel. O
+             quadro Pendencias nao conta a auditoria. Variaveis: item
+             auditoria de cada fazenda e auditoria_selecionada (router
+             auth.py v1.18.0). Exige a rota auditoria_eras.fazenda.
+
+         v1.6.0: Sessao 089 (07/10/2026, 13:52 -03) - STATUS ERAS. A coluna
+             Auditoria passa a se chamar Status ERAS (como no modelo
+             aprovado) e a fazenda em dia mostra a etiqueta verde
+             Qualificada: tem codigo ERAS, a ULTIMA vistoria foi CONFORME e a
+             proxima data esta a mais de 15 dias. Se a ultima foi NAO
+             CONFORME, nunca aparece Qualificada: so a etiqueta vermelha Nao
+             conforme (mesmo em dia). Vencendo, pendente e sem registro: as
+             mesmas etiquetas da v1.5.0. A faixa da fazenda escolhida segue a
+             mesma regra. Esta versao reune as v1.4.0 (cores) e v1.5.0
+             (auditoria), que nao tinham sido instaladas: instalar so esta.
+             Nenhuma mudanca de dados nem de router.
+
+         v1.6.1: Sessao 089 (07/10/2026, 14:30 -03) - Ajustes pedidos por
+             Benedito: (1) os 3 quadros do topo deixam de ter altura fixa
+             (220 px) e passam a ter a altura do conteudo - continuam iguais
+             entre si, porque a grade os estica ate o mais cheio - e a lista
+             interna nunca mais rola; margens internas um pouco menores.
+             (2) O botao da tabela passa a se chamar so Selecionar e a frase
+             de ajuda acima da tabela vira: Clique em Selecionar para ver os
+             numeros da fazenda. Nenhuma mudanca de dados, router ou links.
+
+         v1.7.0: Sessao 089 (07/10/2026, 17:58 -03) - SEM FAZENDA, SEM ENTRADA:
+             com 2 ou mais fazendas e nenhuma escolhida, os cartoes de modulo
+             (Entradas e Brincagem; Saidas e Pesagens ja eram Em breve) ficam
+             INIBIDOS, com a dica Selecione uma fazenda; ao clicar em
+             Selecionar eles ativam. Aviso amarelo no topo quando a pessoa foi
+             mandada para ca pela guarda do auth.py v1.21.0 (variavel
+             aviso_fazenda) por tentar abrir um modulo sem fazenda. Usuario de
+             1 fazenda so: cartoes sempre ativos.
+     v1.8.0: Sessao 090 (08/10/2026, 09:10 -03) - PAINEL SUBSTITUI O HOME: os 2 links
+         (Todas as fazendas e Selecionar) passam a usar o endereco definitivo
+         /produtor/home. Nenhuma outra mudanca de HTML, CSS ou JavaScript.
+     v1.9.0: Sessao 094 (12/10/2026, 19:50 -03) - QUAL FAZENDA TEM A PENDENCIA: na VISAO DO GRUPO
+         (nenhuma fazenda escolhida) cada linha do quadro Pendencias (Comunicados a gerar,
+         Comunicados a imprimir, Notificacoes a imprimir) passa a listar, abaixo, as fazendas que
+         tem aquela pendencia, com a quantidade; clicar na fazenda a seleciona (mesmo link do
+         botao Selecionar). Com fazenda escolhida nada muda. Sem mudanca no servidor.
+         REVERSAO: devolver produtor_home_novo.html.bak_antes_fazendas_card.
+     v1.9.1: Sessao 094 (12/10/2026, 19:55 -03) - TEXTO: "Notificacoes a imprimir" passa a
+         "Notificacao de Nascimento - Imprimir" (quadro Pendencias e coluna Pendencias da tabela),
+         para o usuario novo saber de qual notificacao se trata. Nenhuma outra mudanca.
+     v1.9.2: Sessao 094 (12/10/2026, 20:05 -03) - TEXTO: "Comunicados a gerar/imprimir" passam a
+         "Comunicado de Entrada - Gerar/Imprimir" (Anexo XIX: entradas de qualquer tipo, exceto
+         Nascimento). Nenhuma outra mudanca.
+     v1.10.0: Sessao 096 (14/10/2026, 10:55 -03) - FAZENDAS x PRODUTORES: a mesma fazenda pode ter 2
+         produtores (ex.: Olho d'Agua), entao o titulo da tabela e os textos dos quadros Animais e
+         Pendencias passam a contar fazendas e produtores DISTINTOS. 1 produtor com varias
+         fazendas: "Fazendas (N)". 1 fazenda com varios produtores: "Produtores (N)". Misto:
+         "Fazendas (F) e Produtores (P)". Sem mudanca no servidor. Nenhuma outra mudanca.
+         REVERSAO: devolver produtor_home_novo.html.bak_antes_prod_fazendas_s096.
+     v1.11.0: Sessao 097 (15/10/2026, 10:05 -03) - PERMISSOES POR CARGO: aviso "Seu cargo nao
+         tem acesso a essa tela" (aviso_permissao, auth.py v1.25.0) e cards de modulos so para
+         quem tem acesso (pode_ver). REVERSAO: .bak_antes_perm_s097.
+     v1.12.0: Sessao 097 (15/10/2026, 10:15 -03) - SO O QUE O CARGO PODE ABRIR: sem acesso ao
+         modulo Entrada somem o aviso dos 30 dias, o quadro Pendencias e a coluna Pendencias da
+         tabela de fazendas (todos levam a telas de Entrada). Sem acesso a Minha Propriedade/
+         Auditorias ERAS somem tambem o Status ERAS da faixa da fazenda e a coluna Status ERAS da
+         tabela (decisao de Benedito: o cargo so ve o que pode abrir).
+         REVERSAO: devolver produtor_home_novo.html.bak_antes_pend_s097.
+     v1.13.0: Sessao 098 (16/10/2026, 18:40 -03) - Card Saidas deixa de ser "Em breve": abre o Hub de Saidas
+         (/produtor/hub-novo/saida), com o mesmo teste de fazenda dos cards Entradas e Brincagem.
+     v1.14.0: Sessao 106 (26/10/2026, 11:25 -03) - NOVA pendencia "GTA de Compra - Brincar" (pedido do Benedito):
+         linha no quadro Pendencias (a primeira, antes do Comunicado - Gerar, na ordem do fluxo), com a abertura
+         por fazenda, entra no total de pendencias, na conta de fazendas com pendencia e na coluna Pendencias
+         da tabela de fazendas (chip). O clique abre o Hub de Brincagem. Dado novo vem do home_resumo.py v1.4.0
+         (chaves gtas_brincar e url_brincagem). Como o destino e o Hub de Brincagem, a pendencia so aparece e so
+         conta para quem tem acesso a Brincagem (regra da Sessao 097: o cargo so ve o que pode abrir).
+         REVERSAO: devolver .bak_antes_s106f.
+     v1.15.0: Sessao 106 (26/10/2026, 11:50 -03) - SUB-LINHA DA FAZENDA ABRE A TELA DA PENDENCIA (pedido do Benedito):
+         na visao do grupo, clicar em "fazenda" dentro de uma pendencia (Brincar, Comunicado - Gerar, Comunicado -
+         Imprimir, Notificacao - Imprimir) seleciona a fazenda e abre direto a tela daquela pendencia, em vez de
+         so mostrar o Painel. O link leva o parametro destino (o mesmo endereco da linha principal); o router
+         (auth.py v1.27.0) so aceita os 4 enderecos das pendencias. O botao Selecionar da tabela nao mudou.
+         REVERSAO: devolver .bak_antes_s106h.
+     v1.16.0: Sessao 106 (26/10/2026, 12:05 -03) - "GTA de Compra - Brincar" abre o Hub de Entrada (r.url_brincar_compra), na linha
+         principal e na sub-linha da fazenda, e deixa de depender do acesso a Brincagem (depende so de Entrada, como o quadro).
+         REVERSAO: devolver .bak_antes_s106k.
+     v1.17.0: Sessao 106 (26/10/2026, 14:20 -03) - "GTA de Compra - Brincar" volta a abrir o Hub de Brincagem (home_resumo.py v1.6.0) e volta a depender do acesso a
+         Brincagem (pode_ver('brincagem')): so aparece para quem consegue abrir o destino. REVERSAO: devolver .bak_antes_s106m.
+     v1.18.0: Sessao 106 (26/10/2026, 15:40 -03) - na visao do grupo, a linha PRINCIPAL de "GTA de Compra - Brincar" seleciona a fazenda sozinha quando so UMA fazenda tem a pendencia
+         (mesmo caminho da sub-linha); com varias fazendas continua abrindo o Hub e a tela pede para escolher a fazenda. REVERSAO: devolver .bak_antes_s106o.
+     v1.19.0: Sessao 106 (26/10/2026, 16:00 -03) - "GTA de Compra - Brincar" na visao do grupo com 2 ou mais fazendas: a linha principal vira so TITULO (sem clique) e
+         cada "↳ fazenda" e o clique que seleciona a fazenda e abre o Hub de Brincagem (pedido do Benedito). Com 1 fazenda a linha principal continua clicavel. REVERSAO: devolver .bak_antes_s106p.
+     v1.20.0: Sessao 106 (26/10/2026, 18:10 -03) - PADRAO linha-titulo em TODAS as pendencias (lista itens_pend): com 2+ fazendas a linha principal e so titulo e cada '↳ fazenda' seleciona a fazenda e abre a tela
+         da pendencia (pedido do Benedito: padrao para todos os processos). NOVA pendencia 'Brincos lidos sem GTA - Vincular' (chave brincos_esquecidos, 3+ dias). REVERSAO: .bak_antes_s106w.
+     v1.21.0: Sessao 106 - a pendencia diz o tipo: 'Compra - Brincos lidos sem GTA - Vincular' e NOVA 'Nascimento - Brincos lidos sem Notificacao' (chave nascimentos_esquecidos). REVERSAO: .bak_antes_s106x.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Home</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; margin-bottom: 20px; }
+
+        /* ---- Alerta dos 30 dias da Notificacao ---- */
+        .alerta-prazo { border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; border-left: 6px solid; }
+        .alerta-prazo.urgente { background: #fff3e0; border-color: #FF6B00; color: #8a3b00; }
+        .alerta-prazo.vencida { background: #ffebee; border-color: #c62828; color: #8e1b1b; }
+        .alerta-prazo .alerta-titulo { font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+        .alerta-prazo .alerta-linha { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; font-size: 14px; }
+        .alerta-prazo .alerta-linha + .alerta-linha { border-top: 1px solid rgba(0,0,0,0.08); }
+        .alerta-prazo .alerta-quando { font-weight: bold; white-space: nowrap; }
+        .alerta-prazo a.btn-alerta { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; background: #D4370A; color: #ffffff; white-space: nowrap; }
+        .alerta-prazo a.btn-alerta:hover { background: #C0392B; }
+
+        /* ---- Quadros do topo (visual novo) - os 3 com a MESMA altura fixa;
+             listas rolam por dentro, nunca empurram os Modulos ---- */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 28px; }
+        .card { background: #ffffff; border-radius: 12px; padding: 16px 22px 18px; display: flex; flex-direction: column; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .card-animais { border-top: 4px solid #546e7a; }
+        .card-pend { border-top: 4px solid #e0a100; }
+        .card-lib { border-top: 4px solid #1b7a43; }
+        .card h3 { font-size: 14px; color: #555555; font-weight: normal; flex-shrink: 0; }
+        .card .numero { font-size: 34px; font-weight: bold; color: #222222; margin: 4px 0 6px; flex-shrink: 0; line-height: 1.1; }
+        .card .numero.numero-atencao { color: #a66a00; }
+        .card .numero.numero-urgente { color: #c62828; }
+        .card .numero.numero-ok { color: #1b7a43; }
+        .card .numero small { font-size: 14px; font-weight: normal; color: #777777; margin-left: 4px; }
+        .card-lista { list-style: none; flex: 1 1 auto; min-height: 0; overflow-y: auto; font-size: 13px; color: #555555; border-top: 1px solid #e8e8e8; padding-top: 6px; }
+        .card-lista li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+        .card-lista li + li { border-top: 1px solid #f3f3f3; }
+        .card-lista strong { color: #222222; }
+        .card-alertas { border-top: none; padding-top: 0; margin-top: 8px; font-size: 14px; }
+        .card-alertas li { padding: 0; }
+        .card-alertas li + li { border-top: none; }
+        .card-alertas a { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border-radius: 6px; color: #333333; text-decoration: none; }
+        .card-alertas a:hover { background: #FBE9E4; }
+        .card-alertas strong { color: #D4370A; font-size: 16px; }
+        .card-alertas li.sub-prazo a { padding-left: 24px; font-size: 13px; }
+        .card-alertas li.sub-fazenda a { padding-left: 24px; font-size: 13px; color: #555555; }
+        .card-alertas li.sub-fazenda strong { color: #555555; font-size: 14px; }
+        .card-alertas li a.sem-link { pointer-events: none; cursor: default; }   /* v1.19.0 - titulo da pendencia com varias fazendas: so as sub-linhas clicam */
+        .card-alertas li.sub-prazo strong { color: #c62828; font-size: 14px; }
+        .card-em-dia { margin-top: 14px; font-size: 18px; font-weight: bold; color: #1b5e20; }
+        .card-nota { font-size: 13px; color: #999999; margin-top: 4px; }
+
+        /* ---- Fazenda escolhida (faixa) e tabela de fazendas - Etapa 2 ---- */
+        .visao-grupo { font-size: 13px; color: #666666; margin: -8px 0 16px; }
+        .faixa-fazenda { background: #ffffff; border-left: 6px solid #D4370A; border-radius: 10px; padding: 12px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .faixa-texto { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 15px; color: #222222; }
+        .faixa-rotulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: #888888; }
+        .faixa-sub { font-size: 13px; color: #666666; }
+        .btn-todas { padding: 8px 16px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 13px; font-weight: bold; text-decoration: none; white-space: nowrap; }
+        .btn-todas:hover { background: #D4370A; color: #ffffff; }
+        .quadro-fazendas { background: #ffffff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 28px; overflow-x: auto; }
+        .quadro-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 16px 20px; font-size: 16px; font-weight: bold; color: #222222; }
+        .quadro-dica { font-size: 12px; font-weight: normal; color: #888888; }
+        .tabela-fazendas { width: 100%; border-collapse: collapse; }
+        .tabela-fazendas th { text-align: left; padding: 10px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; color: #888888; font-weight: bold; border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
+        .tabela-fazendas td { padding: 12px 20px; font-size: 14px; color: #333333; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .tabela-fazendas tr:last-child td { border-bottom: none; }
+        .tabela-fazendas .col-num { text-align: right; font-weight: bold; white-space: nowrap; }
+        .tabela-fazendas .col-acao { text-align: right; white-space: nowrap; }
+        .sub-produtor { font-size: 12px; color: #777777; margin-top: 2px; }
+        .chip { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin: 2px 6px 2px 0; white-space: nowrap; }
+        .chip-brincar { background: #fff3cd; color: #8a6100; }
+        .chip-gerar { background: #fff3cd; color: #8a6100; }
+        .chip-imprimir { background: #fff3cd; color: #8a6100; }
+        .chip-notificacao { background: #fff3cd; color: #8a6100; }
+        .chip-ok { background: #e4f4ea; color: #1b7a43; }
+        .chip-indisp { background: #eeeeee; color: #777777; }
+        .etiqueta-uf { display: inline-block; padding: 2px 9px; border-radius: 5px; background: #eceff1; color: #455a64; font-size: 12px; font-weight: bold; }
+        .btn-selecionar { display: inline-block; padding: 7px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #D4370A; color: #ffffff; font-size: 13px; font-weight: bold; text-decoration: none; }
+        .btn-selecionar:hover { background: #B22F09; border-color: #B22F09; }
+        .quadro-aviso { padding: 8px 20px 18px; font-size: 14px; color: #777777; }
+
+        /* ---- Auditoria ERAS (coluna da tabela e faixa) - v1.5.0 ---- */
+        .tabela-fazendas td.col-auditoria { padding: 0; }
+        .link-auditoria { display: block; padding: 12px 20px; min-height: 46px; text-decoration: none; color: inherit; }
+        .link-auditoria:hover { background: #fdf3ef; }
+        .chip-aud { white-space: normal; margin-right: 6px; }
+        .chip-aud-atencao { background: #fff3cd; color: #8a6100; }
+        .chip-aud-urgente { background: #ffebee; color: #c62828; }
+        .chip-nc { background: #c62828; color: #ffffff; }
+        .chip-qualificada { background: #e4f4ea; color: #1b7a43; }
+        .faixa-aud { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .faixa-aud-rotulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: #888888; }
+        .faixa-aud a.link-eras { font-size: 13px; color: #D4370A; text-decoration: none; font-weight: bold; }
+        .faixa-aud a.link-eras:hover { text-decoration: underline; }
+
+        .aviso-fazenda { background: #fff3cd; border-left: 4px solid #e0a100; color: #6d4c00; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 16px; }
+        .secao-titulo small { text-transform: none; letter-spacing: 0; font-weight: normal; color: #888888; margin-left: 8px; }
+
+        /* ---- Modulos ---- */
+        .secao-titulo { font-size: 14px; font-weight: bold; color: #333333; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .modulos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+        .modulo { background: #ffffff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 16px; }
+        .modulo-topo { display: flex; align-items: center; gap: 14px; }
+        .modulo-icone { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .modulo-icone svg { width: 26px; height: 26px; display: block; }
+        .modulo-icone.entradas, .modulo-icone.saidas, .modulo-icone.brincagem, .modulo-icone.pesagens { background: #FBE9E4; color: #D4370A; }
+        .modulo-titulo { font-size: 16px; font-weight: bold; color: #222222; text-transform: uppercase; }
+        .modulo-sub { font-size: 13px; color: #777777; margin-top: 2px; }
+        .modulo-botao { display: block; text-align: center; padding: 10px 12px; border-radius: 8px; font-size: 14px; font-weight: bold; text-decoration: none; color: #ffffff; }
+        .modulo-botao.entradas, .modulo-botao.brincagem, .modulo-botao.saidas, .modulo-botao.pesagens { background: #D4370A; }
+        .modulo-botao.entradas:hover, .modulo-botao.brincagem:hover, .modulo-botao.saidas:hover, .modulo-botao.pesagens:hover { background: #B22F09; }
+        .modulo-botao.em-breve { background: #e0e0e0; color: #777777; cursor: default; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        <!-- MENU LATERAL -->
+        {% include 'produtor/produtor_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-titulo">&#127968; Painel da Fazenda</div>
+
+            {% if aviso_fazenda | default(false) %}
+            <div class="aviso-fazenda">&#9888;&#65039; Selecione uma fazenda para continuar.</div>
+            {% endif %}
+
+            {# v1.11.0 (Sessao 097): aviso quando o porteiro barrou uma tela por causa do cargo #}
+            {% if aviso_permissao | default(false) %}
+            <div class="aviso-fazenda">&#9888;&#65039; Seu cargo ({{ (session.get('usuario_cargo') or '')|replace('_', ' ')|title }}) n&atilde;o tem acesso a essa tela. Pe&ccedil;a ao Titular da fazenda: ele pode fazer a a&ccedil;&atilde;o ou liberar o seu cargo na tela de Permiss&otilde;es.</div>
+            {% endif %}
+
+            <!-- Alerta dos 30 dias da Notificacao de Nascimento -->
+            {% if alertas_notificacao and pode_ver('entrada') %}
+            {% set ha_vencida = alertas_notificacao | selectattr('vencida') | list | length > 0 %}
+            <div class="alerta-prazo {{ 'vencida' if ha_vencida else 'urgente' }}">
+                <div class="alerta-titulo">&#9888;&#65039; Notificação de Nascimento — prazo de envio (30 dias da Data de Brincagem)</div>
+                {% for a in alertas_notificacao %}
+                <div class="alerta-linha">
+                    <span>
+                        <strong>{{ a.numero }}</strong> &#8212; Brincagem de {{ a.data }} &#8212; {{ a.qtde }} animais
+                        {% if alertas_notificacao | map(attribute='id_propriedade') | unique | list | length > 1 %}&#8212; {{ a.propriedade }}{% endif %}
+                    </span>
+                    <span class="alerta-quando">{{ a.texto|capitalize }}</span>
+                    <a class="btn-alerta" href="{{ a.url }}">Abrir Notificações</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Etapa 2: faixa da fazenda escolhida (ou aviso da visao do grupo) -->
+            {% if selecionado %}
+            <div class="faixa-fazenda">
+                <div class="faixa-texto">
+                    <span class="faixa-rotulo">Fazenda</span>
+                    <strong>{{ selecionado.propriedade_nome }}</strong>
+                    <span class="faixa-sub">Produtor: {{ selecionado.produtor_nome }}{% if selecionado.uf %} &#183; {{ selecionado.uf }}{% endif %}</span>
+                </div>
+                {% set aus = auditoria_selecionada | default(none) %}
+                {% if aus and pode_ver('propriedade') %}
+                <div class="faixa-aud">
+                    <span class="faixa-aud-rotulo">Status ERAS</span>
+                    {% if aus.erro %}
+                    <span class="chip chip-indisp">Indisponível no momento</span>
+                    {% elif aus.tem_eras %}
+                        {% if aus.texto %}<span class="chip chip-aud {{ 'chip-aud-urgente' if aus.codigo in ('URGENTE', 'PENDENTE') else 'chip-aud-atencao' }}">{{ aus.texto }}</span>{% endif %}
+                        {% if aus.codigo == 'EM_DIA' and not aus.nao_conforme %}<span class="chip chip-aud chip-qualificada">Qualificada</span>{% endif %}
+                        {% if aus.nao_conforme %}<span class="chip chip-nc">Não conforme</span>{% endif %}
+                        {% if pode_ver('propriedade') %}<a class="link-eras" href="{{ url_for('auditoria_eras.fazenda', id_propriedade=selecionado.id_propriedade, origem='home') }}">Auditorias ERAS &#8250;</a>{% endif %}
+                    {% else %}
+                    <span>&#8212;</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if multiplas_fazendas %}
+                <a class="btn-todas" href="{{ url_for('auth.produtor_home') }}">Todas as fazendas</a>
+                {% endif %}
+            </div>
+            {% elif multiplas_fazendas %}
+            <div class="visao-grupo">Visão do grupo: números de todas as fazendas.</div>
+            {% endif %}
+
+            <!-- Quadros do topo: Animais / Pendencias / Liberados para abate -->
+            {% set r = resumo %}
+            {% set resumo_ok = r and not r.erro %}
+            {# v1.10.0 - conta fazendas e produtores DISTINTOS (a mesma fazenda pode ter 2 produtores) #}
+            {% set n_faz  = (fazendas | map(attribute='id_propriedade') | unique | list | length) if fazendas else 0 %}
+            {% set n_prod = (fazendas | map(attribute='id_produtor') | unique | list | length) if fazendas else 0 %}
+            <div class="cards">
+
+                <div class="card card-animais">
+                    <h3>Animais</h3>
+                    {% if resumo_ok %}
+                    <div class="numero">{{ r.animais_total }}<small>animais</small></div>
+                    {% if r.animais_por_propriedade | length > 1 %}
+                    <div class="card-nota">em {% if n_prod == 1 %}{{ n_faz }} fazendas{% elif n_faz == 1 %}{{ n_prod }} produtores{% elif n_faz %}{{ n_faz }} fazendas &#183; {{ n_prod }} produtores{% else %}{{ r.animais_por_propriedade | length }} fazendas{% endif %}</div>
+                    {% endif %}
+                    {% else %}
+                    <div class="numero">&#8212;</div>
+                    <div class="card-nota">Indisponível no momento</div>
+                    {% endif %}
+                </div>
+
+                {% if pode_ver('entrada') %}
+                <div class="card card-pend">
+                    <h3>Pendências</h3>
+                    {% if resumo_ok %}
+                        {% set pend_brincar = (r.gtas_brincar if pode_ver('brincagem') else 0) %}
+                        {% set pend_esq = (r.brincos_esquecidos if pode_ver('brincagem') else 0) %}
+                        {% set pend_esq = pend_esq + r.nascimentos_esquecidos %}
+                        {% set pend_mortes = (r.mortes_sem_notificacao if pode_ver('saidas') else 0) %}
+                        {% set pend_total = pend_brincar + pend_esq + r.comunicados_gerar + r.comunicados_imprimir + r.notificacoes_imprimir + (1 if pend_mortes > 0 else 0) + (1 if r.reidentificacoes_a_enviar > 0 else 0) %}
+                        {% set prazo_total = (alertas_quadro | default([]) | length) %}
+                        {% set prazo_vencidos = (alertas_quadro | default([]) | selectattr('vencida') | list | length) %}
+                        {% if pend_total == 0 and prazo_total == 0 %}
+                        <div class="card-em-dia">Tudo em dia &#10004;</div>
+                        {% else %}
+                        <div class="numero {{ 'numero-urgente' if prazo_vencidos > 0 else 'numero-atencao' }}">{{ pend_total }}<small>pendências</small></div>
+                        {% if fazendas %}
+                        {% set ns = namespace(com=0, indisp=0) %}
+                        {% for f in fazendas %}
+                            {% if f.resumo.erro %}{% set ns.indisp = ns.indisp + 1 %}
+                            {% elif (f.resumo.gtas_brincar if pode_ver('brincagem') else 0) + (f.resumo.brincos_esquecidos if pode_ver('brincagem') else 0) + f.resumo.nascimentos_esquecidos + f.resumo.comunicados_gerar + f.resumo.comunicados_imprimir + f.resumo.notificacoes_imprimir + (f.resumo.mortes_sem_notificacao if pode_ver('saidas') else 0) + f.resumo.reidentificacoes_a_enviar > 0 %}{% set ns.com = ns.com + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        <div class="card-nota">em {{ ns.com }} de {{ fazendas | length }} {{ 'produtores' if n_faz == 1 else ('fazendas' if n_prod == 1 else 'fazendas/produtores') }}{% if ns.indisp > 0 %} &#183; {{ ns.indisp }} indisponível{% endif %}</div>
+                        {% endif %}
+                        <ul class="card-lista card-alertas">
+                            {# v1.20.0 - TODAS as pendencias seguem o mesmo padrao: com 2+ fazendas a linha principal e so TITULO e as sub-linhas selecionam a fazenda e abrem a tela #}
+                            {% set itens_pend = [
+                                {'chave': 'gtas_brincar', 'rotulo': 'GTA de Compra - Brincar', 'url': r.url_brincar_compra, 'dica': 'GTAs de Compra lançadas, com animais ainda por brincar', 'sub': 'Selecionar esta fazenda e abrir o Hub de Brincagem', 'ver': pode_ver('brincagem')},
+                                {'chave': 'brincos_esquecidos', 'rotulo': 'Compra - Brincos lidos sem GTA - Vincular', 'url': r.url_brincos_esquecidos, 'dica': 'Brincos lidos no brete há 3 dias ou mais, ainda sem GTA', 'sub': 'Selecionar esta fazenda e abrir a Consulta de Brincagem', 'ver': pode_ver('brincagem')},
+                                {'chave': 'nascimentos_esquecidos', 'rotulo': 'Nascimento - Brincos lidos sem Notificação', 'url': r.url_notificacao, 'dica': 'Brincos de Nascimento lidos no brete há 3 dias ou mais, ainda fora da Notificação', 'sub': 'Selecionar esta fazenda e abrir a Notificação de Nascimento', 'ver': True},
+                                {'chave': 'comunicados_gerar', 'rotulo': 'Comunicado de Entrada - Gerar', 'url': r.url_gerar_comunicado, 'dica': 'GTAs já brincadas, ainda sem Comunicado de Entrada', 'sub': 'Selecionar esta fazenda e abrir o Gerar Comunicado', 'ver': True},
+                                {'chave': 'comunicados_imprimir', 'rotulo': 'Comunicado de Entrada - Imprimir', 'url': r.url_imprimir_comunicado, 'dica': 'Comunicados gerados, ainda não impressos', 'sub': 'Selecionar esta fazenda e abrir a Impressão do Comunicado', 'ver': True},
+                                {'chave': 'mortes_sem_notificacao', 'rotulo': 'Morte - Animais sem Notificação - Gerar', 'url': r.url_gerar_notificacao_morte, 'dica': 'Animais mortos ainda sem Notificação de Morte (Anexo XXII): gere antes da Vistoria ou da Auditoria', 'sub': 'Selecionar esta fazenda e abrir o Gerar Notificação de Morte', 'ver': pode_ver('saidas')},
+                                {'chave': 'reidentificacoes_a_enviar', 'rotulo': 'Reidentificação - Notificação a enviar' ~ (' (em aberto há ' ~ r.reidentificacao_dias ~ ' dia(s))' if r.reidentificacao_dias > 0 else ''), 'url': r.url_reidentificacao_enviar, 'dica': 'Animais reidentificados cujo pedido ainda não foi enviado à Certificadora (prazo de 30 dias a partir da reidentificação)', 'sub': 'Selecionar esta fazenda e abrir a Consulta da Reidentificação', 'ver': True},
+                                {'chave': 'notificacoes_imprimir', 'rotulo': 'Notificação de Nascimento - Imprimir', 'url': r.url_notificacao, 'dica': 'Notificações de Nascimento ainda não impressas', 'sub': 'Selecionar esta fazenda e abrir a Notificação de Nascimento', 'ver': True},
+                            ] %}
+                            {% for it in itens_pend %}{% if it.ver %}
+                            {% set total_it = r[it.chave] %}
+                            {% if total_it > 0 %}
+                            {% set faz_it = [] %}
+                            {% if not selecionado and fazendas %}{% for f in fazendas %}{% if f.resumo and not f.resumo.erro and f.resumo[it.chave] > 0 %}{% set _ = faz_it.append(f) %}{% endif %}{% endfor %}{% endif %}
+                            <li><a {% if faz_it|length > 1 %}class="sem-link" title="Escolha a fazenda abaixo"{% else %}href="{% if faz_it|length == 1 %}{{ url_for('auth.produtor_home', id_produtor=faz_it[0].id_produtor, id_propriedade=faz_it[0].id_propriedade, destino=it.url) }}{% else %}{{ it.url }}{% endif %}" title="{{ it.dica }}"{% endif %}><span>{{ it.rotulo }}</span><strong>{{ total_it }}</strong></a></li>
+                            {% for f in faz_it %}
+                            <li class="sub-fazenda"><a href="{{ url_for('auth.produtor_home', id_produtor=f.id_produtor, id_propriedade=f.id_propriedade, destino=it.url) }}" title="{{ it.sub }}"><span>&#8627; {{ f.nome }}</span><strong>{{ f.resumo[it.chave] }}</strong></a></li>
+                            {% endfor %}
+                            {% endif %}
+                            {% endif %}{% endfor %}
+                            {% if prazo_total > 0 %}
+                            <li class="sub-prazo"><a href="{{ r.url_notificacao }}" title="Notificações de Nascimento com o prazo de 30 dias vencendo em até 5 dias ou já vencido"><span>Prazo de 30 dias vencendo ou vencido</span><strong>{{ prazo_total }}</strong></a></li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    {% else %}
+                    <div class="card-nota">Indisponível no momento</div>
+                    {% endif %}
+                </div>
+
+                {% endif %}
+
+                <div class="card card-lib">
+                    <h3>Liberados para abate</h3>
+                    {% if resumo_ok %}
+                    <div class="numero numero-ok">{{ r.liberados_total }}<small>animais</small></div>
+                    <ul class="card-lista">
+                        <li><span>CTH</span><strong>{{ r.liberados_cth }}</strong></li>
+                        <li><span>U.E.</span><strong>{{ r.liberados_livres }}</strong></li>
+                        <li><span>Total</span><strong>{{ r.liberados_total }}</strong></li>
+                    </ul>
+                    {% else %}
+                    <div class="numero">&#8212;</div>
+                    <div class="card-nota">Indisponível no momento</div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Etapa 2: tabela de fazendas (so na visao do grupo, com 2 ou mais fazendas) -->
+            {% if multiplas_fazendas and not selecionado %}
+            <div class="quadro-fazendas">
+                {% if fazendas %}
+                <div class="quadro-topo">
+                    <span>{% if n_faz == 1 %}Produtores ({{ n_prod }}){% elif n_prod == 1 %}Fazendas ({{ n_faz }}){% else %}Fazendas ({{ n_faz }}) &#183; Produtores ({{ n_prod }}){% endif %}</span>
+                    <span class="quadro-dica">Clique em Selecionar para ver os números da fazenda.</span>
+                </div>
+                <table class="tabela-fazendas">
+                    <thead>
+                        <tr>
+                            <th>Fazenda</th>
+                            <th>UF</th>
+                            {% if pode_ver('propriedade') %}<th>Status ERAS</th>{% endif %}
+                            <th class="col-num">Animais</th>
+                            {% if pode_ver('entrada') %}<th>Pendências</th>{% endif %}
+                            <th class="col-acao"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in fazendas %}
+                        {% set fr = f.resumo %}
+                        <tr>
+                            <td>
+                                <strong>{{ f.nome }}</strong>
+                                {% if f.mesma_fazenda_varios_produtores %}<div class="sub-produtor">Produtor: {{ f.produtor_nome }}</div>{% endif %}
+                            </td>
+                            <td><span class="etiqueta-uf">{{ f.uf or '-' }}</span></td>
+                            {% set au = f.auditoria %}
+                            {% if pode_ver('propriedade') %}
+                            <td class="col-auditoria">
+                                {% if not au %}&#8212;
+                                {% elif au.erro %}<span class="link-auditoria"><span class="chip chip-indisp">Indisponível</span></span>
+                                {% elif not au.tem_eras %}<span class="link-auditoria">&#8212;</span>
+                                {% else %}
+                                {% if pode_ver('propriedade') %}<a class="link-auditoria" href="{{ url_for('auditoria_eras.fazenda', id_propriedade=f.id_propriedade, origem='home') }}">{% else %}<span class="link-auditoria">{% endif %}
+                                    {% if au.texto %}<span class="chip chip-aud {{ 'chip-aud-urgente' if au.codigo in ('URGENTE', 'PENDENTE') else 'chip-aud-atencao' }}">{{ au.texto }}</span>{% endif %}
+                                    {% if au.codigo == 'EM_DIA' and not au.nao_conforme %}<span class="chip chip-aud chip-qualificada">Qualificada</span>{% endif %}
+                                    {% if au.nao_conforme %}<span class="chip chip-nc">Não conforme</span>{% endif %}
+                                {% if pode_ver('propriedade') %}</a>{% else %}</span>{% endif %}
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            {% if fr and not fr.erro %}
+                            <td class="col-num">{{ fr.animais_total }}</td>
+                            {% if pode_ver('entrada') %}
+                            <td>
+                                {% set fr_brincar = (fr.gtas_brincar if pode_ver('brincagem') else 0) %}
+                                {% if fr_brincar + fr.comunicados_gerar + fr.comunicados_imprimir + fr.notificacoes_imprimir == 0 %}
+                                <span class="chip chip-ok">Em dia &#10004;</span>
+                                {% else %}
+                                {% if fr_brincar > 0 %}<span class="chip chip-brincar">GTA de Compra - Brincar: {{ fr_brincar }}</span>{% endif %}
+                                {% if fr.comunicados_gerar > 0 %}<span class="chip chip-gerar">Comunicado de Entrada - Gerar: {{ fr.comunicados_gerar }}</span>{% endif %}
+                                {% if fr.comunicados_imprimir > 0 %}<span class="chip chip-imprimir">Comunicado de Entrada - Imprimir: {{ fr.comunicados_imprimir }}</span>{% endif %}
+                                {% if fr.notificacoes_imprimir > 0 %}<span class="chip chip-notificacao">Notificação de Nascimento - Imprimir: {{ fr.notificacoes_imprimir }}</span>{% endif %}
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            {% else %}
+                            <td class="col-num">&#8212;</td>
+                            {% if pode_ver('entrada') %}<td><span class="chip chip-indisp">Indisponível no momento</span></td>{% endif %}
+                            {% endif %}
+                            <td class="col-acao">
+                                <a class="btn-selecionar" href="{{ url_for('auth.produtor_home', id_produtor=f.id_produtor, id_propriedade=f.id_propriedade) }}">Selecionar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="quadro-topo"><span>Fazendas</span></div>
+                <div class="quadro-aviso">A lista de fazendas está indisponível no momento.</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Modulos: Entradas e Brincagem clicaveis; Saidas e Pesagens
+                 ainda nao tem tela (so visual) -->
+            {% set modulos_inibidos = multiplas_fazendas and not selecionado %}
+            <div class="secao-titulo">Módulos{% if modulos_inibidos %}<small>Selecione uma fazenda para liberar</small>{% endif %}</div>
+            <div class="modulos">
+
+                {% if pode_ver('entrada') %}
+                <div class="modulo">
+                    <div class="modulo-topo">
+                        <div class="modulo-icone entradas">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="6" width="13" height="10" rx="1.5"/><path d="M14.5 9.5h4l3 3v3.5h-7"/><circle cx="6" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg>
+                        </div>
+                        <div>
+                            <div class="modulo-titulo">Entradas</div>
+                            <div class="modulo-sub">Chegada dos animais</div>
+                        </div>
+                    </div>
+                    {% if modulos_inibidos %}
+                    <div class="modulo-botao em-breve" title="Selecione uma fazenda para abrir Entradas">Selecione uma fazenda</div>
+                    {% else %}
+                    <a href="/produtor/hub-novo/entrada" class="modulo-botao entradas">Abrir Entradas</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if pode_ver('saidas') %}
+                <div class="modulo">
+                    <div class="modulo-topo">
+                        <div class="modulo-icone saidas">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+                        </div>
+                        <div>
+                            <div class="modulo-titulo">Saídas</div>
+                            <div class="modulo-sub">Embarque e comunicado</div>
+                        </div>
+                    </div>
+                    {% if modulos_inibidos %}
+                    <div class="modulo-botao em-breve" title="Selecione uma fazenda para abrir Saídas">Selecione uma fazenda</div>
+                    {% else %}
+                    <a href="/produtor/hub-novo/saida" class="modulo-botao saidas">Abrir Saídas</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if pode_ver('brincagem') %}
+                <div class="modulo">
+                    <div class="modulo-topo">
+                        <div class="modulo-icone brincagem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12.5V4.5A1.5 1.5 0 0 1 4.5 3h8l8.5 8.5a1.5 1.5 0 0 1 0 2.1l-6.4 6.4a1.5 1.5 0 0 1-2.1 0L3 12.5z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg>
+                        </div>
+                        <div>
+                            <div class="modulo-titulo">Brincagem</div>
+                            <div class="modulo-sub">Brincagem dos animais</div>
+                        </div>
+                    </div>
+                    {% if modulos_inibidos %}
+                    <div class="modulo-botao em-breve" title="Selecione uma fazenda para abrir Brincagem">Selecione uma fazenda</div>
+                    {% else %}
+                    <a href="/produtor/hub-novo/brincagem" class="modulo-botao brincagem">Abrir Brincagem</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if pode_ver('pesagens') %}
+                <div class="modulo">
+                    <div class="modulo-topo">
+                        <div class="modulo-icone pesagens">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/><circle cx="12" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>
+                        </div>
+                        <div>
+                            <div class="modulo-titulo">Pesagens</div>
+                            <div class="modulo-sub">Peso dos animais no brete</div>
+                        </div>
+                    </div>
+                    {% if modulos_inibidos %}
+                    <div class="modulo-botao em-breve" title="Selecione uma fazenda para abrir Pesagens">Selecione uma fazenda</div>
+                    {% else %}
+                    <a href="/produtor/hub-novo/pesos" class="modulo-botao pesagens">Abrir Pesagens</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_home_novo.html
+     ========================================================= -->

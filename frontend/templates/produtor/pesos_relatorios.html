@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\pesos_relatorios.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-17 11:30 -03
+     ATUALIZADO EM: 2026-11-17 13:15 -03
+     VERSAO: 1.0.1
+     v1.0.1: Sessao 129 (2026-11-17 13:15 -03) - A faixa vermelha de erro some assim que o usuario muda qualquer campo (e o erro sai do endereco da pagina). So tela. REVERSAO: .bak_antes_s129_erro.
+     v1.0.0: Sessao 129 (2026-11-17 11:30 -03) - Tela unica dos Relatorios de Pesagem: escolhe o relatorio e so aparecem os filtros dele; o botao abre o PDF. Tela de CONSULTA, nao grava nada.
+         Router: backend/routers/pesos_relatorios.py.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Relatórios de Pesagem</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 780px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-3  { grid-column: span 3; }   /* v1.4.0 */
+        .col-4  { grid-column: span 4; }
+        .col-5  { grid-column: span 5; }   /* v1.4.0 */
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .campo-destaque input, .campo-destaque select { font-size: 17px; font-weight: bold; }
+
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 8px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+        .aviso-construcao { background: #fff8e1; border-left: 6px solid #f9a825; padding: 14px 18px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #8a6d00; margin-top: 12px; display: none; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+
+        /* v1.5.0 - brincagens em aberto do Tipo escolhido */
+        .bloco-abertas { margin-top: 14px; background: #fff8e1; border: 1px solid #f9a825; border-radius: 8px; padding: 10px 14px; display: none; }
+        .bloco-abertas .titulo-abertas { font-size: 13px; font-weight: bold; color: #8a6d00; margin-bottom: 8px; }
+        .bloco-abertas .aberta-vazia { font-size: 13px; color: #8a8a8a; }
+        .item-aberta { display: flex; align-items: baseline; gap: 14px; width: 100%; text-align: left; background: #ffffff; border: 1px solid #e0c36a; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; cursor: pointer; font-family: Arial, sans-serif; }
+        .item-aberta:hover { background: #fffdf0; border-color: #D4370A; }
+        .item-aberta.escolhida { background: #e8f5e9; border-color: #2e7d32; }
+        .item-aberta .aberta-data { font-size: 16px; font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .item-aberta .aberta-rotulo { font-size: 13px; color: #555555; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        .form-botoes { justify-content: flex-end; align-items: center; }
+        .bloco-abertas { display: block; }
+        .item-aberta { font-family: Arial, sans-serif; font-size: 13px; }
+        /* ---- Inconformes dos Pesos (Sessao 114) ---- */
+        .tabela-inconf { width: 100%; border-collapse: collapse; background: #ffffff; font-size: 13px; }
+        .tabela-inconf th { text-align: left; background: #FBE9E4; color: #7a1f04; padding: 8px 10px; border-bottom: 2px solid #D4370A; white-space: nowrap; }
+        .tabela-inconf td { padding: 7px 10px; border-bottom: 1px solid #ececec; vertical-align: top; }
+        .tabela-inconf td.motivo { color: #c62828; font-weight: bold; }
+        .tabela-inconf td.num { white-space: nowrap; font-weight: bold; }
+        .vazio-inconf { color: #888888; padding: 18px 0; font-size: 14px; }
+        .filtro-linha { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .filtro-linha .form-group { width: 200px; }
+        .btn-filtro { padding: 9px 20px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-filtro:hover { background: #C0392B; }
+        .link-limpar { font-size: 13px; color: #555555; }
+        .nota-inconf { font-size: 12px; color: #888888; margin-top: 8px; }
+        /* ---- Consulta e Conferidos dos Pesos (Sessao 114) ---- */
+        .tabela-consulta { width: 100%; border-collapse: collapse; background: #ffffff; font-size: 13px; }
+        .tabela-consulta th { text-align: center; background: #FBE9E4; color: #7a1f04; padding: 8px 8px; border-bottom: 2px solid #D4370A; white-space: nowrap; }
+        .tabela-consulta td { padding: 6px 8px; border-bottom: 1px solid #ececec; text-align: center; white-space: nowrap; }
+        .tabela-consulta td.sisbov { font-weight: bold; font-family: Consolas, monospace; font-size: 14px; }
+        .tabela-consulta td.dir { text-align: right; }
+        .tabela-consulta td.destaque { font-weight: bold; }
+        .tabela-consulta td.elemento { color: #c62828; font-weight: bold; }
+        .tabela-eras { border-collapse: collapse; background: #ffffff; font-size: 13.5px; margin-top: 6px; }
+        .tabela-eras th { background: #FBE9E4; color: #7a1f04; padding: 8px 18px; border-bottom: 2px solid #D4370A; }
+        .tabela-eras td { padding: 7px 18px; border-bottom: 1px solid #ececec; text-align: center; }
+        .tabela-eras tr.total td { font-weight: bold; background: #f7f7f7; }
+        .rolagem { overflow-x: auto; }
+        .faixa-botoes { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+        .btn-pdf { display: inline-block; padding: 9px 20px; background: #ffffff; color: #D4370A; border: 2px solid #D4370A; border-radius: 6px; font-size: 14px; font-weight: bold; text-decoration: none; }
+        .btn-pdf:hover { background: #FBE9E4; }
+        .lista-recentes { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .lista-recentes a { background: #fff8e1; border: 1px solid #e0c36a; border-radius: 6px; padding: 8px 14px; text-decoration: none; color: #7a1f04; font-size: 13.5px; }
+        .lista-recentes a:hover { border-color: #D4370A; background: #fffdf0; }
+        .lista-recentes b { font-size: 15px; }
+        .rotulo-recentes { font-size: 12.5px; color: #888888; margin-top: 16px; }
+</style>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128196;</span> Relatórios de Pesagem</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro" id="faixa_erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="form-container" style="max-width: 900px;">
+
+                <div class="form-secao">{{ propriedade.nome if propriedade else '-' }}</div>
+
+                <form method="GET" action="{{ url_for('pesos_relatorios.pdf') }}" id="form_rel" data-aviso-descricao="Relatório de Pesagem">
+                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+
+                    <div class="form-grid">
+                        <div class="form-group col-12 campo-destaque">
+                            <label>Relatório</label>
+                            <select name="tipo" id="rel_tipo" autofocus>
+                                <option value="">Escolha o relatório...</option>
+                                {% for chave, item in relatorios.items() %}
+                                <option value="{{ chave }}" data-periodo="{{ 1 if item[1] else 0 }}" data-lote="{{ 1 if item[2] else 0 }}" {% if v.tipo == chave %}selected{% endif %}>{{ item[0] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4 f-periodo">
+                            <label>Data Inicial</label>
+                            <input type="text" name="ini" value="{{ v.ini }}" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric">
+                        </div>
+                        <div class="form-group col-4 f-periodo">
+                            <label>Data Final</label>
+                            <input type="text" name="fim" value="{{ v.fim }}" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric">
+                        </div>
+
+                        <div class="form-group col-4 f-data">
+                            <label>Data da Pesagem</label>
+                            <input type="text" name="data" value="{{ v.data }}" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric">
+                        </div>
+
+                        <div class="form-group col-6 f-lote">
+                            <label>Lote</label>
+                            <select name="lote">
+                                <option value="">{% if lotes %}Escolha o lote...{% else %}Nenhum lote cadastrado{% endif %}</option>
+                                {% for l in lotes %}
+                                <option value="{{ l.lote }}" {% if v.lote == l.lote %}selected{% endif %}>{{ l.lote }} ({{ l.qtd }} animais)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4 f-peso">
+                            <label>Peso superior a (kg)</label>
+                            <input type="text" name="peso_min" value="{{ v.peso_min }}" maxlength="7" inputmode="decimal">
+                        </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <button type="submit" class="btn-salvar">Gerar PDF</button>
+                    </div>
+                </form>
+
+                <div class="nota-inconf">Entram só os animais que ainda estão na Propriedade. Médias consideram apenas os animais com peso. Média @ = Kg ÷ 30.</div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+        // Mostra so os filtros do relatorio escolhido
+        function ajustarFiltros() {
+            var sel = document.getElementById('rel_tipo');
+            var op = sel.options[sel.selectedIndex];
+            var tipo = sel.value;
+            var mostra = function (classe, sim) {
+                document.querySelectorAll(classe).forEach(function (el) { el.style.display = sim ? '' : 'none'; });
+            };
+            mostra('.f-periodo', op && op.dataset.periodo === '1');
+            mostra('.f-lote', op && op.dataset.lote === '1');
+            mostra('.f-data', tipo === '06');
+            mostra('.f-peso', tipo === '10');
+        }
+        document.getElementById('rel_tipo').addEventListener('change', ajustarFiltros);
+        ajustarFiltros();
+
+        // v1.0.1 - a faixa de erro some quando o usuario mexe em qualquer campo do formulario
+        (function () {
+            var faixa = document.getElementById('faixa_erro');
+            if (!faixa) { return; }
+            var limpar = function () {
+                faixa.style.display = 'none';
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('erro');
+                    window.history.replaceState(null, '', url.toString());
+                } catch (e) { /* sem problema: so nao limpa o endereco */ }
+            };
+            document.getElementById('form_rel').addEventListener('change', limpar);
+            document.getElementById('form_rel').addEventListener('input', limpar);
+        })();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\pesos_relatorios.html
+     ========================================================= -->

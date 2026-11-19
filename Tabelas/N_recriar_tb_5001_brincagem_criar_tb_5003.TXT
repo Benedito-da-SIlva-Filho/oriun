@@ -1,0 +1,95 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\N_recriar_tb_5001_brincagem_criar_tb_5003.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-20 10:15 -03
+-- ATUALIZADO EM: 2026-09-20 10:15 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Aplica, em TODOS os schemas produtor_NNNNN, as alteracoes
+--     fechadas na Especificacao do modulo Brincagem com Leitor
+--     (Sessao 056/057):
+--       1) DROP + CREATE de tb_5001_brincagem com a estrutura
+--          nova (ambiente de TESTE, sem migracao de dados -
+--          confirmado por Benedito).
+--       2) CREATE de tb_5003_rejeicoes_brincagem (nova).
+--
+--     RENOMEIE este arquivo com o proximo numero sequencial da
+--     sua pasta Tabelas\ antes de rodar (o ultimo numero visto
+--     por mim foi 6 - Tabelas\6_backfill_tb_2001_data_brincagem_
+--     liberacao_abate.sql - mas pode ja existir um 7 ou mais
+--     que eu nao vi. Regra de Ouro #1: nao presumo o numero
+--     certo sem conferir sua pasta real).
+--
+--     v1.0.0: Criacao do script (Sessao 057, 20/09/2026, 10:15 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_produtor TEXT;
+BEGIN
+    FOR schema_produtor IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        -- -------------------------------------------------
+        -- 1) tb_5001_brincagem: DROP + CREATE (ambiente de
+        --    teste, sem migracao de dados)
+        -- -------------------------------------------------
+        EXECUTE format('DROP TABLE IF EXISTS %I.tb_5001_brincagem CASCADE', schema_produtor);
+
+        EXECUTE format('
+            CREATE TABLE %I.tb_5001_brincagem (
+                id                  SERIAL PRIMARY KEY,
+                id_gta              INTEGER REFERENCES %I.tb_4001_gta(id),
+                id_propriedade      INTEGER NOT NULL REFERENCES public.propriedades(id),
+                sexo                sexo_enum NOT NULL,
+                id_especie          INTEGER NOT NULL REFERENCES public.tb_4002_especie(id),
+                id_raca             INTEGER NOT NULL REFERENCES public.tb_4005_racas(id),
+                id_idade_meses      INTEGER REFERENCES public.tb_4006_idade_meses(id),
+                sisbov              VARCHAR(15),
+                rfid                VARCHAR(30),
+                manejo              VARCHAR(6),
+                lote                VARCHAR(100),
+                saida_brincos       VARCHAR(3),
+                peso                NUMERIC(10,2),
+                nascimento          DATE,
+                data_brincagem      DATE,
+                sts                 BOOLEAN NOT NULL DEFAULT FALSE,
+                numero_comunicado   INTEGER,
+                criado_em           TIMESTAMP NOT NULL DEFAULT now(),
+                atualizado_em       TIMESTAMP NOT NULL DEFAULT now(),
+                CONSTRAINT chk_tb_5001_brincagem_saida_brincos
+                    CHECK (saida_brincos IS NULL OR saida_brincos IN (''COM'', ''SEM''))
+            )',
+            schema_produtor, schema_produtor
+        );
+
+        -- -------------------------------------------------
+        -- 2) tb_5003_rejeicoes_brincagem (NOVA)
+        -- -------------------------------------------------
+        EXECUTE format('DROP TABLE IF EXISTS %I.tb_5003_rejeicoes_brincagem CASCADE', schema_produtor);
+
+        EXECUTE format('
+            CREATE TABLE %I.tb_5003_rejeicoes_brincagem (
+                id                  SERIAL PRIMARY KEY,
+                id_propriedade      INTEGER NOT NULL REFERENCES public.propriedades(id),
+                id_usuario          INTEGER NOT NULL REFERENCES public.usuarios(id),
+                sisbov              VARCHAR(15) NOT NULL,
+                rfid                VARCHAR(15),
+                motivo              VARCHAR(150) NOT NULL,
+                data_tentativa      DATE NOT NULL,
+                criado_em           TIMESTAMP NOT NULL DEFAULT now()
+            )',
+            schema_produtor
+        );
+
+        RAISE NOTICE 'tb_5001_brincagem recriada e tb_5003_rejeicoes_brincagem criada em %', schema_produtor;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\N_recriar_tb_5001_brincagem_criar_tb_5003.sql
+-- =========================================================

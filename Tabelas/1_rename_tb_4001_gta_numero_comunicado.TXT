@@ -1,0 +1,59 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\1_rename_tb_4001_gta_numero_comunicado.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-14 17:10 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 052 (14/09/2026) - Modulo Gerar Comunicado.
+--     Renomeia tb_4001_gta.id_comunicado -> numero_comunicado,
+--     em TODOS os schemas produtor_NNNNN. Nao e uma coluna nova -
+--     a coluna id_comunicado ja existia (nascida vazia na Sessao
+--     17), nunca usada em codigo ate esta sessao. Renomeada para
+--     "numero_comunicado" para ficar com o MESMO NOME em todas as
+--     4 tabelas que participam do processo (tb_2001, tb_4001_gta,
+--     tb_7017_entrada_brincos_rfid, e tb_7002_pia.numero_pia que
+--     mantem seu proprio nome mas passa a VALER como o numero
+--     oficial do Comunicado).
+--
+--     PRE-REQUISITO (Benedito confirma antes de rodar): nenhum
+--     outro arquivo .py do projeto referencia "id_comunicado" -
+--     ver findstr sugerido pelo Claude antes deste script.
+--
+--     IDEMPOTENTE: so renomeia se a coluna antiga ainda existir
+--     E a nova ainda nao existir (protege contra rodar 2x).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = schema_rec.schema_name
+              AND table_name = 'tb_4001_gta'
+              AND column_name = 'id_comunicado'
+        ) AND NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = schema_rec.schema_name
+              AND table_name = 'tb_4001_gta'
+              AND column_name = 'numero_comunicado'
+        ) THEN
+            EXECUTE format(
+                'ALTER TABLE %I.tb_4001_gta RENAME COLUMN id_comunicado TO numero_comunicado',
+                schema_rec.schema_name
+            );
+            RAISE NOTICE 'Renomeado em %', schema_rec.schema_name;
+        END IF;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\1_rename_tb_4001_gta_numero_comunicado.sql
+-- =========================================================

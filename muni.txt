@@ -1,0 +1,67 @@
+﻿C:\Orion\backend\leitores\leitor_ms_iagro.py:315: municipio_codigo, municipio_nome = _extrair_municipio(
+C:\Orion\backend\leitores\leitor_ms_iagro.py:337: f'{prefixo}municipio': municipio_nome,
+C:\Orion\backend\models\tb_frigorificos.py:75: municipio_nome      = Column(String(100))
+C:\Orion\backend\models\tb_parceiros_propriedades.py:84: municipio_nome      = Column(String(100))
+C:\Orion\backend\routers\brincagem_sequencial.py:815: f'{parceiro_propriedade.municipio_nome} / {parceiro_propriedade.uf}'
+C:\Orion\backend\routers\brincagem_sequencial.py:816: if parceiro_propriedade and parceiro_propriedade.municipio_nome else '-'
+C:\Orion\backend\routers\busca_parceiro.py:100: 'municipio_nome':   p.municipio_nome,
+C:\Orion\backend\routers\busca_propriedade.py:79: 'municipio_nome':   propriedade.municipio_nome,
+C:\Orion\backend\routers\frigorificos.py:70: 'logradouro', 'numero', 'bairro', 'cep', 'municipio_codigo', 'municipio_nome', 'uf')
+C:\Orion\backend\routers\frigorificos.py:145: 'municipio': f.municipio_nome or '',
+C:\Orion\backend\routers\frigorificos.py:150: 'mun_norm': _norm(f.municipio_nome),
+C:\Orion\backend\routers\frigorificos.py:297: for c in ('nome', 'insc_estadual', 'logradouro', 'bairro', 'municipio_nome', 'uf', 'cod_sie', 'cod_sim'):
+C:\Orion\backend\routers\frigorificos.py:348: municipio_nome   = municipio['nome'].upper(),
+C:\Orion\backend\routers\gta_compra.py:923: municipio_nome=procedencia_municipio,
+C:\Orion\backend\routers\gta_consulta.py:729: ('Município:', procedencia.municipio_nome if procedencia and procedencia.municipio_nome else '-', None),
+C:\Orion\backend\routers\gta_consulta.py:737: ('Município:', f'{destino.municipio_nome} / {destino.uf}' if destino and destino.municipio_nome else '-', None),
+C:\Orion\backend\routers\gta_manual.py:382: municipio_nome=propriedade_externa.municipio_nome,
+C:\Orion\backend\routers\gta_manual.py:411: municipio_nome=propriedade_interna.municipio,
+C:\Orion\backend\routers\gta_saida.py:300: 'municipio': f.municipio_nome or '',
+C:\Orion\backend\routers\parceiros_fornecedores copia.py:125: (ParceiroPropriedades.municipio_nome.ilike(f'%{termo}%'))
+C:\Orion\backend\routers\parceiros_fornecedores copia.py:148: 'municipio_nome':  prop.municipio_nome,
+C:\Orion\backend\routers\parceiros_fornecedores copia.py:235: 'municipio_nome':   prop.municipio_nome,
+C:\Orion\backend\routers\parceiros_fornecedores.py:169: (ParceiroPropriedades.municipio_nome.ilike(f'%{termo}%'))
+C:\Orion\backend\routers\parceiros_fornecedores.py:193: 'municipio_nome':  prop.municipio_nome,
+C:\Orion\backend\routers\parceiros_fornecedores.py:283: 'municipio_nome':   prop.municipio_nome,
+C:\Orion\backend\routers\parceiros_fornecedores.py:393: 'regiao', 'municipio_codigo', 'municipio_nome', 'uf')
+C:\Orion\backend\routers\parceiros_fornecedores.py:412: for c in ('nome', 'estabelecimento', 'insc_estadual', 'regiao', 'municipio_nome', 'uf'):
+C:\Orion\backend\routers\parceiros_fornecedores.py:443: dados['municipio_nome'] = municipio['nome'].upper()
+C:\Orion\backend\routers\parceiros_fornecedores.py:462: municipio_nome   = dados['municipio_nome'],
+C:\Orion\backend\routers\parceiro_cadastro_manual.py:200: municipio_nome    = (request.form.get('municipio_nome') or '').strip().upper()
+C:\Orion\backend\routers\parceiro_cadastro_manual.py:204: if uf and municipio_nome.endswith(' / ' + uf):
+C:\Orion\backend\routers\parceiro_cadastro_manual.py:205: municipio_nome = municipio_nome[:-len(' / ' + uf)]
+C:\Orion\backend\routers\parceiro_cadastro_manual.py:221: municipio_nome=municipio_nome,
+C:\Orion\backend\routers\parceiro_cadastro_manual.py:246: elif not municipio_nome or len(municipio_nome) > 100:
+C:\Orion\backend\routers\parceiro_cadastro_manual.py:284: municipio_nome=municipio_nome,
+C:\Orion\backend\routers\saida_gta_consulta.py:496: ('Município:', f'{propria.municipio_nome} / {propria.uf}' if propria and propria.municipio_nome else '-', None),
+C:\Orion\backend\routers\saida_relatorio.py:354: ('Município:', f'{propria.municipio_nome} / {propria.uf}' if propria and propria.municipio_nome else '-', None),
+C:\Orion\backend\servicos\resolver_parceiro.py:150: municipio_nome='',
+C:\Orion\backend\servicos\resolver_parceiro.py:179: municipio_nome      - opcional, so gravado em criacao.
+C:\Orion\backend\servicos\resolver_parceiro.py:214: municipio_nome=municipio_nome or None,
+C:\Orion\backend\servicos\resolver_parceiro.py:251: municipio_nome=municipio_nome or None,
+C:\Orion\backend\utils\comunicado_display.py:46: #     v1.3.1: Sessao 101 (20/10/2026, 19:10 -03) - Municipio da ORIGEM sai so como municipio_nome (a UF ja vem na Localidade; antes saia "... / AM / AM").  REVERSAO: .bak_antes_uf_s101
+C:\Orion\backend\utils\comunicado_display.py:175: # a UF ja vem na Localidade (municipio_nome); nao se acrescenta a UF do cadastro (Benedito, Sessao 101)
+C:\Orion\backend\utils\comunicado_display.py:176: 'municipio': parceiro_propriedade.municipio_nome if parceiro_propriedade else '-',
+C:\Orion\backend\utils\comunicado_saida_display.py:105: municipio_frig = ' / '.join(p for p in (_texto(frigorifico.municipio_nome), _texto(frigorifico.uf)) if p)
+C:\Orion\frontend\templates\produtor\frigorifico_novo.html:172: <input type="text" id="municipio_busca" class="upper" maxlength="50" value="{{ dados.municipio_nome }}" placeholder="Escolha a UF e digite 3 letras do munic&#237;pio">
+C:\Orion\frontend\templates\produtor\frigorifico_novo.html:179: <input type="hidden" id="municipio_nome" name="municipio_nome" value="{{ dados.municipio_nome }}">
+C:\Orion\frontend\templates\produtor\frigorifico_novo.html:250: var campoNome   = document.getElementById('municipio_nome');
+C:\Orion\frontend\templates\produtor\gta_consulta_detalhe.html:220: <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_consulta_detalhe.html:232: <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ destino.municipio_nome if destino else '-' }} / {{ destino.uf if destino else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_consulta_editar.html:254: <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_consulta_editar.html:262: <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ destino.municipio_nome if destino else '-' }} / {{ destino.uf if destino else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_manual_cadastro.html:316: <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_manual_cadastro.html:328: <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ destino.municipio_nome if destino else '-' }} / {{ destino.uf if destino else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_saida_cadastro.html:211: <div class="linha"><span class="rotulo">Munic&iacute;pio/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\gta_saida_detalhe.html:156: <div class="linha"><span class="rotulo">Munic&iacute;pio/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+C:\Orion\frontend\templates\produtor\parceiros_lista_relatorio_pdf.html:196: <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+C:\Orion\frontend\templates\produtor\parceiro_cadastro_manual.html:381: <input type="text" name="municipio_nome" id="campo-municipio-nome" required maxlength="100" class="upper" readonly autocomplete="off" placeholder="Digite o código ao lado"
+C:\Orion\frontend\templates\produtor\parceiro_cadastro_manual.html:382: value="{{ dados.municipio_nome if dados else '' }}">
+C:\Orion\frontend\templates\produtor\parceiro_cadastro_manual.html:558: '<td>' + String(prop.municipio_nome || '-').replace(prop.uf ? ' / ' + prop.uf : '\u0000', '') + (prop.uf ? ' / ' + prop.uf : '') + '</td>' +
+C:\Orion\frontend\templates\produtor\parceiro_detalhe.html:179: <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+C:\Orion\frontend\templates\produtor\parceiro_lista copia.html:182: <td>{{ prop.municipio_nome or '-' }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+C:\Orion\frontend\templates\produtor\parceiro_lista.html:200: <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+C:\Orion\frontend\templates\produtor\parceiro_novo.html:190: <input type="text" id="municipio_busca" class="upper" maxlength="50" value="{{ dados.municipio_nome }}" placeholder="Escolha a UF e digite 3 letras do município">
+C:\Orion\frontend\templates\produtor\parceiro_novo.html:197: <input type="hidden" id="municipio_nome" name="municipio_nome" value="{{ dados.municipio_nome }}">
+C:\Orion\frontend\templates\produtor\parceiro_novo.html:237: var campoNome   = document.getElementById('municipio_nome');
+C:\Orion\frontend\templates\produtor\parceiro_relatorio_pdf.html:195: <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>

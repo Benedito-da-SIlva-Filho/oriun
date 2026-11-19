@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\produtor_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-06 20:36 -03
+     ATUALIZADO EM: 2026-11-12 19:20 -03
+     VERSAO: 2.9.0
+     v2.8.3: Sessao 122 (2026-11-12 17:40 -03) - Auditoria Etapa 2 (item 4): o botao Ativar/Inativar vinculo so aparece para a Consiste; o Produtor ve a orientacao. REVERSAO: .bak_antes_s122_etapa2.
+     v2.8.1: Sessao 118 (2026-11-08 15:30 -03) - CPF/CNPJ vem preenchido quando chega da DTA de Posse. REVERSAO: .bak_antes_s118_dtacpf
+     v2.8.2: Sessao 122 (2026-11-12 13:55 -03) - Auditoria Etapa 1: alert() nativo trocado pelo aviso padrao (mostrarAviso) e peca modal_confirmacao incluida. REVERSAO: .bak_antes_s122_etapa1.
+     v2.8.0: Sessao 116 (2026-11-06 16:24 -03) - (1) Trocar o CPF/CNPJ depois de um cadastro encontrado LIMPA os campos preenchidos por ele (nome, e-mail, telefones, endereco, CEP, municipio), para nao gravar dado de outra pessoa; (2) Produtor Fisico: "Nome (igual ao acima)" acompanha sempre o nome de cima (input, change, blur e ao enviar); (3) Numero e CEP com autocomplete="nope" (o Chrome ignora "off"). REVERSAO: .bak_antes_s116_limpar.
+
+     DESCRICAO:
+         Formulario de cadastro e edicao de Produtor. Ate a v1.9.0,
+         exclusivo da plataforma Consiste (perfil CONSISTE). A
+         partir da v2.0.0, tambem acessado pelo perfil PRODUTOR -
+         para cadastrar/vincular OUTRO Produtor a sua propria
+         Propriedade, a partir da v2.1.0 tambem para o proprio
+         Titular completar os placeholders do seu Produtor ja
+         vinculado (P-040), e a partir da v2.3.0 tambem para EDITAR
+         (contato/endereco) um Produtor ja vinculado.
+
+         Espelha proprietario_cadastro.html v2.0.0/v2.3.0, com
+         ajustes proprios do Produtor: upload real de logo
+         (marca_criador, P-020), busca por CPF/CNPJ com tres
+         resultados possiveis (v2.1.0), e bloco de status do
+         Ambiente Multi-tenant (Onboarding, Sessao 019) - este
+         ultimo permanece visivel apenas para CONSISTE.
+
+         v1.0.0 a v1.9.0: historico completo mantido no arquivo
+             original do projeto.
+         v2.0.0: Sessao 032 - P-040: perfil PRODUTOR passou a poder
+             acessar esta tela (sempre com contexto de Propriedade,
+             nunca edicao avulsa - produtores.py v1.5.0). Menu
+             lateral, botao hamburguer, link "Voltar" (topo), botao
+             "Cancelar" e o bloco de status do Ambiente Multi-tenant
+             (badge + botao "Ativar Ambiente", que aciona
+             Onboarding - continua exclusivo CONSISTE) agora so
+             aparecem quando usuario_perfil == 'CONSISTE'.
+         v2.1.0: Sessao 033 - P-040, wizard de onboarding: a busca
+             de CPF/CNPJ (blur) passa a enviar tambem id_propriedade
+             (quando presente) para /api/busca-cpf-cnpj
+             (busca_cpf_cnpj.py v1.1.0). Novo cenario: se o
+             Produtor encontrado ja estiver VINCULADO A ESTA MESMA
+             Propriedade (dados.produtor.vinculado_a_esta_propriedade
+             == true - caso do Titular completando os proprios
+             placeholders de municipio/UF, criados pela transacao do
+             Convite Publico), os campos NAO sao travados - abrem
+             para edicao normal, com aviso proprio ("aviso-completar")
+             e o valor gravado no novo campo hidden
+             id_produtor_completar (distinto de id_existente, que
+             continua exclusivo do fluxo antigo "achei em outra
+             Propriedade, so vincular"). Ao submeter, produtores.py
+             v1.6.0 atualiza o Produtor existente (sem duplicar
+             vinculo) e redireciona direto para propriedades.editar()
+             - proxima secao do wizard ja liberada.
+         v2.2.0: Sessao 033 - Teste real do wizard de onboarding
+             revelou o MESMO bug ja corrigido em
+             propriedade_cadastro.html v1.13.0: campos opcionais com
+             valor NULL no banco exibiam a palavra literal "None"
+             dentro do input, em vez de ficar vazio. Corrigido nos 6
+             campos afetados (logradouro, numero, complemento,
+             bairro, cep, telefone2): agora usam "(produtor.campo or
+             '') if produtor else ''" - None vira string vazia.
+         v2.3.0: Sessao 033 - Benedito pediu para trocar o
+             Ativar/Inativar (que ficava na lista de
+             propriedade_cadastro.html) por um link "Editar", e
+             notou que esta tela nao tinha opcao "Voltar" para o
+             perfil PRODUTOR. Corrigido: (1) botao "Voltar" (topo)
+             agora tambem aparece para PRODUTOR quando ha contexto
+             de Propriedade (id_propriedade), voltando para
+             propriedades.editar(); (2) novo bloco "Vinculo com esta
+             Propriedade" (status + botao Ativar/Inativar, chamando
+             a MESMA rota toggle_vinculo() de sempre) - so aparece
+             quando id_vinculo foi informado pelo router
+             (produtores.py v1.7.0); (3) quando o novo contexto
+             travar_documento vem True (PRODUTOR editando um
+             Produtor ja vinculado via link "Editar"), os campos
+             Tipo de Pessoa e CPF/CNPJ ficam travados - PRODUTOR so
+             edita contato/endereco (o servidor ja ignora esses dois
+             campos vindos do formulario nesse caso, esta trava aqui
+             e so a camada visual). Nao afeta o fluxo de completar
+             placeholder (id_produtor_completar) - la o Tipo de
+             Pessoa/CPF/CNPJ ja sao do proprio Titular, nascidos do
+             Convite.
+         v2.4.0: Sessao 034 (continuacao 9, 13/08/2026, 11:17 -03) -
+             P-040/novo (Cenario 1 - Produtor sem login): dois
+             blocos novos, so aparecem para usuario_perfil ==
+             'CONSISTE' e quando produtor existe (tela de edicao,
+             nunca em Novo Produtor):
+             (1) aviso-sem-acesso: quando tem_acesso == False,
+                 mostra que este Produtor ainda nao tem login/senha
+                 no sistema, com um botao "Criar Acesso" (form POST
+                 simples, sem campos, para a nova rota
+                 produtores.criar_acesso() - produtores.py v1.9.0).
+             (2) aviso-acesso-criado: quando acesso_criado_agora ==
+                 True (resposta da propria rota criar_acesso()),
+                 confirma que o acesso foi criado e o e-mail
+                 enviado, com um link opcional de WhatsApp
+                 (link_whatsapp, envio manual - mesmo padrao "envio
+                 final sempre manual" ja usado em prospects.py).
+             tem_acesso e recalculada (produtores.py v1.9.0) em
+             TODOS os pontos que renderizam esta tela com um
+             Produtor existente (editar(), salvar()-em-erro,
+             onboarding()-em-erro, criar_acesso()), para o banner
+             nunca aparecer errado num Produtor que ja tem login.
+             Em novo() (produtor None) essas variaveis nem sao
+             passadas - Jinja2 trata variavel indefinida como
+             falsy, e o "produtor and ..." do bloco novo ja barra
+             a exibicao de qualquer forma. acesso_criado_agora e
+             link_whatsapp so existem de fato na resposta de
+             criar_acesso() - nos demais pontos ficam indefinidas
+             (falsy), entao o banner de sucesso nao aparece.
+         v2.5.0: Sessao 034 (continuacao 9, 13/08/2026, 19:10 -03) -
+             Cracha "PRODUTOR" removido do topo para este perfil
+             (mesma decisao aplicada em mais 8 telas nesta sessao -
+             ver Referencia do Sistema para o motivo completo:
+             confusao real entre o cracha generico do sistema e o
+             cargo real do usuario dentro do vinculo).
+         v2.6.0: Sessao 101 (20/10/2026, 17:18 -03) - CPF E CNPJ DO PRODUTOR: campo novo "CNPJ (opcional)" para Produtor Fisico / "CPF (opcional)" para Juridico (name documento_secundario), ao lado do documento principal. Os dois sao opcionais; o principal continua como estava (e travado para o perfil PRODUTOR; o secundario nao). REVERSAO: devolver .bak_antes_cpf_cnpj_s101.
+         v2.7.0: Sessao 101 (20/10/2026, 18:10 -03) - O campo "CNPJ (opcional)" / "CPF (opcional)" agora e POR FAZENDA: o valor vem do vinculo Produtor+Propriedade (variavel doc_secundario) e so aparece quando a tela esta dentro de uma Propriedade. REVERSAO: devolver .bak_antes_sec_vinculo_s101.
+         v2.9.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'Editar' if produtor else 'Novo' }} Produtor</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+        .banner-propriedade { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 14px; color: #333333; display: flex; align-items: center; gap: 10px; }
+        .banner-propriedade strong { color: #D4370A; font-size: 15px; }
+        .aviso-encontrado { display: none; background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #2e7d32; }
+        .aviso-preenchido { display: none; background: #fff8e1; border: 1px solid #f9a825; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #8a6d00; }
+        .aviso-completar { display: none; background: #e3f2fd; border: 1px solid #1565c0; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #0d47a1; }
+        .aviso-sem-acesso { background: #fff3e0; border: 1px solid #e65100; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #7a3c00; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .aviso-acesso-criado { background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #2e7d32; }
+        .btn-criar-acesso { padding: 7px 16px; background: #ffffff; border: 1px solid #e65100; color: #e65100; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-criar-acesso:hover { background: #e65100; color: #ffffff; }
+        .btn-whatsapp { display: inline-block; margin-top: 8px; padding: 8px 16px; background: #25D366; color: #ffffff; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; }
+        .btn-whatsapp:hover { background: #1DA851; }
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 900px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-8  { grid-column: span 8; }
+        .col-6  { grid-column: span 6; }
+        .col-4  { grid-column: span 4; }
+        .col-3  { grid-column: span 3; }
+        .col-2  { grid-column: span 2; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input[readonly], .form-group select:disabled { background: #f5f5f5; color: #777777; }
+        .form-group small { font-size: 11px; color: #888888; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .caixa-logo-produtor { display: flex; align-items: flex-start; gap: 18px; background: #f5f5f5; border: 1px solid #dddddd; border-radius: 6px; padding: 14px; margin-bottom: 8px; }
+        .area-imagem-logo { width: 140px; height: 110px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #eeeeee; border-radius: 4px; }
+        .area-imagem-logo img { max-width: 130px; max-height: 100px; }
+        .area-imagem-logo span { font-size: 11px; color: #999999; text-align: center; padding: 0 8px; }
+        .coluna-info-logo { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .coluna-info-logo .texto-info-logo { font-size: 12px; color: #666666; }
+        .linha-upload-logo { display: flex; align-items: center; gap: 10px; }
+        .linha-upload-logo input[type="file"] { flex: 1; }
+        .btn-atualizar-logo { padding: 10px 18px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-atualizar-logo:hover { background: #D4370A; color: #ffffff; }
+        .coluna-info-logo small { font-size: 11px; color: #888888; }
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+        .form-secao-linha { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao-linha:first-child { margin-top: 0; }
+        .form-secao-linha .form-secao { margin: 0; padding: 0; border: none; }
+        .status-ambiente { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .badge-ambiente-ativo { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+        .badge-ambiente-inativo { color: #8a6d00; font-size: 12px; }
+        .btn-ativar-ambiente { padding: 7px 16px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-ativar-ambiente:hover { background: #D4370A; color: #ffffff; }
+        .btn-confirmar-ativacao { padding: 10px 20px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-confirmar-ativacao:hover { background: #C0392B; }
+        .overlay-confirmacao { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-confirmacao { background: #ffffff; border-radius: 10px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+        .modal-confirmacao-titulo { font-size: 16px; font-weight: bold; color: #D4370A; margin-bottom: 10px; }
+        .modal-confirmacao-texto { font-size: 14px; color: #333333; margin-bottom: 22px; line-height: 1.5; }
+        .modal-confirmacao-botoes { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-sair-sem-salvar { padding: 10px 20px; background: #c62828; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-sair-sem-salvar:hover { background: #a02020; }
+        .status-ativo { color: #2e7d32; font-weight: bold; font-size: 12px; }
+        .status-inativo { color: #c62828; font-weight: bold; font-size: 12px; }
+        .btn-toggle-vinculo { background: none; border: none; color: #666666; font-size: 12px; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+        .btn-toggle-vinculo:hover { color: #333333; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            {% if usuario_perfil == 'CONSISTE' %}
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            {% endif %}
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            {% if usuario_perfil != 'PRODUTOR' %}
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            {% endif %}
+            {% if usuario_perfil == 'CONSISTE' %}
+            <a href="{{ url_for('produtores.lista') }}" class="btn-voltar-topo">&#8592; Voltar</a>
+            {% elif id_propriedade %}
+            <a href="{{ url_for('propriedades.editar', id=id_propriedade) }}" class="btn-voltar-topo">&#8592; Voltar</a>
+            {% endif %}
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% if usuario_perfil == 'CONSISTE' %}
+        {% include 'consiste/consiste_menu.html' %}
+        {% endif %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128104;&#8205;&#127806; {{ 'Editar' if produtor else 'Novo' }} Produtor</h2>
+            </div>
+
+            {% if nome_propriedade %}
+            <div class="banner-propriedade">
+                &#127806; Vinculando este Produtor à Propriedade: <strong>{{ nome_propriedade }}</strong>
+            </div>
+            {% endif %}
+
+            {% if id_vinculo %}
+            <div class="banner-propriedade" style="justify-content: space-between;">
+                <span>
+                    Vínculo com esta Propriedade:
+                    {% if vinculo_ativo %}<span class="status-ativo">&#9679; Ativo</span>{% else %}<span class="status-inativo">&#9679; Inativo</span>{% endif %}
+                </span>
+                {% if usuario_perfil == 'CONSISTE' %}
+                <form method="POST" action="{{ url_for('produtores.toggle_vinculo', id_vinculo=id_vinculo) }}" style="display:inline;">
+                    <button type="submit" class="btn-toggle-vinculo">{{ 'Inativar' if vinculo_ativo else 'Ativar' }}</button>
+                </form>
+                {% else %}
+                <span style="font-size:12px;color:#666666;">Só a Consiste ativa ou inativa o vínculo.</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if produtor and usuario_perfil == 'CONSISTE' and not tem_acesso %}
+            <div class="aviso-sem-acesso">
+                <span>&#9888;&#65039; Este Produtor ainda não tem acesso ao sistema (login/senha).</span>
+                <form method="POST" action="{{ url_for('produtores.criar_acesso', id=produtor.id) }}">
+                    <button type="submit" class="btn-criar-acesso">Criar Acesso</button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if acesso_criado_agora %}
+            <div class="aviso-acesso-criado">
+                &#9989; Acesso criado com sucesso! Um e-mail com login e senha provisória foi enviado para {{ produtor.email }}.
+                {% if link_whatsapp %}
+                <br>
+                <a href="{{ link_whatsapp }}" target="_blank" class="btn-whatsapp">&#128241; Enviar também por WhatsApp</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="aviso-encontrado" id="aviso-encontrado">
+                &#9989; CPF/CNPJ já cadastrado como Produtor — dados carregados abaixo. Os campos foram travados para evitar alterar o cadastro existente.
+            </div>
+
+            <div class="aviso-preenchido" id="aviso-preenchido">
+                &#8505; Esta pessoa já é Proprietário cadastrado — os dados foram pré-preenchidos a partir de lá. Revise e edite se necessário antes de salvar como Produtor.
+            </div>
+
+            <div class="aviso-completar" id="aviso-completar">
+                &#9989; Este Produtor já está vinculado a esta Propriedade. Revise os dados abaixo e salve para continuar.
+            </div>
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('produtores.salvar') }}" id="form-produtor" autocomplete="off" enctype="multipart/form-data">
+                    <input type="hidden" name="id" id="campo-id" value="{{ produtor.id if produtor else '' }}">
+                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade if id_propriedade else '' }}">
+                    <input type="hidden" name="id_existente" id="campo-id-existente" value="">
+                    <input type="hidden" name="id_proprietario_encontrado" id="campo-id-proprietario-encontrado" value="">
+                    <input type="hidden" name="id_produtor_completar" id="campo-id-produtor-completar" value="{{ id_produtor_completar if id_produtor_completar else '' }}">
+
+                    <div class="form-secao-linha">
+                        <div class="form-secao">Dados do Produtor</div>
+                        {% if produtor and usuario_perfil == 'CONSISTE' %}
+                        <div class="status-ambiente">
+                            {% if produtor.schema_nome %}
+                            <span class="badge-ambiente-ativo">&#9989; Ambiente Ativo</span>
+                            {% else %}
+                            <span class="badge-ambiente-inativo">&#9888;&#65039; Ambiente ainda não ativado</span>
+                            <button type="button" class="btn-ativar-ambiente" onclick="ativarAmbiente()">Ativar Ambiente</button>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-4">
+                            <label>Tipo de Pessoa *</label>
+                            <select name="tipo_pessoa" id="campo-tipo-pessoa" required autocomplete="off" {{ 'disabled' if travar_documento else '' }}>
+                                <option value="">Selecione...</option>
+                                {% for tipo in tipos_pessoa %}
+                                <option value="{{ tipo }}" {{ 'selected' if produtor and produtor.tipo_pessoa == tipo else '' }}>
+                                    {{ 'Física' if tipo == 'FISICA' else 'Jurídica' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Visibilidade *</label>
+                            <select name="visibilidade" id="campo-visibilidade" required autocomplete="off">
+                                <option value="">Selecione...</option>
+                                {% for vis in visibilidades %}
+                                <option value="{{ vis }}" {{ 'selected' if produtor and produtor.visibilidade == vis else '' }}>
+                                    {{ 'Público' if vis == 'PUBLICO' else 'Privado' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label id="label-cpf-cnpj">CPF/CNPJ *</label>
+                            <input type="text" id="campo-cpf-cnpj" name="cpf_cnpj" required maxlength="18" autocomplete="off"
+                                {{ 'readonly' if travar_documento else '' }}
+                                value="{{ produtor.cpf_cnpj if produtor else (documento_inicial or '') }}">
+                        </div>
+
+                        <div class="form-group col-4"{{ '' if id_propriedade else ' style="display:none"' }}>
+                            <label id="label-doc-secundario">CNPJ (opcional)</label>
+                            <input type="text" id="campo-doc-secundario" name="documento_secundario" maxlength="18" autocomplete="off"
+                                value="{{ doc_secundario|default('', true) }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label id="label-razao-social">Razão Social *</label>
+                            <input type="text" id="campo-razao-social" name="razao_social" required maxlength="150" class="upper" autocomplete="off"
+                                value="{{ produtor.razao_social if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label id="label-nome">Nome Fantasia</label>
+                            <input type="text" id="campo-nome" name="nome" maxlength="150" class="upper" autocomplete="off"
+                                value="{{ produtor.nome if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <small id="ajuda-nome">O campo Nome é preenchido automaticamente a partir da Razão Social. Edite se o Nome Fantasia for diferente.</small>
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Marca/Criador (logo)</label>
+                            <div class="caixa-logo-produtor">
+                                <div class="area-imagem-logo">
+                                    <img id="imagem-preview-logo"
+                                        src="{% if produtor and produtor.marca_criador %}{{ url_for('static', filename=produtor.marca_criador) }}{% endif %}"
+                                        alt="Logo do Produtor"
+                                        {% if not (produtor and produtor.marca_criador) %}style="display: none;"{% endif %}>
+                                    <span id="placeholder-sem-logo" {% if produtor and produtor.marca_criador %}style="display: none;"{% endif %}>Sem logo cadastrada</span>
+                                </div>
+                                <div class="coluna-info-logo">
+                                    <span class="texto-info-logo" id="texto-preview-logo">
+                                        {% if produtor and produtor.marca_criador %}Esta é a logo cadastrada atualmente. Só envie um arquivo novo abaixo se quiser substituí-la.{% else %}Nenhuma logo cadastrada ainda. Escolha um arquivo abaixo para adicionar.{% endif %}
+                                    </span>
+                                    <div class="linha-upload-logo">
+                                        <input type="file" id="campo-marca-criador" name="marca_criador" accept="image/png, image/jpeg" autocomplete="off">
+                                        <button type="button" id="botao-atualizar-logo" class="btn-atualizar-logo">Atualizar</button>
+                                    </div>
+                                    <small>Somente PNG ou JPG, até 10 MB.{% if produtor and produtor.marca_criador %} Deixe em branco para manter a logo atual.{% endif %}</small>
+                                    <small>Escolha o arquivo e clique em "Atualizar" para ver a prévia antes de salvar.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-secao">Endereço</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-8">
+                            <label>Logradouro</label>
+                            <input type="text" id="campo-logradouro" name="logradouro" maxlength="200" class="upper" autocomplete="off"
+                                value="{{ (produtor.logradouro or '') if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label>Número</label>
+                            <input type="text" id="campo-numero" name="numero" maxlength="10" class="upper" autocomplete="nope"
+                                value="{{ (produtor.numero or '') if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label>UF *</label>
+                            <select name="uf" id="campo-uf" required autocomplete="off">
+                                <option value="">--</option>
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if produtor and produtor.uf == sigla else '' }}>
+                                    {{ sigla }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Complemento</label>
+                            <input type="text" id="campo-complemento" name="complemento" maxlength="100" class="upper" autocomplete="off"
+                                value="{{ (produtor.complemento or '') if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Bairro</label>
+                            <input type="text" id="campo-bairro" name="bairro" maxlength="100" class="upper" autocomplete="off"
+                                value="{{ (produtor.bairro or '') if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-8">
+                            <label>Município *</label>
+                            <input type="text" id="campo-municipio" name="municipio" required maxlength="100" class="upper" autocomplete="off"
+                                value="{{ produtor.municipio if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>CEP</label>
+                            <input type="text" id="campo-cep" name="cep" maxlength="9" autocomplete="nope"
+                                value="{{ (produtor.cep or '') if produtor else '' }}"
+                                placeholder="00000-000">
+                        </div>
+
+                    </div>
+
+                    <div class="form-secao">Contato</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-6">
+                            <label>Email *</label>
+                            <input type="email" id="campo-email" name="email" required maxlength="150" autocomplete="off"
+                                value="{{ produtor.email if produtor else '' }}">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Telefone *</label>
+                            <input type="text" id="campo-telefone" name="telefone" required maxlength="15" autocomplete="off"
+                                value="{{ produtor.telefone if produtor else '' }}"
+                                placeholder="(00) 00000-0000">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Telefone 2</label>
+                            <input type="text" id="campo-telefone2" name="telefone2" maxlength="15" autocomplete="off"
+                                value="{{ (produtor.telefone2 or '') if produtor else '' }}"
+                                placeholder="(00) 00000-0000">
+                        </div>
+
+                    </div>
+
+                    <div class="form-botoes">
+                        {% if usuario_perfil == 'CONSISTE' %}
+                        <a href="{{ url_for('produtores.lista') }}" class="btn-cancelar">Cancelar</a>
+                        {% endif %}
+                        <button type="submit" class="btn-salvar" id="botao-salvar">
+                            {{ 'Salvar Alterações' if produtor else 'Cadastrar' }}
+                        </button>
+                    </div>
+
+                </form>
+
+                {% if produtor and not produtor.schema_nome and usuario_perfil == 'CONSISTE' %}
+                <form method="POST" action="{{ url_for('produtores.onboarding', id=produtor.id) }}" id="form-ativar-ambiente" style="display: none;"></form>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay-confirmacao" id="overlay-confirmacao-saida">
+        <div class="modal-confirmacao">
+            <div class="modal-confirmacao-titulo">Alterações não salvas</div>
+            <div class="modal-confirmacao-texto">Você tem alterações neste cadastro que ainda não foram salvas. Se sair agora, elas serão perdidas.</div>
+            <div class="modal-confirmacao-botoes">
+                <button type="button" id="botao-continuar-editando" class="btn-cancelar">Continuar editando</button>
+                <button type="button" id="botao-sair-sem-salvar" class="btn-sair-sem-salvar">Sair sem salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay-confirmacao" id="overlay-confirmacao-ambiente">
+        <div class="modal-confirmacao">
+            <div class="modal-confirmacao-titulo">Ativar Ambiente do Produtor</div>
+            <div class="modal-confirmacao-texto">Isso vai criar o ambiente definitivo deste Produtor (schema físico com as tabelas de movimento). Esta ação não pode ser desfeita. Confirma?</div>
+            <div class="modal-confirmacao-botoes">
+                <button type="button" id="botao-cancelar-ativacao" class="btn-cancelar">Cancelar</button>
+                <button type="button" id="botao-confirmar-ativacao" class="btn-confirmar-ativacao">Confirmar Ativação</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+
+        var overlayConfirmacaoAmbiente = document.getElementById('overlay-confirmacao-ambiente');
+        var botaoCancelarAtivacao = document.getElementById('botao-cancelar-ativacao');
+        var botaoConfirmarAtivacao = document.getElementById('botao-confirmar-ativacao');
+
+        function ativarAmbiente() {
+            overlayConfirmacaoAmbiente.style.display = 'flex';
+        }
+
+        botaoCancelarAtivacao.addEventListener('click', function() {
+            overlayConfirmacaoAmbiente.style.display = 'none';
+        });
+
+        botaoConfirmarAtivacao.addEventListener('click', function() {
+            var formAtivar = document.getElementById('form-ativar-ambiente');
+            if (formAtivar) {
+                formAtivar.submit();
+            }
+        });
+
+        document.querySelectorAll('.upper').forEach(function(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+
+        function aplicarMascaraTelefone(campo) {
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 11);
+                var formatado = digitos;
+
+                if (digitos.length > 10) {
+                    formatado = digitos.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+                } else if (digitos.length > 6) {
+                    formatado = digitos.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                } else if (digitos.length > 2) {
+                    formatado = digitos.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                } else if (digitos.length > 0) {
+                    formatado = digitos.replace(/^(\d{0,2})/, '($1');
+                }
+
+                this.value = formatado.trim();
+            });
+        }
+        aplicarMascaraTelefone(document.getElementById('campo-telefone'));
+        aplicarMascaraTelefone(document.getElementById('campo-telefone2'));
+
+        var campoCep = document.getElementById('campo-cep');
+        campoCep.addEventListener('input', function() {
+            var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+            var formatado = digitos;
+            if (digitos.length > 5) {
+                formatado = digitos.replace(/^(\d{5})(\d{0,3})/, '$1-$2');
+            }
+            this.value = formatado.trim();
+        });
+
+        var idPropriedadeContexto = '{{ id_propriedade if id_propriedade else "" }}';
+
+        var campoTipoPessoa = document.getElementById('campo-tipo-pessoa');
+        var campoVisibilidade = document.getElementById('campo-visibilidade');
+        var campoUf = document.getElementById('campo-uf');
+        var campoCpfCnpj = document.getElementById('campo-cpf-cnpj');
+        var campoIdExistente = document.getElementById('campo-id-existente');
+        var campoIdProprietarioEncontrado = document.getElementById('campo-id-proprietario-encontrado');
+        var campoIdProdutorCompletar = document.getElementById('campo-id-produtor-completar');
+        var campoId = document.getElementById('campo-id');
+        var avisoEncontrado = document.getElementById('aviso-encontrado');
+        var avisoPreenchido = document.getElementById('aviso-preenchido');
+        var avisoCompletar = document.getElementById('aviso-completar');
+        var botaoSalvar = document.getElementById('botao-salvar');
+        var textoOriginalBotao = botaoSalvar.textContent.trim();
+
+        var estaEditandoExistente = !!campoId.value;
+
+        if (campoIdProdutorCompletar.value) {
+            avisoCompletar.style.display = 'block';
+            botaoSalvar.textContent = 'Salvar e Continuar';
+        }
+
+        campoCpfCnpj.addEventListener('input', function() {
+            var digitos = this.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();   // CNPJ alfanumerico
+            var formatado = digitos;
+
+            if (campoTipoPessoa.value === 'FISICA') {
+                digitos = digitos.replace(/\D/g, '').slice(0, 11);
+                formatado = digitos.replace(/^(\d{3})(\d{0,3})(\d{0,3})(\d{0,2})/, function(m, p1, p2, p3, p4) {
+                    var r = p1;
+                    if (p2) r += '.' + p2;
+                    if (p3) r += '.' + p3;
+                    if (p4) r += '-' + p4;
+                    return r;
+                });
+            } else {
+                digitos = digitos.slice(0, 14);
+                formatado = digitos.replace(/^([0-9A-Z]{2})([0-9A-Z]{0,3})([0-9A-Z]{0,3})([0-9A-Z]{0,4})([0-9A-Z]{0,2})/, function(m, p1, p2, p3, p4, p5) {
+                    var r = p1;
+                    if (p2) r += '.' + p2;
+                    if (p3) r += '.' + p3;
+                    if (p4) r += '/' + p4;
+                    if (p5) r += '-' + p5;
+                    return r;
+                });
+            }
+
+            this.value = formatado;
+
+            if (campoIdExistente.value || campoIdProprietarioEncontrado.value || campoIdProdutorCompletar.value) {
+                resetarFormulario();
+            }
+        });
+
+        campoCpfCnpj.addEventListener('blur', function() {
+            if (estaEditandoExistente) {
+                return;
+            }
+
+            var digitos = this.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            var tamanhoEsperado = (campoTipoPessoa.value === 'FISICA') ? 11 : 14;
+
+            if (digitos.length !== tamanhoEsperado) {
+                return;
+            }
+
+            var url = '/api/busca-cpf-cnpj?documento=' + digitos;
+            if (idPropriedadeContexto) {
+                url += '&id_propriedade=' + idPropriedadeContexto;
+            }
+
+            fetch(url)
+                .then(function(resposta) { return resposta.json(); })
+                .then(function(dados) {
+                    if (dados.produtor && dados.produtor.vinculado_a_esta_propriedade) {
+                        preencherComProdutorParaCompletar(dados.produtor);
+                    } else if (dados.produtor) {
+                        preencherComProdutorEncontrado(dados.produtor);
+                    } else if (dados.proprietario) {
+                        preencherComProprietarioEncontrado(dados.proprietario);
+                    }
+                })
+                .catch(function(erro) {
+                    console.error('Erro ao buscar CPF/CNPJ:', erro);
+                });
+        });
+
+        function preencherComProdutorEncontrado(produtorEncontrado) {
+            campoIdExistente.value = produtorEncontrado.id;
+
+            preencherCampos(produtorEncontrado);
+            atualizarRotulosTipoPessoa();
+            travarFormulario();
+
+            avisoEncontrado.style.display = 'block';
+            avisoPreenchido.style.display = 'none';
+            avisoCompletar.style.display = 'none';
+            botaoSalvar.textContent = 'Vincular';
+        }
+
+        function preencherComProdutorParaCompletar(produtorEncontrado) {
+            campoIdProdutorCompletar.value = produtorEncontrado.id;
+
+            preencherCampos(produtorEncontrado);
+            atualizarRotulosTipoPessoa();
+
+            avisoCompletar.style.display = 'block';
+            avisoEncontrado.style.display = 'none';
+            avisoPreenchido.style.display = 'none';
+            botaoSalvar.textContent = 'Salvar e Continuar';
+        }
+
+        function preencherComProprietarioEncontrado(proprietarioEncontrado) {
+            campoIdProprietarioEncontrado.value = proprietarioEncontrado.id;
+
+            preencherCampos(proprietarioEncontrado);
+            atualizarRotulosTipoPessoa();
+
+            avisoPreenchido.style.display = 'block';
+            avisoEncontrado.style.display = 'none';
+            avisoCompletar.style.display = 'none';
+            botaoSalvar.textContent = textoOriginalBotao;
+        }
+
+        function preencherCampos(dados) {
+            campoTipoPessoa.value = dados.tipo_pessoa;
+            campoVisibilidade.value = dados.visibilidade;
+            document.getElementById('campo-razao-social').value = dados.razao_social;
+            document.getElementById('campo-nome').value = dados.nome;
+            document.getElementById('campo-email').value = dados.email;
+            document.getElementById('campo-telefone').value = dados.telefone || '';
+            document.getElementById('campo-telefone2').value = dados.telefone2 || '';
+            document.getElementById('campo-logradouro').value = dados.logradouro || '';
+            document.getElementById('campo-numero').value = dados.numero || '';
+            document.getElementById('campo-complemento').value = dados.complemento || '';
+            document.getElementById('campo-bairro').value = dados.bairro || '';
+            document.getElementById('campo-cep').value = dados.cep || '';
+            document.getElementById('campo-doc-secundario').value = '';
+            document.getElementById('campo-municipio').value = dados.municipio || '';
+            campoUf.value = dados.uf;
+        }
+
+        var CAMPOS_TEXTO_IDS = [
+            'campo-razao-social', 'campo-nome', 'campo-email',
+            'campo-telefone', 'campo-telefone2', 'campo-logradouro',
+            'campo-numero', 'campo-complemento', 'campo-bairro',
+            'campo-cep', 'campo-municipio', 'campo-doc-secundario'
+        ];
+        var SELECTS_TRAVAVEIS = [campoTipoPessoa, campoVisibilidade, campoUf];
+
+        function travarFormulario() {
+            CAMPOS_TEXTO_IDS.forEach(function(idCampo) {
+                document.getElementById(idCampo).setAttribute('readonly', 'readonly');
+            });
+            SELECTS_TRAVAVEIS.forEach(function(select) {
+                if (!select.nextElementSibling || select.nextElementSibling.tagName !== 'INPUT') {
+                    var hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = select.name;
+                    hidden.value = select.value;
+                    hidden.className = 'hidden-select-' + select.id;
+                    select.insertAdjacentElement('afterend', hidden);
+                }
+                select.removeAttribute('name');
+                select.disabled = true;
+            });
+        }
+
+        function resetarFormulario() {
+            // s116: se havia um cadastro carregado (Produtor/Proprietario/completar), o CPF mudou = outra pessoa:
+            // limpa o que veio dele para nao gravar nome, e-mail, telefone ou endereco alheio.
+            var havia_cadastro_carregado = !!(campoIdExistente.value || campoIdProprietarioEncontrado.value || campoIdProdutorCompletar.value);
+            CAMPOS_TEXTO_IDS.forEach(function(idCampo) {
+                var campoLimpar = document.getElementById(idCampo);
+                campoLimpar.removeAttribute('readonly');
+                if (havia_cadastro_carregado) { campoLimpar.value = ''; }
+            });
+            SELECTS_TRAVAVEIS.forEach(function(select) {
+                select.disabled = false;
+                var mapaName = {
+                    'campo-tipo-pessoa': 'tipo_pessoa',
+                    'campo-visibilidade': 'visibilidade',
+                    'campo-uf': 'uf'
+                };
+                select.setAttribute('name', mapaName[select.id]);
+                var hiddenExistente = document.querySelector('.hidden-select-' + select.id);
+                if (hiddenExistente) {
+                    hiddenExistente.remove();
+                }
+            });
+            campoIdExistente.value = '';
+            campoIdProprietarioEncontrado.value = '';
+            campoIdProdutorCompletar.value = '';
+            avisoEncontrado.style.display = 'none';
+            avisoPreenchido.style.display = 'none';
+            avisoCompletar.style.display = 'none';
+            botaoSalvar.textContent = textoOriginalBotao;
+        }
+
+        var campoRazaoSocial = document.getElementById('campo-razao-social');
+        var campoNome = document.getElementById('campo-nome');
+        var labelRazaoSocial = document.getElementById('label-razao-social');
+        var labelNome = document.getElementById('label-nome');
+        var labelCpfCnpj = document.getElementById('label-cpf-cnpj');
+        var labelDocSec = document.getElementById('label-doc-secundario');
+        var campoDocSec = document.getElementById('campo-doc-secundario');
+        var ajudaNome = document.getElementById('ajuda-nome');
+        var nomeEditadoManualmente = false;
+
+        campoNome.addEventListener('input', function() {
+            nomeEditadoManualmente = true;
+        });
+
+        function sincronizarNomeFisica() {
+            if (!nomeEditadoManualmente || campoTipoPessoa.value === 'FISICA') {
+                campoNome.value = campoRazaoSocial.value;
+            }
+        }
+        ['input', 'change', 'blur'].forEach(function(evento) {
+            campoRazaoSocial.addEventListener(evento, sincronizarNomeFisica);
+        });
+        // s116: ao enviar, o nome de baixo (Fisica) e sempre igual ao de cima
+        document.getElementById('form-produtor').addEventListener('submit', function() {
+            if (campoTipoPessoa.value === 'FISICA') { campoNome.value = campoRazaoSocial.value; }
+        });
+
+        function atualizarRotulosTipoPessoa() {
+            var jaTravado = !!campoIdExistente.value;
+
+            if (campoTipoPessoa.value === 'FISICA') {
+                labelRazaoSocial.textContent = 'Nome do Produtor *';
+                labelNome.textContent = 'Nome (igual ao acima)';
+                labelCpfCnpj.textContent = 'CPF *';
+                campoCpfCnpj.setAttribute('maxlength', '14');
+                labelDocSec.textContent = 'CNPJ (opcional)';
+                campoDocSec.setAttribute('maxlength', '18');
+                ajudaNome.style.display = 'none';
+                if (!jaTravado) {
+                    campoNome.value = campoRazaoSocial.value;
+                }
+                campoNome.setAttribute('readonly', 'readonly');
+            } else if (campoTipoPessoa.value === 'JURIDICA') {
+                labelRazaoSocial.textContent = 'Razão Social *';
+                labelNome.textContent = 'Nome Fantasia';
+                labelCpfCnpj.textContent = 'CNPJ *';
+                campoCpfCnpj.setAttribute('maxlength', '18');
+                labelDocSec.textContent = 'CPF (opcional)';
+                campoDocSec.setAttribute('maxlength', '14');
+                ajudaNome.style.display = 'block';
+                if (!jaTravado) {
+                    campoNome.removeAttribute('readonly');
+                }
+            } else {
+                labelRazaoSocial.textContent = 'Razão Social *';
+                labelNome.textContent = 'Nome Fantasia';
+                labelCpfCnpj.textContent = 'CPF/CNPJ *';
+                campoCpfCnpj.setAttribute('maxlength', '18');
+                labelDocSec.textContent = 'CNPJ / CPF (opcional)';
+                campoDocSec.setAttribute('maxlength', '18');
+                ajudaNome.style.display = 'block';
+                if (!jaTravado) {
+                    campoNome.removeAttribute('readonly');
+                }
+            }
+        }
+        campoTipoPessoa.addEventListener('change', atualizarRotulosTipoPessoa);
+        atualizarRotulosTipoPessoa();
+
+        var botaoAtualizarLogo = document.getElementById('botao-atualizar-logo');
+        var campoMarcaCriador = document.getElementById('campo-marca-criador');
+        var imagemPreviewLogo = document.getElementById('imagem-preview-logo');
+        var placeholderSemLogo = document.getElementById('placeholder-sem-logo');
+        var textoPreviewLogo = document.getElementById('texto-preview-logo');
+
+        botaoAtualizarLogo.addEventListener('click', function() {
+            var arquivo = campoMarcaCriador.files[0];
+
+            if (!arquivo) {
+                mostrarAviso('Escolha um arquivo (PNG ou JPG) antes de clicar em Atualizar.');
+                return;
+            }
+
+            var leitor = new FileReader();
+            leitor.onload = function(evento) {
+                imagemPreviewLogo.src = evento.target.result;
+                imagemPreviewLogo.style.display = 'block';
+                placeholderSemLogo.style.display = 'none';
+                textoPreviewLogo.textContent = 'Prévia do arquivo selecionado (ainda não salvo). Clique em "' + textoOriginalBotao + '" para confirmar.';
+            };
+            leitor.readAsDataURL(arquivo);
+        });
+
+        document.getElementById('form-produtor').addEventListener('submit', function() {
+            ['campo-telefone', 'campo-telefone2', 'campo-cep', 'campo-cpf-cnpj'].forEach(function(idCampo) {
+                var campo = document.getElementById(idCampo);
+                if (campo) {
+                    campo.value = (idCampo === 'campo-cpf-cnpj') ? campo.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase() : campo.value.replace(/\D/g, '');
+                }
+            });
+
+            formularioModificado = false;
+        });
+
+        var formularioModificado = false;
+
+        document.getElementById('form-produtor').addEventListener('input', function() {
+            formularioModificado = true;
+        });
+        document.getElementById('form-produtor').addEventListener('change', function() {
+            formularioModificado = true;
+        });
+
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioModificado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+
+        var overlayConfirmacaoSaida = document.getElementById('overlay-confirmacao-saida');
+        var botaoContinuarEditando = document.getElementById('botao-continuar-editando');
+        var botaoSairSemSalvar = document.getElementById('botao-sair-sem-salvar');
+        var linkDestinoPendente = null;
+
+        function interceptarSaida(link) {
+            if (!link) {
+                return;
+            }
+            link.addEventListener('click', function(evento) {
+                if (formularioModificado) {
+                    evento.preventDefault();
+                    linkDestinoPendente = link.getAttribute('href');
+                    overlayConfirmacaoSaida.style.display = 'flex';
+                }
+            });
+        }
+
+        interceptarSaida(document.querySelector('.btn-voltar-topo'));
+        interceptarSaida(document.querySelector('.btn-cancelar'));
+
+        botaoContinuarEditando.addEventListener('click', function() {
+            overlayConfirmacaoSaida.style.display = 'none';
+            linkDestinoPendente = null;
+        });
+
+        botaoSairSemSalvar.addEventListener('click', function() {
+            formularioModificado = false;
+            if (linkDestinoPendente) {
+                window.location.href = linkDestinoPendente;
+            }
+        });
+    </script>
+
+{% include 'produtor/modal_confirmacao.html' %}
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\produtor_cadastro.html
+     ========================================================= -->

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\consiste_carga.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-17 18:41 -03
+     ATUALIZADO EM: 2026-11-17 18:41 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Tela Consiste > Carga de Animais (router carga_consiste.py).
+         Envio do PDF do Extrato de Animais Vivos, Previa (erros e alertas),
+         Confirmar e lista das Cargas com Desfazer. So o perfil CONSISTE.
+     v1.0.0: Criacao (Carga, 17/11/2026).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Carga de Animais</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .pagina-subtitulo { font-size: 13px; color: #777777; margin-bottom: 20px; }
+
+        .bloco { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 1000px; margin-bottom: 18px; }
+        .bloco h3 { font-size: 15px; color: #333333; margin-bottom: 4px; }
+        .bloco .nota { font-size: 12px; color: #888888; margin-bottom: 14px; }
+
+        table.resumo { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.resumo th { text-align: left; font-size: 11px; color: #777777; text-transform: uppercase; padding: 8px 10px; border-bottom: 2px solid #e0e0e0; }
+        table.resumo td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; color: #333333; vertical-align: top; }
+        table.resumo td.num, table.resumo th.num { text-align: right; }
+        .zero { color: #bbbbbb; }
+        .alerta-amarelo { color: #b26a00; font-weight: bold; }
+        .alerta-vermelho { color: #c62828; font-weight: bold; }
+        .ok-verde { color: #2e7d32; font-weight: bold; }
+        .sem-provedor { color: #999999; font-style: italic; }
+        .linha-problema { color: #c62828; font-size: 12px; }
+
+        .form-validar { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+        .form-validar .campo label { display: block; font-size: 12px; font-weight: bold; color: #555555; margin-bottom: 6px; }
+        .form-validar select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; min-width: 190px; }
+        .form-validar .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #444444; padding-bottom: 9px; }
+        .btn-validar { background: #1F4E79; color: #ffffff; border: none; border-radius: 6px; padding: 10px 18px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-validar:hover { background: #173b5d; }
+        .btn-baixar { background: #ffffff; color: #1F4E79; border: 1px solid #1F4E79; border-radius: 6px; padding: 9px 16px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-baixar:hover { background: #eef4fa; }
+
+        .faixa-total { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .pilula { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .pilula.ok { background: #E8F3E8; color: #2e7d32; }
+        .pilula.atencao { background: #FFF6DD; color: #b26a00; }
+        .pilula.falha { background: #FDE7E7; color: #c62828; }
+        .quando { font-size: 12px; color: #888888; margin-bottom: 14px; }
+
+        .cartao-produtor { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        .cartao-produtor .cabec { background: #f7f7f7; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .cartao-produtor .cabec .nome { font-weight: bold; font-size: 14px; color: #333333; }
+        .cartao-produtor .cabec .sub { font-size: 12px; color: #888888; font-weight: normal; }
+        .cartao-produtor .corpo { padding: 6px 14px 10px; }
+        .achado { font-size: 13px; padding: 6px 0; border-bottom: 1px solid #f3f3f3; display: flex; gap: 10px; align-items: flex-start; }
+        .achado:last-child { border-bottom: none; }
+        .etiqueta { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; margin-top: 1px; min-width: 66px; text-align: center; }
+        .etiqueta.ok { background: #E8F3E8; color: #2e7d32; }
+        .etiqueta.atencao { background: #FFF6DD; color: #b26a00; }
+        .etiqueta.falha { background: #FDE7E7; color: #c62828; }
+        .tudo-certo { font-size: 13px; color: #2e7d32; padding: 8px 0; }
+        .resumo-linha { font-size: 12px; color: #777777; padding-top: 8px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        .msg { padding: 12px 16px; border-radius: 8px; max-width: 1000px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
+        .msg.ok { background: #E8F3E8; color: #2e7d32; }
+        .msg.erro { background: #FDE7E7; color: #c62828; }
+        .grupo { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+        .grupo .gt { padding: 8px 14px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; }
+        .grupo.erro .gt { background: #FDE7E7; color: #c62828; }
+        .grupo.alerta .gt { background: #FFF6DD; color: #b26a00; }
+        .grupo ul { padding: 8px 14px 8px 32px; font-size: 12px; color: #444444; }
+        .btn-ok { background: #2e7d32; color: #ffffff; border: none; border-radius: 6px; padding: 11px 22px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-ok:hover { background: #1f5c23; }
+        .btn-perigo { background: #ffffff; color: #c62828; border: 1px solid #c62828; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-perigo:hover { background: #FDE7E7; }
+        .aviso-espera { display: none; background: #E3F0FB; color: #1F4E79; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% include 'consiste/consiste_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128230;</span> Carga de Animais</h2>
+            </div>
+            <div class="pagina-subtitulo">Carga inicial de um Produtor novo, a partir do PDF &quot;Extrato de Animais Vivos&quot; do MAPA. Uma Carga por Propriedade. O Produtor e a Propriedade já precisam estar cadastrados.</div>
+
+            {% include 'produtor/aviso_download.html' %}
+
+            {% if mensagem %}
+            <div class="msg {{ mensagem_tipo }}">{{ mensagem }}</div>
+            {% endif %}
+
+            {% if previa %}
+            <div class="bloco">
+                <h3>Prévia da Carga{% if nome_arquivo %} &#8212; {{ nome_arquivo }}{% endif %}</h3>
+                <div class="nota">Nada foi gravado ainda.</div>
+                {% if destino %}
+                <p style="font-size:14px;margin-bottom:10px;"><b>Produtor:</b> {{ destino.produtor }} &nbsp; <b>Propriedade:</b> {{ destino.propriedade }}</p>
+                {% elif cabecalho %}
+                <p style="font-size:14px;margin-bottom:10px;"><b>No arquivo:</b> {{ cabecalho.produtor_nome }} &#8212; {{ cabecalho.propriedade_nome }}</p>
+                {% endif %}
+                <div class="faixa-total">
+                    <span class="pilula ok">{{ previa.lidos }} animais lidos</span>
+                    <span class="pilula ok">{{ previa.femeas }} fêmeas</span>
+                    <span class="pilula ok">{{ previa.machos }} machos</span>
+                    <span class="pilula {{ 'falha' if previa.qtd_erros else 'ok' }}">{{ previa.qtd_erros }} erro(s)</span>
+                    <span class="pilula {{ 'atencao' if previa.qtd_alertas else 'ok' }}">{{ previa.qtd_alertas }} alerta(s)</span>
+                </div>
+
+                {% for g in previa.erros %}
+                <div class="grupo erro"><div class="gt"><span>{{ g.titulo }}</span><span>{{ g.qtd }}</span></div>
+                    <ul>{% for m in g.exemplos %}<li>{{ m }}</li>{% endfor %}{% if g.qtd > g.exemplos|length %}<li>... e mais {{ g.qtd - g.exemplos|length }}.</li>{% endif %}</ul></div>
+                {% endfor %}
+                {% for g in previa.alertas %}
+                <div class="grupo alerta"><div class="gt"><span>{{ g.titulo }} (não impede a Carga)</span><span>{{ g.qtd }}</span></div>
+                    <ul>{% for m in g.exemplos %}<li>{{ m }}</li>{% endfor %}{% if g.qtd > g.exemplos|length %}<li>... e mais {{ g.qtd - g.exemplos|length }}.</li>{% endif %}</ul></div>
+                {% endfor %}
+
+                {% if token_conf %}
+                <p style="margin:6px 0 14px;"><a class="btn-baixar" style="text-decoration:none;display:inline-block;" href="/consiste/carga/conferencia?token={{ token_conf }}" data-aviso-descricao="Arquivo de Conferência da Carga" data-aviso-arquivo="Conferencia_Carga.csv">Baixar Arquivo de Conferência (CSV)</a>
+                <span style="font-size:12px;color:#888;margin-left:8px;">Uma linha por animal, com a situação de cada um. Serve para conferir sem fazer a Carga.</span></p>
+                {% endif %}
+
+                {% if token %}
+                <form method="post" action="/consiste/carga/confirmar" onsubmit="return confirmarCarga(this);">
+                    <input type="hidden" name="token" value="{{ token }}">
+                    <input type="hidden" name="nome_arquivo" value="{{ nome_arquivo }}">
+                    <button type="submit" class="btn-ok" id="btn-confirmar">Confirmar e gravar a Carga ({{ previa.lidos }} animais)</button>
+                    <div class="aviso-espera" id="aviso-espera">Gravando a Carga. Pode levar alguns segundos; não feche nem recarregue esta tela.</div>
+                </form>
+                {% else %}
+                <p style="font-size:13px;color:#c62828;font-weight:bold;">Corrija os erros acima e envie o PDF de novo. Nada foi gravado.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="bloco">
+                <h3>Enviar Extrato de Animais Vivos</h3>
+                <div class="nota">Arquivo PDF gerado no MAPA (até 10 MB).</div>
+                <form method="post" action="/consiste/carga/previa" enctype="multipart/form-data" class="form-validar" onsubmit="document.getElementById('aviso-leitura').style.display='block';">
+                    <div class="campo"><input type="file" name="arquivo" accept="application/pdf,.pdf" required></div>
+                    <button type="submit" class="btn-validar">Ler e mostrar a prévia</button>
+                </form>
+                <div class="aviso-espera" id="aviso-leitura">Lendo o arquivo. Pode levar alguns segundos; não feche esta tela.</div>
+            </div>
+
+            <div class="bloco">
+                <h3>Cargas já feitas</h3>
+                <div class="nota">Desfazer só é possível se nenhum animal da Carga teve movimento depois dela.</div>
+                {% if cargas %}
+                <table class="resumo">
+                    <tr><th>Data</th><th>Produtor</th><th>Propriedade</th><th class="num">Animais</th><th></th></tr>
+                    {% for c in cargas %}
+                    <tr>
+                        <td>{{ c.data.strftime('%d/%m/%Y') if c.data else '' }}</td>
+                        <td>{{ c.produtor }}</td>
+                        <td>{{ c.propriedade }}</td>
+                        <td class="num">{{ c.quantidade }}</td>
+                        <td style="white-space:nowrap;">
+                            <a class="btn-baixar" style="text-decoration:none;display:inline-block;margin-right:8px;padding:5px 10px;font-size:12px;" href="/consiste/carga/relatorio?id_produtor={{ c.id_produtor }}&amp;id_propriedade={{ c.id_propriedade }}&amp;id_gta={{ c.id }}">Relatório (PDF)</a>
+                            <form method="post" style="display:inline;" action="/consiste/carga/desfazer" onsubmit="return confirm('Desfazer a Carga de {{ c.quantidade }} animais? Os animais serão removidos.');">
+                                <input type="hidden" name="id_produtor" value="{{ c.id_produtor }}">
+                                <input type="hidden" name="id_gta" value="{{ c.id }}">
+                                <button type="submit" class="btn-perigo">Desfazer</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <div class="sem-provedor">Nenhuma Carga feita ainda.</div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+        var enviado = false;
+        function confirmarCarga(f) {
+            if (enviado) { return false; }
+            if (!confirm('Gravar a Carga agora? Para refazer, será preciso desfazer.')) { return false; }
+            enviado = true;
+            document.getElementById('btn-confirmar').disabled = true;
+            document.getElementById('aviso-espera').style.display = 'block';
+            return true;
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\consiste_carga.html
+     ========================================================= -->

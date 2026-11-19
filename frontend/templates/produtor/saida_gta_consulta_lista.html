@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\saida_gta_consulta_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-20 09:20 -03
+     ATUALIZADO EM: 2026-11-05 17:55 -03
+     VERSAO: 1.4.0
+     v1.4.0: Sessao 115 (2026-11-05 17:55 -03) - DTA de Posse na lista. REVERSAO: .bak_antes_s115_dta3a.
+     v1.3.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Consulta GTA de Saida - lista das GTAs de saida (Abate) da Propriedade, com filtros (numero, situacao, frigorifico, Data de Saida) e o botao Ver de cada GTA (backend/routers/saida_gta_consulta.py, rota lista). So consulta: nao grava nada.
+
+     v1.0.0: Criacao (Sessao 101).
+     v1.1.0: Sessao 101 (20/10/2026, 09:31 -03) - Botoes de atalho (Todas, Pendentes, Vinculadas, Comunicadas) com a quantidade e aviso no topo quando ha GTAs pendentes.
+     v1.2.0: Sessao 110 (31/10/2026, 2026-10-31 10:22 -03) - Colunas estreitas (Numero, Datas, Animais, Situacao, Comunicado, Ver) com margens menores; a sobra de largura vai para o Destino, que passa a caber numa linha so (quebra apenas se o nome for muito longo).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Consulta GTA</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .btn-acao.principal { background: #D4370A; color: #ffffff; }
+        .banner-ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e3f2fd; color: #0d47a1; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+
+        /* v1.0.0 - Consulta GTA: selo Comunicada, filtros e botoes */
+        .selo-situacao.comunicada { background: #e3f2fd; color: #1565c0; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-novo { padding: 9px 18px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-novo:hover { background: #C0392B; }
+        .filtros { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+        .filtros label { display: block; font-size: 12px; color: #888888; margin-bottom: 4px; }
+        .filtros input, .filtros select { height: 40px; padding: 0 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; background: #ffffff; }
+        .filtros .f-numero { width: 190px; }
+        .filtros .f-situacao { width: 160px; }
+        .filtros .f-frig { width: 230px; }
+        .filtros .f-data { width: 150px; }
+        .filtros .btn-novo, .filtros .btn-nav { height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; }
+        .atalhos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .atalho { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border: 1px solid #D4370A; border-radius: 20px; background: #ffffff; color: #D4370A; font-size: 13.5px; font-weight: bold; text-decoration: none; }
+        .atalho:hover { background: #FBE9E4; }
+        .atalho.ativo { background: #D4370A; color: #ffffff; }
+        .atalho .qtd { background: #FBE9E4; color: #7a1f04; border-radius: 10px; padding: 1px 8px; font-size: 12px; }
+        .atalho.ativo .qtd { background: #ffffff; color: #D4370A; }
+        .aviso-pendentes { background: #fff8e1; border-left: 6px solid #f9a825; color: #6d4c00; padding: 10px 16px; border-radius: 6px; font-size: 13.5px; font-weight: bold; margin-bottom: 14px; }
+        .aviso-pendentes a { color: #7a1f04; text-decoration: underline; }
+        /* v1.2.0 - colunas compactas: a sobra de largura fica com o Destino */
+        .tabela-gtas th, .tabela-gtas td { padding: 7px 8px; }
+        .tabela-gtas th.c-num { width: 96px; }
+        .tabela-gtas th.c-dt { width: 82px; }
+        .tabela-gtas th.col-qtd { width: 92px; }
+        .tabela-gtas th.c-sit { width: 92px; }
+        .tabela-gtas th.c-com { width: 80px; }
+        .tabela-gtas th.c-acao { width: 56px; }
+        .tabela-gtas td.numero-gta { font-size: 13px; }
+        .contador { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_hub %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128269;</span> Consulta GTA de Sa&iacute;da</div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }}</div>
+
+            {% if qtd_pendentes and filtros.situacao != 'pendente' %}
+            <div class="aviso-pendentes">&#9888;&#65039; Voc&ecirc; tem {{ qtd_pendentes }} GTA(s) pendente(s), sem animais vinculados. <a href="{{ url_pendentes }}">Ver pendentes</a></div>
+            {% endif %}
+
+            <div class="atalhos">
+                {% for a in atalhos %}
+                <a class="atalho {% if a.ativo %}ativo{% endif %}" href="{{ a.url }}">{{ a.rotulo }} <span class="qtd">{{ a.qtd }}</span></a>
+                {% endfor %}
+            </div>
+
+            <form class="filtros" method="get" action="/produtor/saida-gta-consulta/lista">
+                <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                <div>
+                    <label for="f-numero">N&uacute;mero da GTA</label>
+                    <input type="text" class="f-numero" id="f-numero" name="numero" maxlength="30" autocomplete="off" value="{{ filtros.numero }}">
+                </div>
+                <div>
+                    <label for="f-situacao">Situa&ccedil;&atilde;o</label>
+                    <select class="f-situacao" id="f-situacao" name="situacao">
+                        <option value="">Todas</option>
+                        {% for chave, rotulo in situacoes.items() %}
+                        <option value="{{ chave }}" {% if filtros.situacao == chave %}selected{% endif %}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="f-frig">Frigor&iacute;fico</label>
+                    <select class="f-frig" id="f-frig" name="frigorifico">
+                        <option value="">Todos</option>
+                        {% for o in opcoes_frig %}
+                        <option value="{{ o.id }}" {% if filtros.frigorifico == o.id|string %}selected{% endif %}>{{ o.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="f-de">Data de Sa&iacute;da (de)</label>
+                    <input type="date" class="f-data" id="f-de" name="saida_de" value="{{ filtros.saida_de }}">
+                </div>
+                <div>
+                    <label for="f-ate">Data de Sa&iacute;da (at&eacute;)</label>
+                    <input type="date" class="f-data" id="f-ate" name="saida_ate" value="{{ filtros.saida_ate }}">
+                </div>
+                <button type="submit" class="btn-novo">Filtrar</button>
+                <a class="btn-nav" href="{{ url_limpar }}">Limpar</a>
+            </form>
+
+            {% if gtas %}
+            <div class="tabela-container">
+                <div class="contador">{{ gtas|length }} GTA(s) encontrada(s). Pendente = sem animais; Vinculada = com animais e sem Comunicado; Comunicada = Comunicado j&aacute; gerado.</div>
+                <table class="tabela-gtas">
+                    <thead>
+                        <tr>
+                            <th class="c-num">N&uacute;mero da GTA</th>
+                            <th class="c-dt">Data Embarque</th>
+                            <th class="c-dt">Data de Sa&iacute;da</th>
+                            <th>Destino</th>
+                            <th class="col-qtd">Animais (vinculados / GTA)</th>
+                            <th class="c-sit">Situa&ccedil;&atilde;o</th>
+                            <th class="c-com">Comunicado</th>
+                            <th class="c-acao"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in gtas %}
+                        <tr>
+                            <td class="numero-gta">{{ g.numero }}</td>
+                            <td>{{ g.data_embarque }}</td>
+                            <td>{{ g.data_saida }}</td>
+                            <td>{% if g.transfer %}<strong style="color:{{ '#2e7d32' if g.tipo_rotulo == 'Venda' else ('#e65100' if g.tipo_rotulo == 'Alteração de Posse' else '#1565C0') }}">{{ 'Venda' if g.tipo_rotulo == 'Venda' else ('DTA Posse' if g.tipo_rotulo == 'Alteração de Posse' else 'Transfer&ecirc;ncia'|safe) }}</strong> &rarr; {% endif %}{{ g.frigorifico }}</td>
+                            <td class="col-qtd">{{ g.vinculados }} / {{ g.qtde_gta }}</td>
+                            <td><span class="selo-situacao {{ g.situacao }}">{{ g.rotulo_situacao }}</span></td>
+                            <td>{{ g.numero_comunicado if g.numero_comunicado is not none else '-' }}</td>
+                            <td>
+                                <div class="acoes">
+                                    <a class="btn-acao" href="{{ g.url }}">Ver</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="tabela-container">
+                <div class="sem-resultados">Nenhuma GTA de sa&iacute;da encontrada com estes filtros.</div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\saida_gta_consulta_lista.html
+     ========================================================= -->

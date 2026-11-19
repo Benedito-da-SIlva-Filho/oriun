@@ -1,0 +1,82 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\15_alter_tb_2012_tipo_entrada_obrigatorio.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-10 16:40 -03
+-- ATUALIZADO EM: 2026-10-10 16:40 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Sessao 093 - Em TODOS os schemas produtor_NNNNN:
+--   tb_2012_com_entrada.tipo_entrada passa a ser OBRIGATORIO (NOT NULL) e
+--   so aceita COMPRA, NASCTO-DESMAME ou TRANSFERENCIA (regra confirmada por
+--   Benedito). Antes dos 4 produtores antigos o campo aceitava vazio e
+--   qualquer valor da lista publica tipo_entrada_enum.
+--   SEGURANCA: se algum schema tiver linha vazia ou com outro tipo, o
+--   script PARA com erro e NAO altera nenhum schema (tudo ou nada).
+--   Pode rodar de novo sem problema (ja aplicado = pula).
+--
+--   v1.0.0: Criacao (Sessao 093).
+-- =========================================================
+
+DO $$
+DECLARE
+    sch RECORD;
+    ruins INTEGER;
+BEGIN
+    FOR sch IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+        ORDER BY schema_name
+    LOOP
+        IF to_regclass(format('%I.tb_2012_com_entrada', sch.schema_name)) IS NULL THEN
+            RAISE WARNING '%: sem tb_2012_com_entrada - pulado', sch.schema_name;
+            CONTINUE;
+        END IF;
+
+        EXECUTE format(
+            'SELECT count(*) FROM %I.tb_2012_com_entrada
+             WHERE tipo_entrada IS NULL
+                OR tipo_entrada::text NOT IN (''COMPRA'', ''NASCTO-DESMAME'', ''TRANSFERENCIA'')',
+            sch.schema_name) INTO ruins;
+        IF ruins > 0 THEN
+            RAISE EXCEPTION '%: % linha(s) com tipo_entrada vazio ou fora dos 3 tipos - nada foi alterado',
+                sch.schema_name, ruins;
+        END IF;
+
+        EXECUTE format('ALTER TABLE %I.tb_2012_com_entrada ALTER COLUMN tipo_entrada SET NOT NULL',
+                       sch.schema_name);
+
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conrelid = format('%I.tb_2012_com_entrada', sch.schema_name)::regclass
+              AND conname = 'chk_tb_2012_tipo_entrada') THEN
+            EXECUTE format(
+                'ALTER TABLE %I.tb_2012_com_entrada ADD CONSTRAINT chk_tb_2012_tipo_entrada
+                 CHECK (tipo_entrada IN (''COMPRA'', ''NASCTO-DESMAME'', ''TRANSFERENCIA''))',
+                sch.schema_name);
+        END IF;
+
+        RAISE NOTICE '%: tipo_entrada obrigatorio + trava OK', sch.schema_name;
+    END LOOP;
+END $$;
+
+-- ---------- VERIFICACAO ----------
+-- ESPERADO: 4 linhas (00001, 00004, 00005, 00010), todas com nulo = NO e trava = SIM
+SELECT c.table_schema,
+       c.is_nullable AS nulo,
+       CASE WHEN EXISTS (
+            SELECT 1 FROM pg_constraint k
+            JOIN pg_class t ON t.oid = k.conrelid
+            JOIN pg_namespace n ON n.oid = t.relnamespace
+            WHERE n.nspname = c.table_schema AND t.relname = 'tb_2012_com_entrada'
+              AND k.conname = 'chk_tb_2012_tipo_entrada') THEN 'SIM' ELSE 'NAO' END AS trava
+FROM information_schema.columns c
+WHERE c.table_schema LIKE 'produtor\_%'
+  AND c.table_name = 'tb_2012_com_entrada' AND c.column_name = 'tipo_entrada'
+ORDER BY 1;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\15_alter_tb_2012_tipo_entrada_obrigatorio.sql
+-- =========================================================

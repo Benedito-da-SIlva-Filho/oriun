@@ -1,0 +1,49 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\alterar_tb_4001_gta_meio_transporte.sql
+-- AUTOR: Benedito Silva Filho.
+-- CRIADO EM: 2026-07-30 15:13 -03
+-- ATUALIZADO EM: 2026-07-30 15:13 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     ALTER TABLE em tb_4001_gta (mora dentro de cada schema
+--     produtor_NNNNN, Schema-por-Produtor) -- adiciona a coluna
+--     meio_transporte.
+--
+--     Contexto (Sessao 027): reabertura pontual do P-028
+--     (Sessao 026). O campo "Meio de Transporte" tinha sido
+--     removido da tela/banco por nao ter regra de negocio na
+--     epoca. Ganhou regra de negocio real ao revisar a tela de
+--     GTA de Entrada - Compra: o campo volta como transcricao
+--     livre e fiel do documento fisico (ex: RODOVIARIO,
+--     FERROVIARIO, COMITIVA), e alimenta a validacao da Data de
+--     Entrega -- quando o texto transcrito for COMITIVA (viagem
+--     conduzida a pe, sem veiculo), a Data de Entrega ganha
+--     tolerancia de ate 30 dias alem da Data de Validade da GTA.
+--     Fora isso, a Data de Entrega tem que estar entre Emissao e
+--     Validade. Demais campos do P-028 (Finalidade, Marca do
+--     Rebanho, Rota, Evento, Local Evento, Vacinacoes) continuam
+--     fora do banco, sem mudanca.
+--
+--     Tabela confirmada vazia de dados reais com Benedito em
+--     2026-07-30 -- ALTER sem DEFAULT, coluna nasce obrigatoria
+--     (NOT NULL) desde ja, sem necessidade de preencher linhas
+--     antigas.
+--
+--     Executar manualmente em CADA schema produtor_NNNNN ja
+--     existente (nao ha automatizacao de migracao entre schemas
+--     ainda). Para novos Produtores, a coluna ja nasce junto via
+--     rotina de Onboarding, que usa o Model Python (tb_4001_gta.py
+--     v1.3.0) como fonte da estrutura.
+--
+-- v1.0.0: Criacao do script (Sessao 027).
+-- =========================================================
+
+ALTER TABLE tb_4001_gta
+    ADD COLUMN meio_transporte VARCHAR(30) NOT NULL;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alterar_tb_4001_gta_meio_transporte.sql
+-- =========================================================

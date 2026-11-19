@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_home.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-25 13:08 -03
+     ATUALIZADO EM: 2026-10-04 14:10 -03
+     VERSAO: 1.7.0
+
+     DESCRICAO:
+         Painel inicial da plataforma Produtor/Fazenda.
+         (ver historico completo de v1.0.0 a v1.4.0 na versao
+         anterior deste arquivo - sem mudanca de conteudo, so o
+         TOPO/RODAPE viraram peca reutilizavel nesta versao)
+
+         v1.5.0: Sessao 076 (21/09/2026, 10:00 -03) - TOPO e
+             RODAPE substituidos por comandos de INCLUDE das
+             novas pecas-mestras (produtor_topo.html /
+             produtor_rodape.html) - piloto de teste da
+             modularizacao (Ideia registrada na Sessao 057,
+             retomada agora). Home recebe mostrar_navegacao=False
+             vindo do router (backend/routers/auth.py::
+             produtor_home(), v1.13.0) - unica tela sem
+             Voltar/Home (so tem Sair). Nenhuma outra mudanca de
+             conteudo/CSS/JS nesta versao.
+
+         v1.6.0: Sessao 084 (02/10/2026, 19:00 -03) - ALERTA DOS 30 DIAS: faixa
+             no topo do painel com as Notificacoes de Nascimento ainda NAO
+             impressas que vencem em ate 5 dias (laranja) ou ja venceram
+             (vermelha), com botao que abre a lista da Notificacao. Variavel
+             'alertas_notificacao' vem do router (auth.py v1.14.0). Sem
+             alerta, nada aparece. Nenhuma outra mudanca.
+
+         v1.7.0: Sessao 085 (04/10/2026, 14:10 -03) - CARDS DO TOPO com
+             numeros reais (variavel 'resumo' vem do router, auth.py
+             v1.15.0, montada por backend/utils/home_resumo.py):
+             Animais (total do Produtor + lista por Propriedade quando ha
+             mais de uma), Entradas (ALERTA - Comunicados a gerar,
+             Comunicados a imprimir e Notificacoes a imprimir, cada linha
+             e um atalho e some quando zera; tudo zerado mostra "Tudo em
+             dia") e Liberados para abate (total, CTH e Livres). O card
+             Saidas foi descartado. Os 3 cards tem a MESMA altura fixa e
+             as listas rolam por dentro, para nunca empurrar o bloco
+             Modulos que vem abaixo. Se o resumo nao puder ser montado,
+             os cards mostram "indisponivel" (nunca "Tudo em dia" por
+             engano). Alerta dos 30 dias, Modulos, menu e topo: sem
+             mudanca.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Home</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; margin-bottom: 20px; }
+
+        /* ---- Alerta dos 30 dias da Notificacao (v1.6.0) ---- */
+        .alerta-prazo { border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; border-left: 6px solid; }
+        .alerta-prazo.urgente { background: #fff3e0; border-color: #FF6B00; color: #8a3b00; }
+        .alerta-prazo.vencida { background: #ffebee; border-color: #c62828; color: #8e1b1b; }
+        .alerta-prazo .alerta-titulo { font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+        .alerta-prazo .alerta-linha { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; font-size: 14px; }
+        .alerta-prazo .alerta-linha + .alerta-linha { border-top: 1px solid rgba(0,0,0,0.08); }
+        .alerta-prazo .alerta-quando { font-weight: bold; white-space: nowrap; }
+        .alerta-prazo a.btn-alerta { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; background: #D4370A; color: #ffffff; white-space: nowrap; }
+        .alerta-prazo a.btn-alerta:hover { background: #C0392B; }
+
+        /* ---- Cards de totais (v1.7.0) - os 3 com a MESMA altura fixa;
+             listas rolam por dentro do card, nunca empurram os Modulos ---- */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 16px; height: 172px; display: flex; flex-direction: column; overflow: hidden; }
+        .card-topo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .card-icone { font-size: 22px; }
+        .card h3 { font-size: 13px; color: #666666; font-weight: normal; }
+        .card .numero { font-size: 26px; font-weight: bold; color: #333333; margin: 4px 0 2px; flex-shrink: 0; }
+        .card-lista { list-style: none; flex: 1 1 auto; min-height: 0; overflow-y: auto; font-size: 12px; color: #555555; margin-top: 4px; }
+        .card-lista li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+        .card-lista li + li { border-top: 1px solid #f0f0f0; }
+        .card-lista strong { color: #333333; }
+        .card-alertas { font-size: 13px; margin-top: 8px; }
+        .card-alertas li { padding: 0; }
+        .card-alertas a { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border-radius: 6px; color: #333333; text-decoration: none; }
+        .card-alertas a:hover { background: #FBE9E4; }
+        .card-alertas strong { color: #D4370A; font-size: 15px; }
+        .card-em-dia { margin-top: 10px; font-size: 15px; font-weight: bold; color: #1b5e20; }
+        .card-nota { font-size: 12px; color: #999999; margin-top: 4px; }
+
+        /* ---- Modulos do dia a dia (Sessao 034 cont. 9) ---- */
+        .secao-titulo { font-size: 14px; font-weight: bold; color: #333333; margin-bottom: 12px; }
+        .modulos-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 240px)); gap: 18px; }
+        .modulo-card { border-radius: 16px; overflow: hidden; display: block; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+        .modulo-card img { width: 100%; display: block; }
+        a.modulo-card:hover { transform: scale(1.03); box-shadow: 0 6px 16px rgba(0,0,0,0.18); }
+        div.modulo-card { cursor: default; opacity: 0.85; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        <!-- MENU LATERAL -->
+        {% include 'produtor/produtor_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-titulo">&#127968; Painel da Fazenda</div>
+
+            <!-- v1.6.0 - Alerta dos 30 dias da Notificacao de Nascimento -->
+            {% if alertas_notificacao %}
+            {% set ha_vencida = alertas_notificacao | selectattr('vencida') | list | length > 0 %}
+            <div class="alerta-prazo {{ 'vencida' if ha_vencida else 'urgente' }}">
+                <div class="alerta-titulo">&#9888;&#65039; Notificação de Nascimento — prazo de envio (30 dias da Data de Brincagem)</div>
+                {% for a in alertas_notificacao %}
+                <div class="alerta-linha">
+                    <span>
+                        <strong>{{ a.numero }}</strong> &#8212; Brincagem de {{ a.data }} &#8212; {{ a.qtde }} animais
+                        {% if alertas_notificacao | map(attribute='id_propriedade') | unique | list | length > 1 %}&#8212; {{ a.propriedade }}{% endif %}
+                    </span>
+                    <span class="alerta-quando">{{ a.texto|capitalize }}</span>
+                    <a class="btn-alerta" href="{{ a.url }}">Abrir Notificações</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- v1.7.0 - Cards do topo: Animais / Entradas (alerta) / Liberados para abate -->
+            {% set r = resumo %}
+            {% set resumo_ok = r and not r.erro %}
+            <div class="cards">
+
+                <div class="card">
+                    <div class="card-topo"><span class="card-icone">&#128004;</span><h3>Animais</h3></div>
+                    {% if resumo_ok %}
+                    <div class="numero">{{ r.animais_total }}</div>
+                    {% if r.animais_por_propriedade | length > 1 %}
+                    <ul class="card-lista">
+                        {% for p in r.animais_por_propriedade %}
+                        <li><span>{{ p.nome }}</span><strong>{{ p.qtde }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% else %}
+                    <div class="numero">&#8212;</div>
+                    <div class="card-nota">Indisponível no momento</div>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <div class="card-topo"><span class="card-icone">&#128229;</span><h3>Entradas</h3></div>
+                    {% if resumo_ok %}
+                        {% if r.comunicados_gerar + r.comunicados_imprimir + r.notificacoes_imprimir == 0 %}
+                        <div class="card-em-dia">Tudo em dia &#10004;</div>
+                        {% else %}
+                        <ul class="card-lista card-alertas">
+                            {% if r.comunicados_gerar > 0 %}
+                            <li><a href="{{ r.url_gerar_comunicado }}" title="GTAs já brincadas, ainda sem Comunicado de Entrada"><span>Comunicados a gerar</span><strong>{{ r.comunicados_gerar }}</strong></a></li>
+                            {% endif %}
+                            {% if r.comunicados_imprimir > 0 %}
+                            <li><a href="{{ r.url_imprimir_comunicado }}" title="Comunicados gerados, ainda não impressos"><span>Comunicados a imprimir</span><strong>{{ r.comunicados_imprimir }}</strong></a></li>
+                            {% endif %}
+                            {% if r.notificacoes_imprimir > 0 %}
+                            <li><a href="{{ r.url_notificacao }}" title="Notificações de Nascimento ainda não impressas"><span>Notificações a imprimir</span><strong>{{ r.notificacoes_imprimir }}</strong></a></li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    {% else %}
+                    <div class="card-nota">Indisponível no momento</div>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <div class="card-topo"><span class="card-icone">&#9989;</span><h3>Liberados para abate</h3></div>
+                    {% if resumo_ok %}
+                    <div class="numero">{{ r.liberados_total }}</div>
+                    <ul class="card-lista">
+                        <li><span>CTH</span><strong>{{ r.liberados_cth }}</strong></li>
+                        <li><span>Livres</span><strong>{{ r.liberados_livres }}</strong></li>
+                    </ul>
+                    {% else %}
+                    <div class="numero">&#8212;</div>
+                    <div class="card-nota">Indisponível no momento</div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Modulos do dia a dia (Sessao 034 cont. 9) - substitui
+                 o antigo bloco "Acesso Rapido" (3 botoes de texto).
+                 "Entrada" e "Brincagem" ja sao clicaveis (v1.4.0) -
+                 Saidas e Pesos ainda nao tem modulo construido,
+                 aparecem so como visual. -->
+            <div class="secao-titulo">Módulos</div>
+            <div class="modulos-hero">
+                <a href="{{ url_for('hubs.ver', slug='entrada') }}" class="modulo-card">
+                    <img src="/static/img/home/entrada.jpg" alt="Entrada">
+                </a>
+                <div class="modulo-card">
+                    <img src="/static/img/home/saida.jpg" alt="Saídas">
+                </div>
+                <a href="{{ url_for('hubs.ver', slug='brincagem') }}" class="modulo-card">
+                    <img src="/static/img/home/brincos.jpg" alt="Brincagem">
+                </a>
+                <div class="modulo-card">
+                    <img src="/static/img/home/pesos.jpg" alt="Pesos">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_home.html
+     ========================================================= -->

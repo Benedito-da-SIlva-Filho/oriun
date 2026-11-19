@@ -1,0 +1,44 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\2_alter_numero_comunicado_2001_7017.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-14 17:10 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 052 (14/09/2026) - Modulo Gerar Comunicado.
+--     Adiciona a coluna numero_comunicado (Integer, NULLABLE -
+--     so passa a existir de fato quando o Comunicado e gerado;
+--     NULL = animal/brinco ainda sem Comunicado) em:
+--       - tb_2001 (Entradas)
+--       - tb_7017_entrada_brincos_rfid
+--     em TODOS os schemas produtor_NNNNN. Sem FK - mesmo padrao
+--     ja usado em tb_7002_pia.id_gta (referencia solta, protege
+--     contra travar DELETE fisico de tb_2001 no evento de saida).
+--
+--     IDEMPOTENTE: ADD COLUMN IF NOT EXISTS.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %I.tb_2001 ADD COLUMN IF NOT EXISTS numero_comunicado INTEGER',
+            schema_rec.schema_name
+        );
+        EXECUTE format(
+            'ALTER TABLE %I.tb_7017_entrada_brincos_rfid ADD COLUMN IF NOT EXISTS numero_comunicado INTEGER',
+            schema_rec.schema_name
+        );
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\2_alter_numero_comunicado_2001_7017.sql
+-- =========================================================

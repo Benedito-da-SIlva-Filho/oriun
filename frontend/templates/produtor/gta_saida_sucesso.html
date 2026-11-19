@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_saida_sucesso.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-17 15:00 -03
+     ATUALIZADO EM: 2026-11-05 17:55 -03
+     VERSAO: 1.2.0
+     v1.2.0: Sessao 115 (2026-11-05 17:55 -03) - DTA de Posse na mensagem de sucesso. REVERSAO: .bak_antes_s115_dta3a.
+     v1.1.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Confirmacao apos gravar a GTA de Saida (gta_saida.py, rota sucesso).
+         Mostra o numero, o Frigorifico de destino e a quantidade; botoes
+         para lancar outra GTA ou ver a lista.
+
+     v1.0.0: Criacao (Sessao 099).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; GTA de Sa&iacute;da Gravada</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; }
+
+        .cartao-sucesso { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 48px 40px; max-width: 520px; width: 100%; text-align: center; margin-top: 40px; }
+        .icone-sucesso { font-size: 64px; line-height: 1; margin-bottom: 16px; }
+        .titulo-sucesso { font-size: 20px; font-weight: bold; color: #2e7d32; margin-bottom: 10px; }
+        .numero-gta { font-size: 28px; font-weight: bold; color: #333333; margin-bottom: 6px; letter-spacing: 1px; }
+        .subtitulo-sucesso { font-size: 13.5px; color: #888888; margin-bottom: 32px; }
+
+        .botoes-sucesso { display: flex; gap: 12px; justify-content: center; }
+        .btn-primario { padding: 10px 22px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-primario:hover { background: #C0392B; }
+        .btn-secundario { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-secundario:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_lista %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            <div class="cartao-sucesso">
+                <div class="icone-sucesso">&#9989;</div>
+                <div class="titulo-sucesso">{{ 'DTA' if gta.tipo_movimento == 'POSSE' else 'GTA de Sa&iacute;da'|safe }} gravada com sucesso!</div>
+                <div class="numero-gta">{{ gta.numero_gta_completo }}</div>
+                <div class="subtitulo-sucesso">
+                    {% if destino %}{{ gta.qtde_animais }} animal(is) em {{ 'Venda' if gta.tipo_movimento == 'VENDA' else ('Altera&ccedil;&atilde;o de Posse'|safe if gta.tipo_movimento == 'POSSE' else 'Transfer&ecirc;ncia'|safe) }} para {{ destino.estabelecimento }} ({{ destino.parceiro_nome }}).{% else %}{{ gta.qtde_animais }} animal(is) para {{ frigorifico.nome if frigorifico else 'o Frigorífico' }}.{% endif %}
+                </div>
+
+                <div class="botoes-sucesso">
+                    <a href="{{ url_nova }}" class="btn-primario">+ Lan&ccedil;ar Outra GTA</a>
+                    <a href="{{ url_lista }}" class="btn-secundario">Ver GTAs de Sa&iacute;da</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_saida_sucesso.html
+     ========================================================= -->

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\morte_notificacao_listar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-01 18:30 -03
+     ATUALIZADO EM: 2026-11-01 18:30 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Notificacao de Morte (Anexo XXII) - lista para Impressao e Reimpressao (backend/routers/morte_notificacao.py).
+
+     v1.0.0: Criacao (Sessao 111).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ titulo_tela }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .btn-acao.principal { background: #D4370A; color: #ffffff; }
+        .banner-ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e3f2fd; color: #0d47a1; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+
+
+        /* v1.0.0 - Impressao / Reimpressao do Comunicado de Saida */
+        .nota-download { background: #fff8e1; border-left: 6px solid #f9a825; padding: 10px 14px; border-radius: 6px; font-size: 13.5px; font-weight: bold; color: #8a6d00; margin: 0 0 16px 0; }
+        .aviso-vazio { background: #FBE9E4; border: 1px solid #D4370A; color: #7a2a10; padding: 16px 20px; border-radius: 8px; font-size: 14px; }
+        table.tabela-comunicados { width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; }
+        table.tabela-comunicados th { background: #f5f5f5; text-align: left; padding: 10px 14px; font-size: 12px; color: #666666; text-transform: uppercase; letter-spacing: 0.02em; border-bottom: 1px solid #e0e0e0; }
+        table.tabela-comunicados td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333; vertical-align: middle; }
+        table.tabela-comunicados tbody tr:last-child td { border-bottom: none; }
+        table.tabela-comunicados tbody tr:hover { background-color: #fafafa; }
+        .modelos { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; }
+        table.tabela-comunicados td.col-acoes { white-space: nowrap; width: 1%; }
+        .btn-modelo { background: #D4370A; color: #ffffff; border: 1px solid #D4370A; padding: 8px 0; width: 138px; text-align: center; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 12.5px; font-weight: bold; white-space: nowrap; display: inline-block; }
+        .btn-modelo:hover { opacity: 0.9; }
+        .btn-modelo.secundario { background: #ffffff; color: #D4370A; border: 1px solid #D4370A; }
+        .btn-modelo.secundario:hover { background: #D4370A; color: #ffffff; opacity: 1; }
+        .legenda-modelos { font-size: 12.5px; color: #666666; margin: 0 0 14px 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128424;&#65039;</span> {{ titulo_tela }}</div>
+                <div class="botoes-topo">
+                    <a href="{{ url_voltar }}" class="btn-nav">Voltar</a>
+                </div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }} &#8212; {{ subtitulo_tela }}</div>
+
+            <div class="nota-download">&#128190; O PDF &eacute; salvo na pasta <b>Downloads</b> do seu computador. Depois de clicar no documento, abra o arquivo baixado para imprimir.</div>
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="legenda-modelos">Documento: <b>Anexo XXII</b> &#8212; Comunicado de Sacrif&iacute;cio, Morte Natural ou Acidental de Animais. 2 vias: Certificadora e Arquivo ERAS da Propriedade.</div>
+
+            {% if notificacoes|length == 0 %}
+                <div class="aviso-vazio">{{ texto_vazio }}</div>
+            {% else %}
+                <table class="tabela-comunicados">
+                    <thead>
+                        <tr>
+                            <th>Notifica&ccedil;&atilde;o</th>
+                            <th>Gerada em</th>
+                            <th>Controles (MRT)</th>
+                            <th>Qtde Animais</th>
+                            {% if modo == 'reimpressao' %}
+                            <th>Impresso em</th>
+                            <th>Por</th>
+                            {% endif %}
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notificacoes %}
+                        {% set numero6 = '%06d' % n.numero_comunicado %}
+                        <tr>
+                            <td>{{ numero6 }}</td>
+                            <td>{{ n.gerada_em }}</td>
+                            <td>{{ n.qtd_mrt }}</td>
+                            <td>{{ n.total_animais }}</td>
+                            {% if modo == 'reimpressao' %}
+                            <td>{{ n.impresso_texto }}</td>
+                            <td>{{ n.impresso_por }}</td>
+                            {% endif %}
+                            <td class="col-acoes">
+                                <div class="modelos">
+                                    <a class="btn-modelo"
+                                       href="{{ url_base }}/pdf/{{ n.numero_comunicado }}?id_propriedade={{ id_propriedade }}"
+                                       data-aviso-descricao="Notifica&ccedil;&atilde;o de Morte n&ordm; {{ numero6 }} &#8212; Anexo XXII"
+                                       data-aviso-arquivo="notificacao_morte_{{ numero6 }}_anexo_xxii.pdf"
+                                       {% if modo == 'impressao' %}onclick="agendarRecarga();"{% endif %}>Anexo XXII</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // Impressao: o Comunicado baixado vira Impresso e sai desta lista; recarrega depois do download.
+        // O aviso e a trava de clique repetido vem da peca aviso_download.
+        var recargaAgendada = false;
+        function agendarRecarga() {
+            if (recargaAgendada) { return; }
+            recargaAgendada = true;
+            setTimeout(function () { window.location.reload(); }, 4500);
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: frontend\templates\produtor\saida_impressao_listar.html
+     ========================================================= -->

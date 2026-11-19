@@ -1,0 +1,114 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\14d_conferir_produtor_00012.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-10 16:40 -03
+-- ATUALIZADO EM: 2026-10-10 17:08 -03
+-- VERSAO: 1.0.1
+--
+-- DESCRICAO:
+--   Sessao 093 - Conferencia do produtor de teste (id 12 = produtor_00012)
+--   contra o produtor_00004. So le, nao altera nada. JA ESTA com os
+--   numeros certos: nao precisa trocar nada. Rode cada bloco separado.
+--   v1.0.0: baseado no 14c. O C3 ja IGNORA as diferencas inofensivas de
+--   padrao (o 00004 sem padrao no banco x o novo com padrao; CURRENT_DATE x
+--   now()). Rode DEPOIS do script 15 e DEPOIS de criar o produtor de teste
+--   (se o C0 nao mostrar produtor_00012, PARE e me avise).
+--   v1.0.1: C5 corrigido - o numero do produtor no NOME do indice (idx_00004_...
+--   x idx_00012_...) fazia o mesmo indice aparecer como diferente. Agora o
+--   numero e ignorado na comparacao (nome e definicao).
+--   Diferente do 14b: aqui cada diferenca aparece em UMA linha, com os
+--   dois lados lado a lado (_04 = produtor_00004, _12 = produtor_00012).
+-- =========================================================
+
+-- ---------- C0) O produtor 12 tem o schema esperado? ----------
+-- ESPERADO: 1 linha, schema_nome = produtor_00012
+SELECT id, nome, schema_nome FROM produtores WHERE id = 12;
+
+-- ---------- C1) Numero de tabelas ----------
+-- ESPERADO: 33 em cada
+SELECT table_schema, count(*)
+FROM information_schema.tables
+WHERE table_schema IN ('produtor_00004', 'produtor_00012')
+GROUP BY 1 ORDER BY 1;
+
+-- ---------- C2) Versao do banco e racas do produtor 11 ----------
+-- ESPERADO: versao = 2; racas = 108 (igual ao produtor_00004)
+SELECT (SELECT versao FROM produtor_00012.tb_versao_schema) AS versao,
+       (SELECT count(*) FROM produtor_00012.tb_4005_racas) AS racas;
+
+-- ---------- C3) COLUNAS diferentes (tipo, tamanho, nulo, padrao) ----------
+-- ESPERADO: nenhuma linha. Cada linha = uma diferenca a corrigir.
+-- (padrao so no novo, e CURRENT_DATE x now(), sao ignorados de proposito)
+WITH a AS (
+    SELECT table_name, column_name, data_type, character_maximum_length AS tam, is_nullable,
+           regexp_replace(coalesce(column_default, ''), 'produtor_[0-9]+\.', '', 'g') AS padrao
+    FROM information_schema.columns WHERE table_schema = 'produtor_00004'),
+b AS (
+    SELECT table_name, column_name, data_type, character_maximum_length AS tam, is_nullable,
+           regexp_replace(coalesce(column_default, ''), 'produtor_[0-9]+\.', '', 'g') AS padrao
+    FROM information_schema.columns WHERE table_schema = 'produtor_00012')
+SELECT coalesce(a.table_name, b.table_name) AS tabela,
+       coalesce(a.column_name, b.column_name) AS coluna,
+       CASE WHEN a.column_name IS NULL THEN 'SO NO 00012'
+            WHEN b.column_name IS NULL THEN 'SO NO 00004'
+            ELSE 'DIFERENTE' END AS situacao,
+       a.data_type AS tipo_04, b.data_type AS tipo_12,
+       a.tam AS tam_04, b.tam AS tam_12,
+       a.is_nullable AS nulo_04, b.is_nullable AS nulo_12,
+       a.padrao AS padrao_04, b.padrao AS padrao_12
+FROM a FULL JOIN b ON a.table_name = b.table_name AND a.column_name = b.column_name
+WHERE (a.data_type, a.tam, a.is_nullable) IS DISTINCT FROM (b.data_type, b.tam, b.is_nullable)
+   OR (a.padrao <> '' AND b.padrao <> '' AND a.padrao <> b.padrao
+       AND NOT (a.padrao = 'CURRENT_DATE' AND b.padrao = 'now()'))
+   OR (a.padrao <> '' AND b.padrao = '')
+ORDER BY 1, 2;
+
+-- ---------- C4) TRAVAS diferentes (chave, unico, FK, CHECK) ----------
+-- ESPERADO: nenhuma linha
+WITH a AS (
+    SELECT c.relname AS tabela, con.conname AS trava,
+           regexp_replace(pg_get_constraintdef(con.oid), 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'produtor_00004'),
+b AS (
+    SELECT c.relname AS tabela, con.conname AS trava,
+           regexp_replace(pg_get_constraintdef(con.oid), 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'produtor_00012')
+SELECT coalesce(a.tabela, b.tabela) AS tabela,
+       coalesce(a.trava, b.trava) AS trava,
+       CASE WHEN a.trava IS NULL THEN 'SO NO 00012'
+            WHEN b.trava IS NULL THEN 'SO NO 00004'
+            ELSE 'DIFERENTE' END AS situacao,
+       a.definicao AS definicao_04, b.definicao AS definicao_12
+FROM a FULL JOIN b ON a.tabela = b.tabela AND a.trava = b.trava
+WHERE a.definicao IS DISTINCT FROM b.definicao
+ORDER BY 1, 2;
+
+-- ---------- C5) INDICES diferentes ----------
+-- ESPERADO: nenhuma linha
+WITH a AS (
+    SELECT tablename AS tabela,
+           regexp_replace(indexname, 'idx_[0-9]{5}_', 'idx_N_') AS indice,
+           regexp_replace(regexp_replace(indexdef, 'produtor_[0-9]+\.', '', 'g'), 'idx_[0-9]{5}_', 'idx_N_') AS definicao
+    FROM pg_indexes WHERE schemaname = 'produtor_00004'),
+b AS (
+    SELECT tablename AS tabela,
+           regexp_replace(indexname, 'idx_[0-9]{5}_', 'idx_N_') AS indice,
+           regexp_replace(regexp_replace(indexdef, 'produtor_[0-9]+\.', '', 'g'), 'idx_[0-9]{5}_', 'idx_N_') AS definicao
+    FROM pg_indexes WHERE schemaname = 'produtor_00012')
+SELECT coalesce(a.tabela, b.tabela) AS tabela,
+       coalesce(a.indice, b.indice) AS indice,
+       CASE WHEN a.indice IS NULL THEN 'SO NO 00012'
+            WHEN b.indice IS NULL THEN 'SO NO 00004'
+            ELSE 'DIFERENTE' END AS situacao,
+       a.definicao AS definicao_04, b.definicao AS definicao_12
+FROM a FULL JOIN b ON a.tabela = b.tabela AND a.indice = b.indice
+WHERE a.definicao IS DISTINCT FROM b.definicao
+ORDER BY 1, 2;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\14d_conferir_produtor_00012.sql
+-- =========================================================

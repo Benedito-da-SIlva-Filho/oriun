@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_colaboradores_relatorio.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-15 12:15 -03
+     ATUALIZADO EM: 2026-11-13 18:20 -03
+     VERSAO: 1.1.0
+     v1.1.0: Sessao 123 (2026-11-13 18:20 -03) - AUDITORIA ETAPA 6 (Regra #15): aviso de download padrao no botao Gerar PDF. So tela. REVERSAO: .bak_antes_etapa6.
+
+     DESCRICAO:
+         Relatorio de Colaboradores da fazenda em uso: 1 cartao por pessoa
+         com cadastro (nome, login/celular, e-mail), cargo, situacao,
+         inicio/fim do vinculo, ultimo acesso e as permissoes por modulo
+         agrupadas por nivel (asterisco = ajuste fora do padrao). CPF nao
+         aparece. Botao de PDF no mesmo padrao dos outros relatorios.
+         So Titular e Administrador chegam aqui (produtor_permissoes.py).
+         v1.0.0: Sessao 097 (15/10/2026, 12:15 -03) - Criacao.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Relat&oacute;rio de Colaboradores</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 12px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+        .pagina-header-direita { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .link-filtro { font-size: 13px; color: #D4370A; text-decoration: none; font-weight: bold; }
+        .link-filtro:hover { text-decoration: underline; }
+        .btn-novo { padding: 9px 18px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .btn-novo:hover { background: #C0392B; }
+        .subtitulo-filtro { font-size: 13px; color: #666666; margin-bottom: 14px; line-height: 1.6; }
+        .card-pessoa { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+        .card-pessoa.encerrado { opacity: 0.75; background: #fafafa; }
+        .card-topo { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .card-nome { font-size: 15px; font-weight: bold; color: #333333; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; margin-left: 6px; }
+        .badge-cargo { background: #FBE9E4; color: #D4370A; }
+        .badge-ativo { background: #e8f5e9; color: #2e7d32; }
+        .badge-inativo { background: #eeeeee; color: #757575; }
+        .card-dados { font-size: 12px; color: #666666; margin: 8px 0 10px; line-height: 1.8; }
+        .card-dados strong { color: #444444; }
+        .linha-nivel { display: flex; gap: 10px; margin-top: 6px; font-size: 12px; color: #444444; line-height: 1.6; }
+        .chip { flex-shrink: 0; width: 86px; text-align: center; padding: 2px 0; border-radius: 4px; font-weight: bold; font-size: 11px; height: 20px; }
+        .n-tudo { background: #e8f5e9; color: #2e7d32; }
+        .n-lanca { background: #e3f2fd; color: #1565c0; }
+        .n-consulta { background: #fff8e1; color: #8d6e00; }
+        .n-sem { background: #eeeeee; color: #757575; }
+        .encerrado-aviso { font-size: 12px; color: #757575; font-style: italic; }
+        .vazio { text-align: center; padding: 40px; color: #999999; background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .obs { font-size: 12px; color: #888888; margin-top: 8px; line-height: 1.6; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        @media (max-width: 700px) {
+            .conteudo { padding: 12px; }
+            .pagina-header { flex-wrap: wrap; }
+            .linha-nivel { flex-direction: column; gap: 3px; }
+            .chip { width: 100px; }
+            .btn-novo { width: 100%; text-align: center; padding: 14px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/usuarios' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2>&#128203; Relat&oacute;rio de Colaboradores{% if nome_propriedade %} &#8212; {{ nome_propriedade }}{% endif %}</h2>
+                <div class="pagina-header-direita">
+                    {% if so_ativos %}
+                    <a href="{{ url_for('produtor_permissoes.relatorio') }}" class="link-filtro">Ver todos</a>
+                    {% else %}
+                    <a href="{{ url_for('produtor_permissoes.relatorio', mostrar='ativos') }}" class="link-filtro">S&oacute; ativos</a>
+                    {% endif %}
+                    <a href="{{ url_for('produtor_permissoes.tela') }}" class="link-filtro">&#128273; Permiss&otilde;es</a>
+                    <a href="{{ url_for('produtor_usuarios.lista') }}" class="link-filtro">&larr; Voltar para a Equipe</a>
+                    <a href="{{ url_for('produtor_permissoes.relatorio_pdf', mostrar='ativos' if so_ativos else None) }}" class="btn-novo" data-aviso-descricao="Relatório da Equipe">&#128196; Gerar PDF</a>
+                </div>
+            </div>
+
+            <div class="subtitulo-filtro">
+                {{ resumo.total }} colaborador{{ '' if resumo.total == 1 else 'es' }}
+                ({{ resumo.ativos }} ativo{{ '' if resumo.ativos == 1 else 's' }}{% if not so_ativos %}, {{ resumo.encerrados }} encerrado{{ '' if resumo.encerrados == 1 else 's' }}{% endif %})
+                &middot; Emitido em {{ data_impressao }}
+            </div>
+
+            {% for p in pessoas %}
+            <div class="card-pessoa {{ '' if p.ativo else 'encerrado' }}">
+                <div class="card-topo">
+                    <div class="card-nome">{{ p.nome }}</div>
+                    <div>
+                        <span class="badge badge-cargo">{{ p.cargo }}</span>
+                        {% if p.ativo %}<span class="badge badge-ativo">Ativo</span>{% else %}<span class="badge badge-inativo">Encerrado</span>{% endif %}
+                    </div>
+                </div>
+                <div class="card-dados">
+                    <strong>Login/Celular:</strong> {{ p.login }} &nbsp;&middot;&nbsp;
+                    <strong>E-mail:</strong> {{ p.email }}<br>
+                    <strong>In&iacute;cio:</strong> {{ p.inicio }} &nbsp;&middot;&nbsp;
+                    {% if not p.ativo %}<strong>Fim:</strong> {{ p.fim }} &nbsp;&middot;&nbsp;{% endif %}
+                    <strong>&Uacute;ltimo acesso:</strong> {{ p.ultimo_acesso }}
+                </div>
+                {% if p.ativo %}
+                    {% for g in p.grupos %}
+                    <div class="linha-nivel">
+                        <span class="chip {{ g.classe }}">{{ g.nome }}</span>
+                        <span>{{ g.modulos | join(', ') }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="encerrado-aviso">V&iacute;nculo encerrado &#8212; sem acesso a esta fazenda.</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% if not pessoas %}
+            <div class="vazio">Nenhum colaborador encontrado.</div>
+            {% endif %}
+
+            {% if resumo.ha_ajuste %}
+            <div class="obs">* Ajuste diferente do padr&atilde;o do cargo, feito nesta fazenda (tela Permiss&otilde;es).</div>
+            {% endif %}
+            <div class="obs">O CPF n&atilde;o &eacute; exibido neste relat&oacute;rio.</div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('recolhido');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 700) {
+                var s = document.getElementById('sidebar');
+                if (s) { s.classList.add('recolhido'); }
+            }
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_colaboradores_relatorio.html
+     ========================================================= -->

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\consulta_propriedade_produtores.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-08 19:26 -03
+     ATUALIZADO EM: 2026-07-08 20:13 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Consulta Propriedade -> Produtores (plataforma Consiste).
+         Espelho de consulta_produtor_propriedades.html. Tela
+         somente leitura, lista completa direto (sem busca),
+         agrupada por Propriedade. Cada bloco mostra os dados da
+         Propriedade e uma mini-tabela com os Produtores vinculados
+         ATIVOS (vinculo propriedade_produtor com data_fim nulo).
+         So aparecem Propriedades com pelo menos 1 vinculo ativo.
+         Produtor ou Propriedade inativos (campo ativo=False)
+         continuam aparecendo, com etiqueta de status - decisao
+         consciente para nao esconder inconsistencia de cadastro
+         (definida com Benedito em 08/07/2026).
+         Coluna "Pode Movimentar" calculada na hora pelo router
+         (Propriedade.ativo E Produtor.ativo simultaneamente) -
+         ver pendencia P-024 no Diario de Bordo.
+         v1.0.0: Criacao do modulo (Sessao do dia 08/07/2026).
+         v1.1.0: Sessao do dia 08/07/2026 - Mesmo redesenho visual
+             aplicado em consulta_produtor_propriedades.html
+             v1.1.0 (espelhado aqui):
+             - Tarja do bloco (cabecalho da Propriedade) muda de
+               cor conforme o status: pessego claro se Propriedade
+               ativa, cinza neutro se Propriedade inativa. A
+               bolinha e o texto do status continuam sempre
+               verde/vermelho.
+             - Coluna "Status Produtor" removida da tabela - vira
+               bolinha colorida junto do nome do Produtor, na
+               mesma celula.
+             - Coluna "Município / UF" do Produtor removida (o
+               foco da tela e o vinculo com a Propriedade, cujo
+               municipio ja aparece na tarja do bloco).
+             - Produtores vinculados chegam do router ja ordenados:
+               ativos primeiro (alfabetico), inativos por ultimo
+               (tambem alfabetico) - ver v1.1.0 do consultas.py.
+               Linha de Produtor inativo ganha fundo cinza claro
+               na propria linha da tabela, mantendo as colunas
+               alinhadas com as ativas (CPF etc. no mesmo lugar).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Propriedade &#8594; Produtores</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include consiste_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        /* ---- Bloco agrupado (um por Propriedade) ---- */
+        .bloco-produtor { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+        .bloco-header { padding: 8px 16px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+        .bloco-header.ativo { background: #FBE9E4; }
+        .bloco-header.inativo { background: #eeeeee; }
+        .bloco-header strong { font-size: 15px; color: #333333; }
+        .info-extra { font-size: 13px; color: #666666; }
+
+        /* ---- Tabela ---- */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; text-align: left; padding: 12px 16px; font-size: 12px; color: #666666; text-transform: uppercase; border-bottom: 1px solid #e0e0e0; }
+        td { padding: 12px 16px; font-size: 14px; color: #333333; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+        tr.linha-inativa td { background: #f0f0f0; }
+        tr.linha-inativa:hover td { background: #ececec; }
+        .nome-com-status { display: flex; align-items: center; gap: 8px; }
+        .bolinha { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .bolinha.ativa { background: #2e7d32; }
+        .bolinha.inativa { background: #c62828; }
+        .status-ativo { color: #2e7d32; font-weight: bold; font-size: 12px; white-space: nowrap; }
+        .status-inativo { color: #c62828; font-weight: bold; font-size: 12px; white-space: nowrap; }
+
+        /* ---- Estado vazio ---- */
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .vazio { text-align: center; padding: 40px; color: #999999; font-size: 14px; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — plataforma Consiste -->
+        {% include 'consiste/consiste_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128269; Propriedade &#8594; Produtores</h2>
+            </div>
+
+            {% if blocos %}
+                {% for bloco in blocos %}
+                <div class="bloco-produtor">
+                    <div class="bloco-header {{ 'ativo' if bloco.propriedade.ativo else 'inativo' }}">
+                        <div>
+                            <strong>{{ bloco.propriedade.nome }}</strong>
+                            <span class="info-extra">&nbsp;&#8226;&nbsp;{{ bloco.propriedade.municipio }} / {{ bloco.propriedade.uf }}&nbsp;&#8226;&nbsp;{{ bloco.propriedade.tipo }}</span>
+                        </div>
+                        <div>
+                            {% if bloco.propriedade.ativo %}
+                            <span class="status-ativo">&#9679; Propriedade Ativa</span>
+                            {% else %}
+                            <span class="status-inativo">&#9679; Propriedade Inativa</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produtor</th>
+                                <th>CPF/CNPJ</th>
+                                <th>Tipo</th>
+                                <th>Pode Movimentar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in bloco.produtores %}
+                            <tr class="{{ '' if item.produtor.ativo else 'linha-inativa' }}">
+                                <td>
+                                    <span class="nome-com-status">
+                                        <span class="bolinha {{ 'ativa' if item.produtor.ativo else 'inativa' }}"></span>
+                                        {{ item.produtor.nome }}
+                                    </span>
+                                </td>
+                                <td>{{ item.produtor.cpf_cnpj }}</td>
+                                <td>{{ 'Física' if item.produtor.tipo_pessoa == 'FISICA' else 'Jurídica' }}</td>
+                                <td>
+                                    {% if item.pode_movimentar %}
+                                    <span class="status-ativo">Sim</span>
+                                    {% else %}
+                                    <span class="status-inativo">Não</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="tabela-container">
+                <div class="vazio">Nenhum vínculo ativo encontrado entre Propriedades e Produtores.</div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\consulta_propriedade_produtores.html
+     ========================================================= -->

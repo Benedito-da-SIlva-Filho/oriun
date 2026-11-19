@@ -1,0 +1,44 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\13_alter_tb_blk_8003_status_cancelado.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-09 17:35 -03
+-- ATUALIZADO EM: 2026-10-09 17:35 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Sessao 092 - BLOCKCHAIN. Acrescenta o status CANCELADO na trava
+--   (CHECK) de tb_blk_8003_envios, em TODOS os schemas produtor_NNNNN.
+--   CANCELADO = a operacao foi desfeita (Desfazer) antes do envio sair.
+--   Pode rodar mais de uma vez sem estragar nada. Quem rodou o script 12_
+--   v1.0.0 PRECISA rodar este; quem rodar o 12_ v1.1.0 em schema novo nao
+--   precisa (mas nao faz mal).
+-- =========================================================
+
+DO $blk$
+DECLARE
+    esquema text;
+BEGIN
+    FOR esquema IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema = esquema AND table_name = 'tb_blk_8003_envios') THEN
+
+            EXECUTE format('ALTER TABLE %I.tb_blk_8003_envios DROP CONSTRAINT IF EXISTS chk_tb_blk_8003_status', esquema);
+            EXECUTE format($sql$
+                ALTER TABLE %I.tb_blk_8003_envios
+                ADD CONSTRAINT chk_tb_blk_8003_status
+                CHECK (status IN ('PENDENTE', 'ENVIANDO', 'CONFIRMADO', 'ERRO', 'CANCELADO'))
+            $sql$, esquema);
+
+            RAISE NOTICE '% -> status CANCELADO OK', esquema;
+        END IF;
+    END LOOP;
+END $blk$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\13_alter_tb_blk_8003_status_cancelado.sql
+-- =========================================================

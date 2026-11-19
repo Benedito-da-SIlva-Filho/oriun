@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\reidentificacao.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-11 12:05 -03
+     ATUALIZADO EM: 2026-11-11 19:30 -03
+     VERSAO: 1.0.8
+
+     DESCRICAO:
+         Tela "Reidentificacao" (backend/routers/reidentificacao.py): o animal perdeu o brinco SISBOV e recebe um brinco novo do estoque.
+         Varios animais de uma vez (o Produtor acumula e lanca tudo junto): Data da Reidentificacao (uma so para este lancamento) + lista de pares
+         (brinco perdido, brinco novo, motivo). Cada par e conferido na hora; GRAVAR grava a lista inteira (tudo ou nada).
+         Brinco por Leitor ou digitado (15 digitos). O RFID acompanha o animal; so muda o SISBOV e o Manejo.
+
+     v1.0.8: Sessao 121 (2026-11-11 19:30 -03) - Aviso de espera padrao (aviso_aguarde.html, Regra #65) no Gravar e no link 'Ver Pendentes e Notificacao' (a Consulta demora e o usuario clicava varias vezes).
+     v1.0.7: Sessao 121 (2026-11-11 18:10 -03) - O brinco PERDIDO e conferido assim que completa 15 digitos: a ficha do animal aparece na hora (ou a faixa vermelha com o motivo) e so entao libera o brinco novo. Por que: pedido do Benedito, reduz o tempo de validacao.
+     v1.0.6: Sessao 121 (2026-11-11 17:10 -03) - Novo modelo: nao existe mais 'Pedido' no lancamento. Os animais gravados ficam PENDENTES de Notificacao (o numero nasce so ao gerar a Notificacao na Consulta). Textos renomeados.
+     v1.0.5: Sessao 121 (11/11/2026, 13:50 -03) - Layout validado pelo Benedito no mockup: contador ao lado da Data (dica abaixo da Data), Dados do Animal em 2 linhas, Motivo com Limpar Campos e Adicionar na mesma linha, lista do pedido e Gravar Pedido no painel da direita. Espacos ajustados para caber sem rolagem.
+     v1.0.4: Sessao 121 (11/11/2026, 13:40 -03) - Placeholder curto ('Leia o brinco', antes ficava cortado) e rotulos da ficha em uma linha (campos alinhados).
+     v1.0.3: Sessao 121 (11/11/2026, 13:30 -03) - Layout aprovado pelo Benedito: Motivo ao lado da Data, contador ao lado dos brincos, ficha em 1 linha, campos mais espacados, Gravar Pedido no alto do painel.
+     v1.0.2: Sessao 121 (11/11/2026, 13:05 -03) - Layout do Benedito (mockup): contador ao lado da Data, ficha em 2 linhas, Motivo + Limpar Campos + Adicionar na mesma linha, tela sem barra de rolagem.
+     v1.0.1: Sessao 121 (11/11/2026, 12:30 -03) - Layout compacto.
+     v1.0.0: Sessao 121 (11/11/2026) - Criacao. Visual igual ao da Linkagem RFID e Brinco.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Reidentificação</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .conteudo { flex: 1; padding: 14px 24px; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr) 440px; grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; }
+        .cab-pagina { grid-column: 1; grid-row: 1; }
+        @media (max-width: 1000px) { .conteudo { grid-template-columns: 1fr; } .coluna-lista { grid-column: 1 !important; grid-row: auto !important; } }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+        .subtitulo { font-size: 13px; color: #888888; margin: 0 0 6px; }
+
+        .coluna-form { grid-column: 1; grid-row: 2; min-width: 0; }
+        .coluna-lista { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 4px 22px; text-align: center; background: #ffffff; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 17px; line-height: 1.1; font-weight: bold; color: #D4370A; }
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px 22px 14px; }
+        .form-secao { font-size: 14px; font-weight: bold; color: #D4370A; margin: 14px 0 9px; padding-bottom: 4px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+        .form-grid + .form-grid { margin-top: 8px; }
+        .dica-data { font-size: 12.5px; color: #888888; line-height: 1.35; }
+        .grade-ficha { grid-template-columns: .9fr .9fr 1.2fr 1.1fr 1.35fr 1.2fr 1.7fr; align-items: end; }
+        .grade-ficha .form-group input { font-size: 15px; padding: 8px 8px; }
+        .grade-ficha .form-group label { font-size: 13px; white-space: nowrap; }
+        .lista-lista-topo { height: 10px; }
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; } .col-5 { grid-column: span 5; }
+        .col-6 { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 3px; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 7px 12px; border: 2px solid #cccccc; border-radius: 6px; font-size: 17px; color: #333333; width: 100%; font-family: Arial, sans-serif; background: #ffffff; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .form-group input:disabled, .form-group input[readonly], .form-group select:disabled { background-color: #f0f0f0; color: #555555; cursor: default; }
+        .campo-grande input { font-size: 22px; font-weight: bold; padding: 8px 12px; letter-spacing: 1px; font-family: Consolas, monospace; }
+        .campo-grande input:disabled { color: #aaaaaa; }
+        .campo-grande input.ok { border-color: #2e7d32; color: #1b5e20; background: #E8F5E9; }
+        .erro-faixa { display: none; background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin: 10px 0 0; }
+        .form-botoes { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+        .btn-gravar { padding: 9px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gravar:hover { background: #C0392B; }
+        .btn-gravar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-gravar:focus { outline: 3px solid #1565C0; outline-offset: 3px; }
+        .btn-limpar { padding: 10px 20px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-limpar:hover { background: #888888; color: #ffffff; }
+        .btn-limpar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .painel-lista { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px 14px; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+        .painel-lista h3 { font-size: 15px; color: #333333; margin-bottom: 8px; }
+        .lista-pares { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .lista-vazia { color: #aaaaaa; font-size: 13px; text-align: center; padding: 20px 0; }
+        .item-par { border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px; display: flex; flex-direction: column; gap: 3px; }
+        .item-par.com-erro { border-color: #c62828; background: #ffebee; }
+        .item-par .linha { display: flex; align-items: center; gap: 8px; font-family: Consolas, monospace; font-size: 13.5px; }
+        .item-par .antigo { color: #c62828; font-weight: bold; }
+        .item-par .novo { color: #1565C0; font-weight: bold; }
+        .item-par .detalhe { color: #888888; font-size: 12px; font-family: Arial, sans-serif; }
+        .item-par select { font-size: 12.5px; padding: 2px 4px; border: 1px solid #cccccc; border-radius: 4px; }
+        .item-par .tirar { margin-left: auto; background: none; border: none; color: #c62828; font-size: 16px; cursor: pointer; }
+        .rotulo-seta { color: #888888; }
+        .barra-pedido { display: flex; gap: 10px; justify-content: flex-end; }
+
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa-ok { background: #ffffff; border-radius: 10px; padding: 32px; max-width: 440px; text-align: center; }
+        .modal-caixa-ok .icone-sucesso { font-size: 46px; margin-bottom: 12px; }
+        .modal-caixa-ok h3 { font-size: 18px; color: #2e7d32; margin-bottom: 8px; }
+        .modal-caixa-ok p { font-size: 14px; color: #555555; margin-bottom: 18px; }
+        .modal-caixa-ok .botoes { display: flex; gap: 12px; justify-content: center; }
+        .modal-caixa-ok.confirma h3 { color: #D4370A; }
+        .btn-modal { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-modal:hover { background: #C0392B; }
+        .btn-modal.claro { background: #ffffff; color: #555555; border: 1px solid #cccccc; }
+        .btn-modal.claro:hover { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cab-pagina">
+                <div class="pagina-header"><h2><span class="icone-titulo">&#128260;</span> Reidentificação</h2></div>
+                <div class="subtitulo"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }}</div>
+            </div>
+
+            <div class="coluna-form">
+                <div class="form-container">
+                    <div class="form-secao">Lançamento</div>
+                    <div class="form-grid">
+                        <div class="form-group col-6">
+                            <label for="campo-data">Data da Reidentificação *</label>
+                            <input type="date" id="campo-data" value="{{ hoje_iso }}" max="{{ hoje_iso }}" style="max-width: 230px;">
+                            <span class="dica-data">Vale para todos os animais desta lista.<br>O Produtor pode acumular e lançar tudo de uma vez (máx. {{ max_animais }}).</span>
+                        </div>
+                        <div class="col-6" style="display: flex; justify-content: flex-end; align-items: flex-start;">
+                            <div class="contador-caixa"><div class="rotulo">ANIMAIS NA LISTA</div><div class="valor" id="contador">0</div></div>
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Brincos (Leitor ou digitado)</div>
+                    <div class="form-grid">
+                        <div class="form-group campo-grande col-6">
+                            <label for="campo-antigo">Brinco PERDIDO (SISBOV) *</label>
+                            <input type="text" id="campo-antigo" maxlength="15" inputmode="numeric" autocomplete="off" placeholder="Leia o brinco perdido...">
+                        </div>
+                        <div class="form-group campo-grande col-6">
+                            <label for="campo-novo">Brinco NOVO (SISBOV) *</label>
+                            <input type="text" id="campo-novo" maxlength="15" inputmode="numeric" autocomplete="off" placeholder="Leia o brinco novo..." disabled>
+                        </div>
+                    </div>
+                    <div class="erro-faixa" id="msg-erro"></div>
+
+                    <div class="form-secao">Dados do Animal</div>
+                    <div class="form-grid">
+                        <div class="form-group col-3"><label>Sexo</label><input type="text" id="f-sexo" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Raça</label><input type="text" id="f-raca" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Nascimento</label><input type="text" id="f-nascimento" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Lote</label><input type="text" id="f-lote" readonly tabindex="-1"></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group col-3"><label>Manejo perdido</label><input type="text" id="f-manejo-antigo" readonly tabindex="-1"></div>
+                        <div class="form-group col-3"><label>Manejo novo</label><input type="text" id="f-manejo-novo" readonly tabindex="-1"></div>
+                        <div class="form-group col-6"><label>RFID (acompanha o animal)</label><input type="text" id="f-rfid" readonly tabindex="-1"></div>
+                    </div>
+
+                    <div class="form-secao">Motivo</div>
+                    <div class="form-grid" style="align-items: end;">
+                        <div class="form-group col-6">
+                            <label for="campo-motivo">Motivo da reidentificação *</label>
+                            <select id="campo-motivo" disabled>
+                                {% for chave, rotulo in motivos.items() %}<option value="{{ chave }}">{{ rotulo }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 form-botoes" style="margin-top: 0;">
+                            <button type="button" class="btn-limpar" id="btn-limpar-campos">Limpar Campos</button>
+                            <button type="button" class="btn-gravar" id="btn-adicionar" disabled>Adicionar à Lista</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coluna-lista">
+                <div class="painel-lista">
+                    <h3>Animais desta lista</h3>
+                    <div class="lista-pares" id="lista-pares">
+                        <div class="lista-vazia" id="lista-vazia">Nenhum animal na lista ainda.</div>
+                    </div>
+                    <div class="barra-pedido">
+                        <button type="button" class="btn-limpar" id="btn-limpar-lista" disabled>Limpar Lista</button>
+                        <button type="button" class="btn-gravar" id="btn-gravar" disabled>Gravar</button>
+                    </div>
+                    <div class="erro-faixa" id="msg-erro-pedido"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <div class="modal-fundo" id="modal-sucesso">
+        <div class="modal-caixa-ok">
+            <div class="icone-sucesso">&#9989;</div>
+            <h3>Reidentificação Gravada</h3>
+            <p id="modal-texto"></p>
+            <div class="botoes">
+                <a class="btn-modal" id="btn-ver-pedido" href="#" data-aguarde="Abrindo pendentes e Notificação...">Ver Pendentes e Notificação</a>
+                <button type="button" class="btn-modal claro" id="btn-novo-pedido">Novo Lançamento</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-fundo" id="modal-confirma">
+        <div class="modal-caixa-ok confirma">
+            <h3>Limpar a lista?</h3>
+            <p>Os animais da lista ainda não foram gravados e serão descartados.</p>
+            <div class="botoes">
+                <button type="button" class="btn-modal" id="btn-confirma-limpar">Limpar</button>
+                <button type="button" class="btn-modal claro" id="btn-cancela-limpar">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/aviso_aguarde.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROPRIEDADE = {{ id_propriedade|tojson }};
+        var URL_CHECAR = {{ url_for('reidentificacao.checar')|tojson }};
+        var URL_CHECAR_ANTIGO = {{ url_for('reidentificacao.checar_antigo')|tojson }};
+        var URL_GRAVAR = {{ url_for('reidentificacao.gravar')|tojson }};
+        var MOTIVOS = {{ motivos|tojson }};
+        var TAMANHO = 15;
+        var MAX_ANIMAIS = {{ max_animais|tojson }};
+
+        var campoData = document.getElementById('campo-data');
+        var campoAntigo = document.getElementById('campo-antigo');
+        var campoNovo = document.getElementById('campo-novo');
+        var campoMotivo = document.getElementById('campo-motivo');
+        var btnAdicionar = document.getElementById('btn-adicionar');
+        var btnGravar = document.getElementById('btn-gravar');
+        var btnLimparLista = document.getElementById('btn-limpar-lista');
+        var fichaAtual = null;
+        var lista = [];          // [{antigo, novo, motivo, manejoAntigo, manejoNovo, sexo, raca}]
+        var ocupado = false;
+
+        function el(id) { return document.getElementById(id); }
+        function erro(texto) {
+            var caixa = el('msg-erro');
+            caixa.style.display = texto ? 'block' : 'none';
+            caixa.textContent = texto || '';
+        }
+        function erroPedido(texto) {
+            var caixa = el('msg-erro-pedido');
+            caixa.style.display = texto ? 'block' : 'none';
+            caixa.textContent = texto || '';
+        }
+        function soDigitos(campo) { campo.value = campo.value.replace(/\D/g, ''); }
+
+        function postar(url, corpo) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            }).then(function(resp) {
+                return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; });
+            });
+        }
+
+        var CAMPOS_FICHA = ['f-sexo', 'f-raca', 'f-nascimento', 'f-lote', 'f-manejo-antigo', 'f-manejo-novo', 'f-rfid'];
+        function limparFicha() { CAMPOS_FICHA.forEach(function(id) { el(id).value = ''; }); }
+        function mostrarFicha(a) {
+            el('f-sexo').value = a.sexo || '';
+            el('f-raca').value = a.raca || '';
+            el('f-nascimento').value = a.nascimento || '';
+            el('f-lote').value = a.lote || '';
+            el('f-manejo-antigo').value = a.manejo || '';
+            el('f-manejo-novo').value = a.manejo_novo || '';
+            el('f-rfid').value = a.rfid || a.rfid_novo_brinco || '';
+        }
+
+        // volta ao 1o passo: cursor no brinco perdido (o motivo escolhido continua para o proximo animal)
+        function reiniciarCampos() {
+            fichaAtual = null; ocupado = false;
+            campoAntigo.value = ''; campoNovo.value = '';
+            campoAntigo.classList.remove('ok'); campoNovo.classList.remove('ok');
+            campoAntigo.disabled = false; campoNovo.disabled = true; campoMotivo.disabled = true;
+            btnAdicionar.disabled = true;
+            limparFicha(); erro('');
+            campoAntigo.focus();
+        }
+
+        function atualizarBotoes() {
+            el('contador').textContent = lista.length;
+            btnGravar.disabled = lista.length === 0;
+            btnLimparLista.disabled = lista.length === 0;
+            var vazia = el('lista-vazia');
+            if (vazia) { vazia.style.display = lista.length ? 'none' : 'block'; }
+        }
+
+        function desenharLista(linhaComErro) {
+            var area = el('lista-pares');
+            Array.prototype.slice.call(area.querySelectorAll('.item-par')).forEach(function(n) { n.remove(); });
+            lista.forEach(function(p, i) {
+                var div = document.createElement('div');
+                div.className = 'item-par' + ((linhaComErro && linhaComErro === i + 1) ? ' com-erro' : '');
+                var linha = document.createElement('div'); linha.className = 'linha';
+                var a = document.createElement('span'); a.className = 'antigo'; a.textContent = p.antigo;
+                var seta = document.createElement('span'); seta.className = 'rotulo-seta'; seta.textContent = '\u2192';
+                var n = document.createElement('span'); n.className = 'novo'; n.textContent = p.novo;
+                var x = document.createElement('button'); x.type = 'button'; x.className = 'tirar'; x.title = 'Tirar da lista'; x.textContent = '\u2715';
+                x.addEventListener('click', function() { lista.splice(i, 1); desenharLista(); atualizarBotoes(); });
+                linha.appendChild(a); linha.appendChild(seta); linha.appendChild(n); linha.appendChild(x);
+                var detalhe = document.createElement('div'); detalhe.className = 'detalhe';
+                detalhe.textContent = [p.sexo, 'Manejo ' + p.manejoAntigo + ' \u2192 ' + p.manejoNovo].filter(function(t) { return t; }).join(' \u00b7 ');
+                var sel = document.createElement('select');
+                Object.keys(MOTIVOS).forEach(function(chave) {
+                    var op = document.createElement('option'); op.value = chave; op.textContent = MOTIVOS[chave];
+                    if (chave === p.motivo) { op.selected = true; }
+                    sel.appendChild(op);
+                });
+                sel.addEventListener('change', function() { p.motivo = sel.value; });   // o usuario pode trocar o motivo de cada animal
+                div.appendChild(linha); div.appendChild(detalhe); div.appendChild(sel);
+                area.insertBefore(div, area.firstChild);
+            });
+        }
+
+        // 1o passo: brinco perdido com 15 digitos -> o servidor confere NA HORA; se estiver tudo certo mostra a ficha e libera o brinco novo
+        function conferirAntigo() {
+            soDigitos(campoAntigo); erro('');
+            if (campoAntigo.value.length < TAMANHO || ocupado) { return; }
+            if (lista.some(function(p) { return p.antigo === campoAntigo.value || p.novo === campoAntigo.value; })) {
+                erro('Este brinco já está na lista.'); campoAntigo.select(); return;
+            }
+            ocupado = true; limparFicha();
+            postar(URL_CHECAR_ANTIGO, { id_propriedade: ID_PROPRIEDADE, sisbov_antigo: campoAntigo.value, data: campoData.value })
+            .then(function(r) {
+                ocupado = false;
+                if (r.status === 200 && r.dados.sucesso) {
+                    mostrarFicha(r.dados.animal);
+                    campoAntigo.classList.add('ok'); campoAntigo.disabled = true;
+                    campoNovo.disabled = false; campoNovo.value = ''; campoNovo.focus();
+                    return;
+                }
+                erro(r.dados.erro || 'Brinco perdido não aceito.');
+                campoAntigo.select();
+            })
+            .catch(function() {
+                ocupado = false;
+                erro('Não foi possível conferir o brinco. Verifique sua conexão.');
+            });
+        }
+
+        // 2o passo: brinco novo com 15 digitos -> o servidor confere o par e devolve os dados para o usuario ter certeza
+        function conferirPar() {
+            soDigitos(campoNovo); erro('');
+            var antigo = campoAntigo.value, novo = campoNovo.value;
+            if (novo.length < TAMANHO || ocupado || fichaAtual) { return; }
+            if (lista.some(function(p) { return p.antigo === novo || p.novo === novo; })) {
+                erro('Este brinco já está na lista.'); campoNovo.select(); return;
+            }
+            ocupado = true;
+            postar(URL_CHECAR, { id_propriedade: ID_PROPRIEDADE, sisbov_antigo: antigo, sisbov_novo: novo, data: campoData.value })
+            .then(function(r) {
+                ocupado = false;
+                if (r.status === 200 && r.dados.sucesso) {
+                    fichaAtual = r.dados.animal;
+                    mostrarFicha(fichaAtual);
+                    campoNovo.classList.add('ok'); campoNovo.disabled = true;
+                    campoMotivo.disabled = false; btnAdicionar.disabled = false;
+                    campoMotivo.focus();
+                    return;
+                }
+                erro(r.dados.erro || 'Par de brincos não aceito.');
+                // erro no brinco perdido volta para ele; erro no novo fica no novo
+                var msg = (r.dados.erro || '').toLowerCase();
+                if (msg.indexOf('perdido') !== -1 || msg.indexOf('rebanho') !== -1 || msg.indexOf('já saiu') !== -1 || msg.indexOf('rfid (do animal') !== -1) {
+                    campoAntigo.disabled = false; campoAntigo.classList.remove('ok'); campoNovo.disabled = true; campoNovo.value = ''; limparFicha(); campoAntigo.select();
+                } else {
+                    campoNovo.select();
+                }
+            })
+            .catch(function() {
+                ocupado = false;
+                erro('Não foi possível conferir os brincos. Verifique sua conexão.');
+            });
+        }
+
+        function adicionar() {
+            if (!fichaAtual) { return; }
+            lista.push({
+                antigo: campoAntigo.value, novo: campoNovo.value, motivo: campoMotivo.value,
+                manejoAntigo: fichaAtual.manejo, manejoNovo: fichaAtual.manejo_novo, sexo: fichaAtual.sexo
+            });
+            if (lista.length >= MAX_ANIMAIS) { erroPedido('Limite de ' + MAX_ANIMAIS + ' animais por lançamento: grave esta lista.'); }
+            desenharLista(); atualizarBotoes(); erroPedido('');
+            reiniciarCampos();
+        }
+
+        function gravarPedido() {
+            if (ocupado || lista.length === 0) { return; }
+            if (!campoData.value) { erroPedido('Informe a Data da Reidentificação.'); campoData.focus(); return; }
+            ocupado = true; btnGravar.disabled = true; erroPedido('');
+            mostrarAguarde('Gravando a reidentificação...');
+            postar(URL_GRAVAR, {
+                id_propriedade: ID_PROPRIEDADE, data: campoData.value,
+                itens: lista.map(function(p) { return { sisbov_antigo: p.antigo, sisbov_novo: p.novo, motivo: p.motivo }; })
+            })
+            .then(function(r) {
+                ocupado = false; esconderAguarde();
+                if (r.status === 200 && r.dados.sucesso) {
+                    el('modal-texto').textContent = r.dados.mensagem;
+                    el('btn-ver-pedido').href = r.dados.url_consulta;
+                    lista = []; desenharLista(); atualizarBotoes();
+                    el('modal-sucesso').classList.add('aberto');
+                    el('btn-novo-pedido').focus();
+                    return;
+                }
+                btnGravar.disabled = false;
+                erroPedido(r.dados.erro || 'Não foi possível gravar.');
+                if (r.dados.linha) { desenharLista(r.dados.linha); }
+            })
+            .catch(function() {
+                ocupado = false; btnGravar.disabled = false; esconderAguarde();
+                erroPedido('Não foi possível gravar. Verifique sua conexão.');
+            });
+        }
+
+        campoAntigo.addEventListener('input', conferirAntigo);
+        campoAntigo.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); conferirAntigo(); } });
+        campoNovo.addEventListener('input', conferirPar);
+        campoNovo.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); conferirPar(); } });
+        campoMotivo.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); adicionar(); } });
+        btnAdicionar.addEventListener('click', adicionar);
+        btnGravar.addEventListener('click', gravarPedido);
+        el('btn-limpar-campos').addEventListener('click', reiniciarCampos);
+
+        // Limpar Lista pede confirmacao (descarta o que ainda nao foi gravado)
+        btnLimparLista.addEventListener('click', function() { el('modal-confirma').classList.add('aberto'); el('btn-cancela-limpar').focus(); });
+        el('btn-cancela-limpar').addEventListener('click', function() { el('modal-confirma').classList.remove('aberto'); campoAntigo.focus(); });
+        el('btn-confirma-limpar').addEventListener('click', function() {
+            lista = []; desenharLista(); atualizarBotoes(); erroPedido('');
+            el('modal-confirma').classList.remove('aberto'); reiniciarCampos();
+        });
+        el('btn-novo-pedido').addEventListener('click', function() { el('modal-sucesso').classList.remove('aberto'); reiniciarCampos(); });
+
+        // sair da tela com animais ainda nao gravados: o navegador avisa
+        window.addEventListener('beforeunload', function(e) {
+            if (lista.length > 0) { e.preventDefault(); e.returnValue = ''; }
+        });
+
+        atualizarBotoes();
+        campoAntigo.focus();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\reidentificacao.html
+     ========================================================= -->

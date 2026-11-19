@@ -1,0 +1,47 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\11_create_tb_blk_8000_provedores.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-09 17:20 -03
+-- ATUALIZADO EM: 2026-10-09 17:20 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Sessao 092 - BLOCKCHAIN (preparacao). Cria, no schema PUBLIC (catalogo
+--   unico, igual para todos os Produtores), a tabela
+--   tb_blk_8000_provedores: a lista de "provedores" para onde o Orion pode
+--   enviar os eventos dos animais (cada provedor tem o seu conector).
+--   Pode rodar mais de uma vez sem estragar nada.
+--
+--   Provedores iniciais:
+--     SIMULADO       - conector de mentira (nao sai do Orion), para testes.
+--     STELLAR_TESTE  - rede de teste da Stellar.
+--     POLYGON_TESTE  - rede de teste da Polygon.
+--     DEFARM         - DeFarm (Stellar). Nasce DESLIGADO: so liga quando o
+--                      formato da API for recebido.
+--
+--   Rodar ANTES do script 12_ (as tabelas por Produtor apontam para esta).
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS public.tb_blk_8000_provedores (
+    id          SERIAL PRIMARY KEY,
+    codigo      VARCHAR(30)  NOT NULL UNIQUE,
+    nome        VARCHAR(80)  NOT NULL,
+    ativo       BOOLEAN      NOT NULL DEFAULT TRUE,
+    criado_em   TIMESTAMP    NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.tb_blk_8000_provedores (codigo, nome, ativo) VALUES
+    ('SIMULADO',      'Simulado (teste interno, sem rede)', TRUE),
+    ('STELLAR_TESTE', 'Stellar - rede de teste',            TRUE),
+    ('POLYGON_TESTE', 'Polygon - rede de teste',            TRUE),
+    ('DEFARM',        'DeFarm (Stellar)',                   FALSE)
+ON CONFLICT (codigo) DO NOTHING;
+
+-- Conferencia
+SELECT id, codigo, nome, ativo FROM public.tb_blk_8000_provedores ORDER BY id;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\11_create_tb_blk_8000_provedores.sql
+-- =========================================================

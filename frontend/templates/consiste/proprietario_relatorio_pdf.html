@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\proprietario_relatorio_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-06 18:30 -03
+     ATUALIZADO EM: 2026-07-07 12:54 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Template do relatorio em PDF do Proprietario, renderizado
+         pelo xhtml2pdf (chamado em proprietarios.py, rota
+         relatorio_pdf()). Mostra os dados cadastrais do
+         Proprietario e a lista de Propriedades ATIVAS vinculadas
+         (vinculo sem data_fim).
+
+         Proprietario NAO tem campo de logo propria (isso e
+         exclusivo do Produtor, campo marca_criador - P-020) -
+         por isso o cabecalho deste relatorio nao tem nenhuma
+         imagem, so o titulo e subtitulo.
+
+         IMPORTANTE: xhtml2pdf usa um motor de renderizacao
+         limitado (baseado em reportlab) - NAO suporta flexbox
+         nem CSS grid. Layout feito com <table> e CSS simples
+         (CSS 2.1), diferente do padrao usado nas telas normais
+         do sistema (que usam grid).
+
+         LICAO APRENDIDA (Sessao 011.2, aplicada aqui a partir do
+         que foi corrigido em produtor_relatorio_pdf.html): o
+         motor reportlab NAO respeita de forma confiavel larguras
+         de coluna em porcentagem (%) em tabelas. Toda largura de
+         coluna deste arquivo usa <colgroup>/width FIXA em cm, e
+         toda celula de tabela tem "border: none" explicito (o
+         motor aplicava borda por padrao quando isso nao era
+         dito).
+
+         v1.0.0: Criacao do modulo (Sessao 011.1).
+         v1.1.0: Sessao 011.2 - Primeira tentativa de padrao
+             visual (cabecalho com logo, caixa nos Dados
+             Cadastrais, zebra striping cinza). Layout base sem os
+             ajustes finos que vieram depois.
+         v1.2.0: Sessao 011.2 - Alinhado ao padrao final validado
+             em produtor_relatorio_pdf.html v1.7.0: coluna de
+             rotulos com largura FIXA em cm, "border: none"
+             explicito em toda celula, zebra striping no laranja
+             da marca (#FBE9E4) tanto em Dados Cadastrais quanto em
+             Propriedades Vinculadas, padding compacto (4px 10px).
+             Sem logo no cabecalho (Proprietario nao tem esse
+             campo) - so titulo e subtitulo.
+     ========================================================= -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            color: #333333;
+        }
+
+        /* ---- Cabecalho: so titulo (Proprietario nao tem logo) ---- */
+        .cabecalho-relatorio {
+            border-bottom: 3px solid #D4370A;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .cabecalho-relatorio h1 {
+            font-size: 17pt;
+            color: #D4370A;
+            margin: 0 0 4px 0;
+        }
+        .cabecalho-relatorio .subtitulo {
+            font-size: 9.5pt;
+            color: #777777;
+        }
+
+        .secao-titulo {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #D4370A;
+            border-bottom: 1px solid #D4370A;
+            padding-bottom: 4px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* ---- Caixa ao redor dos Dados Cadastrais ---- */
+        .caixa-dados {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #fafafa;
+            padding: 10px 14px;
+        }
+
+        table.dados-proprietario {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.dados-proprietario td {
+            border: none;
+            padding: 4px 10px;
+            font-size: 10.5pt;
+            line-height: 1.3;
+            vertical-align: top;
+        }
+        table.dados-proprietario td.rotulo {
+            width: 4.5cm;
+            font-weight: bold;
+            color: #555555;
+        }
+        table.dados-proprietario tr.linha-par td {
+            background-color: #FBE9E4;
+        }
+
+        /* ---- Tabela de Propriedades, com linhas zebradas ---- */
+        table.propriedades {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        table.propriedades th {
+            background-color: #D4370A;
+            color: #ffffff;
+            text-align: left;
+            padding: 4px 10px;
+            font-size: 10pt;
+            border: none;
+        }
+        table.propriedades td {
+            padding: 4px 10px;
+            font-size: 10pt;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        table.propriedades tr.linha-par td {
+            background-color: #FBE9E4;
+        }
+
+        .sem-propriedades {
+            font-size: 10.5pt;
+            color: #999999;
+            font-style: italic;
+            padding: 10px 0;
+        }
+        .rodape-relatorio {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #cccccc;
+            font-size: 9pt;
+            color: #999999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho-relatorio">
+        <h1>Relatório de Proprietário</h1>
+        <div class="subtitulo">Orion SISBOV — Emitido em {{ data_emissao }}</div>
+    </div>
+
+    <div class="secao-titulo">Dados Cadastrais</div>
+    <div class="caixa-dados">
+        <table class="dados-proprietario">
+            <tr class="linha-par">
+                <td class="rotulo">Nome:</td>
+                <td>{{ proprietario.nome }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Razão Social:</td>
+                <td>{{ proprietario.razao_social }}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Tipo de Pessoa:</td>
+                <td>{{ 'Física' if proprietario.tipo_pessoa == 'FISICA' else 'Jurídica' }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">{{ 'CPF:' if proprietario.tipo_pessoa == 'FISICA' else 'CNPJ:' }}</td>
+                <td>{{ proprietario.cpf_cnpj }}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Email:</td>
+                <td>{{ proprietario.email }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Telefone:</td>
+                <td>{{ proprietario.telefone }}{% if proprietario.telefone2 %} / {{ proprietario.telefone2 }}{% endif %}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Endereço:</td>
+                <td>
+                    {{ proprietario.logradouro or '' }}{% if proprietario.numero %}, {{ proprietario.numero }}{% endif %}
+                    {% if proprietario.complemento %} - {{ proprietario.complemento }}{% endif %}
+                    {% if proprietario.bairro %} - {{ proprietario.bairro }}{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="rotulo">Município/UF:</td>
+                <td>{{ proprietario.municipio }} / {{ proprietario.uf }}{% if proprietario.cep %} — CEP {{ proprietario.cep }}{% endif %}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Status:</td>
+                <td>{{ 'Ativo' if proprietario.ativo else 'Inativo' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="secao-titulo">Propriedades Vinculadas (Ativas)</div>
+
+    {% if propriedades_ativas %}
+    <table class="propriedades">
+        <thead>
+            <tr>
+                <th>Propriedade</th>
+                <th>Município/UF</th>
+                <th>Vinculado desde</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in propriedades_ativas %}
+            <tr {% if loop.index0 % 2 == 0 %}class="linha-par"{% endif %}>
+                <td>{{ item.propriedade.nome }}</td>
+                <td>{{ item.propriedade.municipio }} / {{ item.propriedade.uf }}</td>
+                <td>{{ item.data_inicio.strftime('%d/%m/%Y') if item.data_inicio else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="sem-propriedades">Nenhuma Propriedade ativa vinculada a este Proprietário no momento.</div>
+    {% endif %}
+
+    <div class="rodape-relatorio">
+        Orion SISBOV &copy; 2026 &#8212; Consiste Informática — Documento gerado automaticamente
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\proprietario_relatorio_pdf.html
+     ========================================================= -->

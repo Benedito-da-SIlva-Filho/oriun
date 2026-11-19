@@ -1,0 +1,34 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- ARQUIVO:      Tabelas\alterar_vitrine_visitantes_conversao.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-08-13 13:20 -03
+--
+-- DESCRICAO:
+--     Adiciona duas colunas na tabela vitrine_visitantes, para
+--     rastrear quando um visitante da Tela Vitrine (/convite,
+--     Etapa 1) e convertido em cliente real (Cenario 2, Sessao
+--     034 continuacao 9).
+--
+--     id_produtor_criado: FK nullable para produtores.id -
+--     preenchida so no momento da conversao (manual, via tela
+--     "Visitantes da Vitrine" - backend/routers/
+--     vitrine_visitantes.py) ou automatica (auto-deteccao a cada
+--     carregamento da lista, quando o CPF/CNPJ ja virou Produtor
+--     por outro caminho, ex.: cadastro direto pela Consiste).
+--
+--     convertido_em: TIMESTAMP nullable - marca o momento da
+--     conversao. NULL = visitante ainda nao convertido (aparece
+--     na lista). Preenchido = ja e cliente (some da lista,
+--     decisao de Benedito).
+-- =========================================================
+
+ALTER TABLE public.vitrine_visitantes
+    ADD COLUMN id_produtor_criado INTEGER REFERENCES public.produtores(id);
+
+ALTER TABLE public.vitrine_visitantes
+    ADD COLUMN convertido_em TIMESTAMP;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alterar_vitrine_visitantes_conversao.sql
+-- =========================================================

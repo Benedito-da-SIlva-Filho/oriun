@@ -1,0 +1,209 @@
+<!--
+=========================================================
+PROJETO: Orion
+PASTA: C:\orion\frontend\templates\convite
+MODULO: templates\convite\convite_etapa2.html
+AUTOR: Benedito Silva Filho.
+CRIADO EM: 2026-08-04 15:09 -03
+ATUALIZADO EM: 2026-08-04 15:09 -03
+VERSAO: 1.0.0
+
+DESCRICAO:
+    Tela da Etapa 2 do fluxo de Convite Publico (/convite).
+    Pre-cadastro da Propriedade - apenas Nome, Inscricao
+    Estadual, Municipio e UF (decisao com Benedito, Sessao
+    032: cadastro minimo para destravar acesso; o restante e
+    completado depois, ja dentro do sistema).
+    Ao confirmar, dispara a transacao unica de criacao
+    (Propriedade + Produtor + PropriedadeProdutor + Usuario +
+    UsuarioVinculo) no proprio convite.py.
+
+    v1.0.0: Criacao do template. Segue o mesmo padrao visual
+            de convite_etapa1.html.
+=========================================================
+-->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV — Cadastro de Produtor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f4f4;
+            color: #333;
+        }
+        .topo {
+            background: #D4370A;
+            color: #fff;
+            padding: 18px 32px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 640px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 32px;
+        }
+        .form-secao {
+            border-bottom: 2px solid #D4370A;
+            margin-bottom: 20px;
+            padding-bottom: 6px;
+        }
+        .form-secao h2 {
+            font-size: 1.1rem;
+            color: #D4370A;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+        .col-12 { grid-column: span 12; }
+        .col-8  { grid-column: span 8; }
+        .col-4  { grid-column: span 4; }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #555;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #D4370A;
+        }
+        .erro {
+            background: #fdecea;
+            border: 1px solid #f5aca4;
+            color: #a33;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .sucesso {
+            background: #eafaf0;
+            border: 1px solid #a8e6bf;
+            color: #217a45;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .btn-salvar {
+            grid-column: span 12;
+            background: #D4370A;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-salvar:hover { background: #b52e08; }
+        .rodape {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 30px;
+        }
+        .info-etapa {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topo">Orion SISBOV — Cadastro de Produtor</div>
+
+    <div class="container">
+        <div class="form-secao">
+            <h2>Etapa 2 de 2 — Dados da Propriedade</h2>
+        </div>
+        <p class="info-etapa">Informe os dados iniciais da Propriedade. As demais informações (área, tipo, roteiro de acesso etc.) poderão ser completadas depois, já dentro do sistema.</p>
+
+        {% if erro %}
+        <div class="erro">❌ {{ erro }}</div>
+        {% endif %}
+
+        {% if sucesso %}
+        <div class="sucesso">✅ {{ sucesso }}</div>
+        {% endif %}
+
+        {% if not sucesso %}
+        <form method="POST" action="{{ url_for('convite.convite_etapa1') }}" autocomplete="off">
+            <input type="hidden" name="etapa" value="2">
+            <div class="form-grid">
+
+                <div class="col-8">
+                    <label for="nome_propriedade" class="upper">Nome da Propriedade</label>
+                    <input type="text" id="nome_propriedade" name="nome_propriedade" class="upper" maxlength="150"
+                           value="{{ dados.nome_propriedade if dados else '' }}" required>
+                </div>
+
+                <div class="col-4">
+                    <label for="inscricao_estadual" class="upper">Inscrição Estadual</label>
+                    <input type="text" id="inscricao_estadual" name="inscricao_estadual" class="upper" maxlength="30"
+                           value="{{ dados.inscricao_estadual if dados else '' }}" required>
+                </div>
+
+                <div class="col-8">
+                    <label for="municipio" class="upper">Município</label>
+                    <input type="text" id="municipio" name="municipio" class="upper" maxlength="100"
+                           value="{{ dados.municipio if dados else '' }}" required>
+                </div>
+
+                <div class="col-4">
+                    <label for="uf">UF</label>
+                    <select id="uf" name="uf" required>
+                        <option value="">--</option>
+                        {% for sigla in ufs %}
+                        <option value="{{ sigla }}" {{ 'selected' if dados and dados.uf == sigla else '' }}>{{ sigla }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-salvar">Concluir Cadastro</button>
+
+            </div>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="rodape">Orion SISBOV © 2026 — Consiste Informática</div>
+
+    <script>
+        // Uppercase automatico nos campos marcados com .upper
+        document.querySelectorAll('.upper').forEach(function (campo) {
+            campo.addEventListener('input', function () {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+=========================================================
+FIM DE ARQUIVO: templates\convite\convite_etapa2.html
+=========================================================
+-->

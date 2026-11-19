@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_saidas_filtro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 11:32 -03
+     ATUALIZADO EM: 2026-10-13 12:02 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Tela de filtro do Relatorio de Brincos Saidas - 3 opcoes
+         de Tipo de Relatorio (radio): Sequencial (Todos), Só
+         Cancelados, Por Período. Os campos de Data De/Até só
+         aparecem (via JS) quando "Por Período" é selecionado.
+
+         Ao clicar "Imprimir", NAO ha submit de formulario - o JS
+         monta a URL da rota /pdf com os parametros escolhidos
+         (tipo, data_inicio, data_fim) e abre em nova aba, com
+         aviso "Gerando..."/"PDF gerado" no botao (mesmo padrao
+         ja usado em brincos_disponiveis_confirmar.html).
+
+         Estrutura (.topo/.layout/.sidebar via include
+         produtor/produtor_menu.html/.conteudo/.rodape) copiada do
+         PADRAO REUTILIZAVEL - Voltar dinamico via url_voltar
+         (Regra de Ouro No4), calculado no router.
+
+         Variaveis esperadas do router:
+           cabecalho       - SimpleNamespace(propriedade_nome,
+                             municipio, uf, produtor_nome)
+           id_propriedade  - string, usado para montar a URL do PDF
+           url_voltar      - path do botao "Voltar" da tarja
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 11:32 -03).
+     v1.1.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, sem alteracao) nem de nenhuma outra logica desta
+         tela - so a extracao do bloco de HTML repetido.
+         v1.2.0: Sessao 095 (13/10/2026, 12:02 -03) - AVISO DE DOWNLOAD PADRAO no Imprimir Relatorio: sai a mensagem "confira a nova aba" (o PDF
+                 nao abre mais aba, e baixado) e entra a peca aviso_download. As mensagens de erro de data
+                 continuam. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Brincos Saídas</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .cartao-form { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; max-width: 820px; }
+
+        .bloco-conferencia { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+        .bloco-conferencia strong { color: #D4370A; }
+
+        .opcoes-tipo { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .opcao-tipo {
+            display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+            border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer;
+        }
+        .opcao-tipo:hover { background-color: #fafafa; }
+        .opcao-tipo.selecionada { border-color: #D4370A; background-color: #FBE9E4; }
+        .opcao-tipo input[type="radio"] { margin-top: 3px; cursor: pointer; }
+        .opcao-tipo-texto { flex: 1; }
+        .opcao-tipo-titulo { font-size: 14px; font-weight: bold; color: #333333; }
+        .opcao-tipo-desc { font-size: 12px; color: #777777; margin-top: 2px; }
+
+        .campos-periodo { display: none; grid-template-columns: repeat(12, 1fr); gap: 16px; margin: 4px 0 20px 30px; }
+        .campos-periodo.visivel { display: grid; }
+        .col-6 { grid-column: span 6; }
+        label { display: block; font-size: 13px; font-weight: bold; color: #555555; margin-bottom: 6px; }
+        input[type="date"] {
+            width: 100%; padding: 9px 10px; font-size: 14px; border: 1px solid #cccccc;
+            border-radius: 6px; font-family: Arial, sans-serif; color: #333333;
+        }
+        input[type="date"]:focus { outline: none; border-color: #D4370A; }
+
+        .btn-imprimir-grande {
+            background: #D4370A; color: #ffffff; border: none; border-radius: 6px;
+            padding: 12px 28px; font-size: 15px; font-weight: bold; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-imprimir-grande:hover { opacity: 0.9; }
+        .btn-imprimir-grande:disabled { opacity: 0.6; cursor: wait; }
+
+        .aviso-status { margin-top: 14px; font-size: 13px; color: #555555; min-height: 18px; }
+        .aviso-status.sucesso { color: #2e7d32; font-weight: bold; }
+        .aviso-status.erro { color: #c62828; font-weight: bold; }
+
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.5); border-top-color: #ffffff;
+            border-radius: 50%; animation: girar 0.7s linear infinite;
+        }
+        @keyframes girar { to { transform: rotate(360deg); } }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128203;</span> Brincos Saídas</h2>
+            </div>
+
+            <div class="cartao-form">
+                <div class="bloco-conferencia">
+                    <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}<br>
+                    <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}
+                </div>
+
+                <div class="opcoes-tipo" id="opcoesTipo">
+                    <label class="opcao-tipo selecionada" data-tipo="sequencial">
+                        <input type="radio" name="tipo" value="sequencial" checked>
+                        <span class="opcao-tipo-texto">
+                            <span class="opcao-tipo-titulo">Sequencial por Solicitação (Todos)</span>
+                            <span class="opcao-tipo-desc">Todos os brincos que já saíram do estoque, agrupados por Solicitação.</span>
+                        </span>
+                    </label>
+                    <label class="opcao-tipo" data-tipo="cancelados">
+                        <input type="radio" name="tipo" value="cancelados">
+                        <span class="opcao-tipo-texto">
+                            <span class="opcao-tipo-titulo">Só Cancelados</span>
+                            <span class="opcao-tipo-desc">Só os brincos cancelados (Danificado, Extraviado, Inativado, Vendido), com motivo e data.</span>
+                        </span>
+                    </label>
+                    <label class="opcao-tipo" data-tipo="periodo">
+                        <input type="radio" name="tipo" value="periodo">
+                        <span class="opcao-tipo-texto">
+                            <span class="opcao-tipo-titulo">Por Período</span>
+                            <span class="opcao-tipo-desc">Todos os brincos saídos dentro de um intervalo de datas, com motivo e data.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="campos-periodo" id="camposPeriodo">
+                    <div class="col-6">
+                        <label for="data_inicio">Data Saída De</label>
+                        <input type="date" id="data_inicio" name="data_inicio">
+                    </div>
+                    <div class="col-6">
+                        <label for="data_fim">Data Saída Até</label>
+                        <input type="date" id="data_fim" name="data_fim">
+                    </div>
+                </div>
+
+                <button id="btnImprimir" class="btn-imprimir-grande" onclick="imprimir()">
+                    &#128424;&#65039; Imprimir Relatório
+                </button>
+
+                <div id="avisoStatus" class="aviso-status"></div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // -------------------------------------------------------
+        // Alterna o destaque visual das opcoes e mostra/esconde os
+        // campos de Data De/Ate conforme o tipo escolhido.
+        // -------------------------------------------------------
+        var opcoes = document.querySelectorAll('.opcao-tipo');
+        var camposPeriodo = document.getElementById('camposPeriodo');
+
+        opcoes.forEach(function (opcao) {
+            opcao.addEventListener('click', function () {
+                opcoes.forEach(function (o) { o.classList.remove('selecionada'); });
+                opcao.classList.add('selecionada');
+
+                var tipo = opcao.getAttribute('data-tipo');
+                if (tipo === 'periodo') {
+                    camposPeriodo.classList.add('visivel');
+                } else {
+                    camposPeriodo.classList.remove('visivel');
+                }
+            });
+        });
+
+        // -------------------------------------------------------
+        // Monta a URL da rota /pdf com os parametros escolhidos e
+        // abre em nova aba, com aviso de status no botao.
+        // -------------------------------------------------------
+        function imprimir() {
+            var btn   = document.getElementById('btnImprimir');
+            var aviso = document.getElementById('avisoStatus');
+            var tipo  = document.querySelector('input[name="tipo"]:checked').value;
+            if (btn.getAttribute('data-aviso-travado') === '1') { return; }
+
+            if (tipo === 'periodo') {
+                var dataInicio = document.getElementById('data_inicio').value;
+                var dataFim    = document.getElementById('data_fim').value;
+
+                if (!dataInicio || !dataFim) {
+                    aviso.className = 'aviso-status erro';
+                    aviso.textContent = '❌ Informe as duas datas (De e Até) para o filtro por período.';
+                    return;
+                }
+                if (dataFim < dataInicio) {
+                    aviso.className = 'aviso-status erro';
+                    aviso.textContent = '❌ A Data Até não pode ser anterior à Data De.';
+                    return;
+                }
+            }
+
+            aviso.className = 'aviso-status';
+            aviso.textContent = '';
+
+            var url = '/produtor/brincos-saidas/pdf?id_propriedade={{ id_propriedade }}&tipo=' + encodeURIComponent(tipo);
+            if (tipo === 'periodo') {
+                url += '&data_inicio=' + encodeURIComponent(dataInicio) + '&data_fim=' + encodeURIComponent(dataFim);
+            }
+
+            avisarDownload('Relatório de Saídas de Brincos', 'brincos_saidas.pdf', btn);
+            window.location.href = url;
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_saidas_filtro.html
+     ========================================================= -->

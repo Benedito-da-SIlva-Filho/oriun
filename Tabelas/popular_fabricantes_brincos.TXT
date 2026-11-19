@@ -1,0 +1,157 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: popular_fabricantes_brincos.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-01 11:00 -03
+-- ATUALIZADO EM: 2026-09-01 11:00 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO: Populacao inicial da tabela tb_1021_fabricantes_brincos
+--   com os 10 fabricantes migrados do GERAS (arquivo
+--   tb_1021_fabricantes_brincos.TXT, encoding Latin-1).
+--   5 registros com logo (arquivos ja copiados por Benedito para
+--   frontend/static/img/fabricantes/): Allflex, Alltags, Pecsus,
+--   Focking, Plajax. Demais 5 sem logo, sem endereco (dado nao
+--   existia no GERAS).
+--   Idempotente: cada INSERT so executa se o nome ainda nao existir
+--   na tabela, para permitir rodar o script mais de uma vez sem
+--   duplicar registros.
+--   v1.0.0: criacao do script (Sessao 043)
+-- =========================================================
+
+-- 1. ALLFLEX
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, logo, endereco, complemento, bairro, cidade, uf, cep, ativo)
+SELECT
+    'ALLFLEX - SISTEMAS DE IDENTIFICAÇAO ANIMAL LTDA',
+    'fabricantes/Allflex.jpg',
+    'RUA DONA FRANCISCA, 8300',
+    'BLOCO B, MÓDULOS 7 E 8 - DISTRITO INDUSTRIAL',
+    'PERINI BUSINESS PARK',
+    'JOINVILLE',
+    'SC',
+    '89239270',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'ALLFLEX - SISTEMAS DE IDENTIFICAÇAO ANIMAL LTDA'
+);
+
+-- 2. ALLTAGS
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, logo, endereco, complemento, bairro, cidade, uf, cep, ativo)
+SELECT
+    'ALLTAGS COMERCIO DE PRODUTOS PLASTICOS LTDA',
+    'fabricantes/Alltags.jpg',
+    'R. MARIA JOANA FELIX DINIZ, 1.759',
+    'VILA IPIRANGA',
+    'VILA IPIRANGA',
+    'BOTUCATU',
+    'SP',
+    '18601010',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'ALLTAGS COMERCIO DE PRODUTOS PLASTICOS LTDA'
+);
+
+-- 3. PECSUS (sem endereco no GERAS, com logo)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, logo, ativo)
+SELECT
+    'PECSUS COM. VAREJISTA DE PROD. AGROPECUÁRIOS LTDA',
+    'fabricantes/Pecsus.jpg',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'PECSUS COM. VAREJISTA DE PROD. AGROPECUÁRIOS LTDA'
+);
+
+-- 4. FOCKINK (sem endereco no GERAS, com logo)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, logo, ativo)
+SELECT
+    'FOCKINK INDUSTRIAS ELETRICAS LTDA',
+    'fabricantes/Focking.jpg',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'FOCKINK INDUSTRIAS ELETRICAS LTDA'
+);
+
+-- 5. HBL (sem logo, sem endereco)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, ativo)
+SELECT
+    'HBL AGROPECUARIA E NEGOCIOS LTDA',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'HBL AGROPECUARIA E NEGOCIOS LTDA'
+);
+
+-- 6. OX MOBILE (sem logo, sem endereco)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, ativo)
+SELECT
+    'OX MOBILE SOLUCOES EM TECNOLOGIA ELETRONICA LTDA',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'OX MOBILE SOLUCOES EM TECNOLOGIA ELETRONICA LTDA'
+);
+
+-- 7. PECFORT (sem logo, sem endereco)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, ativo)
+SELECT
+    'PECFORT IND. COM. ARTEFATOS PLÁSTICOS LTDA',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'PECFORT IND. COM. ARTEFATOS PLÁSTICOS LTDA'
+);
+
+-- 8. PLAJAX (sem endereco no GERAS, mas COM logo - fornecido por Benedito)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, logo, ativo)
+SELECT
+    'PLAJAX IND. E COM. DE PLASTICOS LTDA.',
+    'fabricantes/Plajax.jpg',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'PLAJAX IND. E COM. DE PLASTICOS LTDA.'
+);
+
+-- 9. SISBOV MAPA (sem logo, sem endereco - nome truncado no GERAS original)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, ativo)
+SELECT
+    'SISBOV MINISTERIO DA AGRICULTURA, PECUARIA E ABAST',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'SISBOV MINISTERIO DA AGRICULTURA, PECUARIA E ABAST'
+);
+
+-- 10. UNIPAC (sem logo, sem endereco)
+INSERT INTO tb_1021_fabricantes_brincos
+    (nome, ativo)
+SELECT
+    'UNIPAC INDUSTRIA E COMERCIO LTDA',
+    true
+WHERE NOT EXISTS (
+    SELECT 1 FROM tb_1021_fabricantes_brincos
+    WHERE nome = 'UNIPAC INDUSTRIA E COMERCIO LTDA'
+);
+
+-- Conferencia final
+SELECT id, nome, logo, cidade, uf, ativo
+FROM tb_1021_fabricantes_brincos
+ORDER BY id;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\popular_fabricantes_brincos.sql
+-- =========================================================

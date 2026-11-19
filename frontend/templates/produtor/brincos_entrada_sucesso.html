@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_entrada_sucesso.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-31 18:32 -03
+     ATUALIZADO EM: 2026-09-24 13:15 -03
+     VERSAO: 1.1.1
+
+     DESCRICAO:
+         Tela minima de confirmacao apos gravar a Entrada de
+         Brincos (tb_3007 + tb_7017). Mesmo padrao minimo ja usado
+         em gta_manual_sucesso.html - pode evoluir para exibir
+         mais detalhes/reimpressao se fizer sentido no futuro.
+
+         Variavel esperada do router: lote (BrincoEntrada gravado)
+
+         NOTA: esta tela NAO tem menu lateral (sidebar) nem link
+         Home no topo (design original minimalista - o Usuario e
+         guiado pelos proprios botoes da tela: "Voltar ao Hub de
+         Brincos" / "Nova Entrada"). Usa mostrar_home=False no
+         include do topo (ver produtor_topo.html v1.2.0).
+
+     v1.0.0: Criacao do modulo (Sessao 042, 31/08/2026, 18:32 -03).
+     v1.1.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO substituido
+         por comando de INCLUDE da peca-mestra produtor_topo.html
+         v1.2.0, com mostrar_home=False (esta tela nunca teve link
+         Home no design original) - motivou a criacao dessa nova
+         opcao na peca-mestra. RODAPE tambem modularizado. Voltar
+         (antes fixo para /produtor/hub/brincos) passado por um
+         comando de atribuicao da variavel url_voltar antes do
+         include - mesmo destino de sempre, sem mudanca de
+         comportamento. Sem sidebar/menu nesta tela - continua sem
+         include de produtor_menu.html, igual ao design original.
+     v1.1.1: Sessao 079 (24/09/2026, 13:15 -03) - BUG REAL (Regra
+         de Ouro #10): o changelog da v1.1.0 trazia a sintaxe de
+         bloco do Jinja escrita literalmente dentro deste
+         comentario - o motor processa o arquivo inteiro e a tela
+         quebrava com TemplateSyntaxError logo apos gravar uma
+         Entrada de Brincos (a gravacao em si acontecia - so a
+         tela de sucesso falhava). Texto do changelog reescrito
+         sem os delimitadores. Nenhuma mudanca de HTML/CSS.
+         Achado pela varredura de todos os templates (script
+         Python rodado por Benedito): so este arquivo e o
+         modal_confirmacao.html tinham o problema.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Entrada de Brincos</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; }
+
+        .caixa-sucesso { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 40px; max-width: 560px; width: 100%; text-align: center; margin-top: 60px; }
+        .icone-sucesso { font-size: 56px; margin-bottom: 16px; }
+        .caixa-sucesso h2 { color: #2e7d32; font-size: 22px; margin-bottom: 20px; }
+
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .form-botoes { display: flex; gap: 12px; justify-content: center; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/hub/brincos' %}
+    {% set mostrar_home = false %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+        <div class="conteudo">
+            <div class="caixa-sucesso">
+                <div class="icone-sucesso">&#9989;</div>
+                <h2>Entrada de Brincos registrada com sucesso!</h2>
+
+                {% if lote %}
+                <div class="bloco-conferencia">
+                    <div class="linha"><span class="rotulo">Sequência</span><span class="valor">{{ lote.sequencia }}</span></div>
+                    <div class="linha"><span class="rotulo">Nota Fiscal</span><span class="valor">{{ lote.nota_fiscal }}</span></div>
+                    <div class="linha"><span class="rotulo">Quantidade</span><span class="valor">{{ lote.qtde_entrada }}</span></div>
+                    <div class="linha"><span class="rotulo">Nro Inicial</span><span class="valor">{{ lote.codigo_inicial }}</span></div>
+                    <div class="linha"><span class="rotulo">Nro Final</span><span class="valor">{{ lote.codigo_final }}</span></div>
+                    <div class="linha"><span class="rotulo">Saldo</span><span class="valor">{{ lote.saldo }}</span></div>
+                </div>
+                {% endif %}
+
+                <div class="form-botoes">
+                    <a href="/produtor/hub/brincos" class="btn-cancelar">Voltar ao Hub de Brincos</a>
+                    <a href="/produtor/brincos-entrada/iniciar" class="btn-salvar">Nova Entrada</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_entrada_sucesso.html
+     ========================================================= -->

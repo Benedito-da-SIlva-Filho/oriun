@@ -1,0 +1,297 @@
+-- =====================================================================
+-- PROJETO:        Orion SISBOV
+-- PASTA:          docs/sql
+-- MODULO:         Modulo Animais (P-012) - Tabelas relacionadas a GTA
+-- AUTOR:          Benedito Silva Filho
+-- CRIADO EM:      14/07/2026 15:40
+-- ATUALIZADO EM:  14/07/2026 15:40
+-- VERSAO:         1.0
+-- DESCRICAO:      Criacao das 6 tabelas do novo fluxo GTA-primeiro
+--                 (Sessao 16): tb_4001_gta, tb_4001_gta_animais,
+--                 tb_parceiros, tb_parceiros_propriedades,
+--                 tb_frigorificos, tb_log_conferencia_parceiro.
+--
+-- CHANGELOG:
+--   v1.0 - 14/07/2026 - Criacao inicial das 6 tabelas, ENUM de sentido,
+--                       triggers dedicados de atualizado_em, indices
+--                       de apoio.
+--
+-- ATENCAO (Regra de Ouro): as FKs para produtores, propriedades e
+-- usuarios assumem coluna "id" como chave primaria (padrao ja usado
+-- no projeto). Confirmar nomes reais de tabela/coluna antes de rodar
+-- caso divirjam.
+--
+-- AMBIENTE DE EXECUCAO: pgAdmin Query Tool (banco orion, porta 5433).
+-- =====================================================================
+
+
+-- =====================================================================
+-- 1) ENUM - sentido da GTA (ENTRADA / SAIDA)
+-- =====================================================================
+CREATE TYPE sentido_gta_enum AS ENUM ('ENTRADA', 'SAIDA');
+
+
+-- =====================================================================
+-- 2) tb_parceiros
+--    Produtor externo (pessoa/CNPJ). Pode ter varias propriedades
+--    (ver tb_parceiros_propriedades). Se o CPF/CNPJ bater com um
+--    Produtor ja cadastrado no Orion (caso de Transferencia), o
+--    link para id_produtor eh feito manualmente via tela de
+--    conferencia (nunca automatico - ver tb_log_conferencia_parceiro).
+-- =====================================================================
+CREATE TABLE tb_parceiros (
+    id              SERIAL PRIMARY KEY,
+    cpf_cnpj        VARCHAR(18) NOT NULL,
+    nome            VARCHAR(150) NOT NULL,
+    id_produtor     INTEGER NULL,
+    ativo           BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_tb_parceiros_produtor
+        FOREIGN KEY (id_produtor) REFERENCES produtores(id)
+);
+
+CREATE INDEX idx_tb_parceiros_cpf_cnpj ON tb_parceiros (cpf_cnpj);
+CREATE INDEX idx_tb_parceiros_id_produtor ON tb_parceiros (id_produtor);
+
+CREATE OR REPLACE FUNCTION trg_tb_parceiros_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_parceiros_atualizado_em
+BEFORE UPDATE ON tb_parceiros
+FOR EACH ROW
+EXECUTE FUNCTION trg_tb_parceiros_atualizado_em();
+
+
+-- =====================================================================
+-- 3) tb_parceiros_propriedades
+--    Cada propriedade/estabelecimento do Parceiro (1:N). Mesmo
+--    CPF/CNPJ pode ter varios Codigos MAPA diferentes.
+-- =====================================================================
+CREATE TABLE tb_parceiros_propriedades (
+    id                  SERIAL PRIMARY KEY,
+    id_parceiro         INTEGER NOT NULL,
+    estabelecimento     VARCHAR(150) NOT NULL,
+    codigo_mapa         VARCHAR(20) NOT NULL,
+    insc_estadual       VARCHAR(20) NULL,
+    municipio_codigo    VARCHAR(10) NULL,
+    municipio_nome      VARCHAR(100) NULL,
+    uf                  VARCHAR(2) NULL,
+    regiao              VARCHAR(50) NULL,
+    ativo               BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_tb_parceiros_propriedades_parceiro
+        FOREIGN KEY (id_parceiro) REFERENCES tb_parceiros(id)
+);
+
+CREATE INDEX idx_tb_parc_prop_id_parceiro ON tb_parceiros_propriedades (id_parceiro);
+CREATE INDEX idx_tb_parc_prop_codigo_mapa ON tb_parceiros_propriedades (codigo_mapa);
+CREATE INDEX idx_tb_parc_prop_insc_estadual ON tb_parceiros_propriedades (insc_estadual);
+
+CREATE OR REPLACE FUNCTION trg_tb_parceiros_propriedades_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_parceiros_propriedades_atualizado_em
+BEFORE UPDATE ON tb_parceiros_propriedades
+FOR EACH ROW
+EXECUTE FUNCTION trg_tb_parceiros_propriedades_atualizado_em();
+
+
+-- =====================================================================
+-- 4) tb_frigorificos
+--    Cadastro proprio de plantas de abate. Cada CNPJ = 1 planta
+--    (nao precisa de tabela filha, diferente do Parceiro).
+-- =====================================================================
+CREATE TABLE tb_frigorificos (
+    id                  SERIAL PRIMARY KEY,
+    cpf_cnpj            VARCHAR(18) NOT NULL,
+    nome                VARCHAR(150) NOT NULL,
+    estabelecimento     VARCHAR(150) NULL,
+    codigo_mapa         VARCHAR(20) NULL,
+    insc_estadual       VARCHAR(20) NULL,
+    municipio_codigo    VARCHAR(10) NULL,
+    municipio_nome      VARCHAR(100) NULL,
+    uf                  VARCHAR(2) NULL,
+    regiao              VARCHAR(50) NULL,
+    ativo               BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_tb_frigorificos_cpf_cnpj ON tb_frigorificos (cpf_cnpj);
+CREATE INDEX idx_tb_frigorificos_codigo_mapa ON tb_frigorificos (codigo_mapa);
+
+CREATE OR REPLACE FUNCTION trg_tb_frigorificos_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_frigorificos_atualizado_em
+BEFORE UPDATE ON tb_frigorificos
+FOR EACH ROW
+EXECUTE FUNCTION trg_tb_frigorificos_atualizado_em();
+
+
+-- =====================================================================
+-- 5) tb_4001_gta
+--    Cabecalho da GTA - cobre tanto Entrada quanto Saida (campo
+--    "sentido"). O lado externo aponta para tb_parceiros_propriedades
+--    (COMPRA/VENDA/TRANSFER) OU tb_frigorificos (ABATE) - mutuamente
+--    exclusivos.
+--
+--    OBS: campo tipo_movimento mantido como VARCHAR livre (nao ENUM),
+--    pendente de confirmacao final do Benedito - ver aviso no topo
+--    do arquivo.
+-- =====================================================================
+CREATE TABLE tb_4001_gta (
+    id                          SERIAL PRIMARY KEY,
+
+    id_propriedade              INTEGER NOT NULL,
+    id_produtor                 INTEGER NOT NULL,
+
+    uf_gta                      VARCHAR(2) NOT NULL,
+    serie_gta                   VARCHAR(5) NOT NULL,
+    numero_gta_sequencial       VARCHAR(15) NOT NULL,
+    numero_gta_completo         VARCHAR(30) NOT NULL,
+
+    qtde_animais                INTEGER NOT NULL,
+    tipo_movimento               VARCHAR(20) NOT NULL,  -- COMPRA / VENDA / ABATE / TRANSFER
+    sentido                      sentido_gta_enum NOT NULL,
+
+    data_emissao                 DATE NOT NULL,
+    data_validade                 DATE NOT NULL,
+    data_entrega                  DATE NULL,
+
+    id_parceiro_propriedade       INTEGER NULL,
+    id_frigorifico                 INTEGER NULL,
+
+    id_comunicado                 INTEGER NULL,
+
+    nf_numero                     INTEGER NULL,
+    pesagem_balancao               NUMERIC(11,2) NULL,
+    pesagem_data                   DATE NULL,
+    peso_medio_entrada              NUMERIC(4) NULL,
+
+    codigo_autenticidade          VARCHAR(100) NULL,
+    emitente_nome                  VARCHAR(150) NULL,
+    emitente_cargo                  VARCHAR(80) NULL,
+    observacoes                     TEXT NULL,
+
+    criado_em                       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em                   TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_tb_4001_gta_propriedade
+        FOREIGN KEY (id_propriedade) REFERENCES propriedades(id),
+    CONSTRAINT fk_tb_4001_gta_produtor
+        FOREIGN KEY (id_produtor) REFERENCES produtores(id),
+    CONSTRAINT fk_tb_4001_gta_parceiro_propriedade
+        FOREIGN KEY (id_parceiro_propriedade) REFERENCES tb_parceiros_propriedades(id),
+    CONSTRAINT fk_tb_4001_gta_frigorifico
+        FOREIGN KEY (id_frigorifico) REFERENCES tb_frigorificos(id),
+
+    -- Garante que o lado externo aponta para exatamente um dos dois
+    -- cadastros (Parceiro OU Frigorifico), nunca os dois nem nenhum.
+    CONSTRAINT chk_tb_4001_gta_lado_externo
+        CHECK (
+            (id_parceiro_propriedade IS NOT NULL AND id_frigorifico IS NULL)
+            OR
+            (id_parceiro_propriedade IS NULL AND id_frigorifico IS NOT NULL)
+        )
+);
+
+CREATE UNIQUE INDEX idx_tb_4001_gta_numero_completo ON tb_4001_gta (numero_gta_completo);
+CREATE INDEX idx_tb_4001_gta_id_propriedade ON tb_4001_gta (id_propriedade);
+CREATE INDEX idx_tb_4001_gta_id_produtor ON tb_4001_gta (id_produtor);
+CREATE INDEX idx_tb_4001_gta_sentido ON tb_4001_gta (sentido);
+CREATE INDEX idx_tb_4001_gta_id_parceiro_propriedade ON tb_4001_gta (id_parceiro_propriedade);
+CREATE INDEX idx_tb_4001_gta_id_frigorifico ON tb_4001_gta (id_frigorifico);
+
+CREATE OR REPLACE FUNCTION trg_tb_4001_gta_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_4001_gta_atualizado_em
+BEFORE UPDATE ON tb_4001_gta
+FOR EACH ROW
+EXECUTE FUNCTION trg_tb_4001_gta_atualizado_em();
+
+
+-- =====================================================================
+-- 6) tb_4001_gta_animais
+--    Tabela filha - categorias de animais declaradas na GTA
+--    (Sexo/Idade em Meses/Quantidade). Alimenta o Quadro de
+--    visualizacao do Brete na Brincagem (tb_5001_brincagem).
+-- =====================================================================
+CREATE TABLE tb_4001_gta_animais (
+    id              SERIAL PRIMARY KEY,
+    id_gta          INTEGER NOT NULL,
+    especie         VARCHAR(20) NOT NULL DEFAULT 'BOVINO',  -- BOVINO / BUBALINO
+    sexo            VARCHAR(10) NOT NULL,                    -- MACHO / FEMEA
+    idade_meses     VARCHAR(20) NOT NULL,                    -- faixa texto, ex: "13 A 24 MESES"
+    quantidade      INTEGER NOT NULL,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_tb_4001_gta_animais_gta
+        FOREIGN KEY (id_gta) REFERENCES tb_4001_gta(id)
+);
+
+CREATE INDEX idx_tb_4001_gta_animais_id_gta ON tb_4001_gta_animais (id_gta);
+
+CREATE OR REPLACE FUNCTION trg_tb_4001_gta_animais_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_4001_gta_animais_atualizado_em
+BEFORE UPDATE ON tb_4001_gta_animais
+FOR EACH ROW
+EXECUTE FUNCTION trg_tb_4001_gta_animais_atualizado_em();
+
+
+-- =====================================================================
+-- 7) tb_log_conferencia_parceiro
+--    Log de auditoria: toda decisao humana na tela de conferencia de
+--    Parceiro/Propriedade fica registrada aqui, com usuario
+--    responsavel. Nenhuma automacao decide sozinha (regra fechada
+--    na Sessao 16) - tabela imutavel, sem atualizado_em/trigger.
+-- =====================================================================
+CREATE TABLE tb_log_conferencia_parceiro (
+    id                      SERIAL PRIMARY KEY,
+    id_gta                  INTEGER NOT NULL,
+    id_usuario              INTEGER NOT NULL,
+    tipo_situacao           VARCHAR(20) NOT NULL,   -- MATCH_PERFEITO / SEM_MATCH / DIVERGENTE
+    divergencias_encontradas TEXT NULL,
+    decisao_tomada          VARCHAR(30) NOT NULL,   -- CONFIRMOU_EXISTENTE / CADASTROU_NOVO / LINKOU_COM_DIVERGENCIA
+    data_hora               TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_tb_log_conf_parceiro_gta
+        FOREIGN KEY (id_gta) REFERENCES tb_4001_gta(id),
+    CONSTRAINT fk_tb_log_conf_parceiro_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+);
+
+CREATE INDEX idx_tb_log_conf_parceiro_id_gta ON tb_log_conferencia_parceiro (id_gta);
+CREATE INDEX idx_tb_log_conf_parceiro_id_usuario ON tb_log_conferencia_parceiro (id_usuario);
+CREATE INDEX idx_tb_log_conf_parceiro_tipo_situacao ON tb_log_conferencia_parceiro (tipo_situacao);
+
+-- FIM DE ARQUIVO

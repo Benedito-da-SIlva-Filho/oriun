@@ -1,0 +1,92 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\14b_conferir_entrega1.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-10 14:30 -03
+-- ATUALIZADO EM: 2026-10-10 14:30 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Sessao 093 - Conferencias da Entrega 1. So le, nao altera nada.
+--   Rode cada bloco (A, B, C...) separado e compare com o "ESPERADO".
+--   Nos blocos B, troque produtor_NNNNN pelo schema do produtor de TESTE
+--   criado pelo botao de onboarding.
+-- =========================================================
+
+-- ---------- A1) Depois do script 14: coluna conferido_em ----------
+-- ESPERADO: 4 linhas (produtor_00001, 00004, 00005, 00010)
+SELECT table_schema
+FROM information_schema.columns
+WHERE table_name = 'tb_blk_8002_eventos' AND column_name = 'conferido_em'
+ORDER BY 1;
+
+-- ---------- A2) Depois do script 14: versao do banco ----------
+-- ESPERADO: 4 linhas, todas com versao = 2
+SELECT 'produtor_00001' AS schema, versao FROM produtor_00001.tb_versao_schema
+UNION ALL SELECT 'produtor_00004', versao FROM produtor_00004.tb_versao_schema
+UNION ALL SELECT 'produtor_00005', versao FROM produtor_00005.tb_versao_schema
+UNION ALL SELECT 'produtor_00010', versao FROM produtor_00010.tb_versao_schema;
+
+-- ---------- B1) Produtor de teste: TABELAS ----------
+-- ESPERADO: 33 em cada
+SELECT table_schema, count(*)
+FROM information_schema.tables
+WHERE table_schema IN ('produtor_00004', 'produtor_NNNNN')
+GROUP BY 1 ORDER BY 1;
+
+-- ---------- B2) Produtor de teste: COLUNAS (tipo, tamanho, nulo, padrao) ----------
+-- ESPERADO: nenhuma linha (qualquer linha = diferenca a corrigir)
+WITH a AS (
+    SELECT table_name, column_name, data_type, character_maximum_length, is_nullable,
+           regexp_replace(coalesce(column_default, ''), 'produtor_[0-9]+\.', '', 'g') AS padrao
+    FROM information_schema.columns WHERE table_schema = 'produtor_00004'),
+b AS (
+    SELECT table_name, column_name, data_type, character_maximum_length, is_nullable,
+           regexp_replace(coalesce(column_default, ''), 'produtor_[0-9]+\.', '', 'g') AS padrao
+    FROM information_schema.columns WHERE table_schema = 'produtor_NNNNN')
+SELECT 'SO NO 00004' AS onde, * FROM (SELECT * FROM a EXCEPT SELECT * FROM b) x
+UNION ALL
+SELECT 'SO NO NOVO', * FROM (SELECT * FROM b EXCEPT SELECT * FROM a) y
+ORDER BY 2, 3, 1;
+
+-- ---------- B3) Produtor de teste: TRAVAS (chave, unico, FK, CHECK) ----------
+-- ESPERADO: nenhuma linha
+WITH a AS (
+    SELECT c.relname AS tabela, con.conname AS trava, con.contype AS tipo,
+           regexp_replace(pg_get_constraintdef(con.oid), 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'produtor_00004'),
+b AS (
+    SELECT c.relname AS tabela, con.conname AS trava, con.contype AS tipo,
+           regexp_replace(pg_get_constraintdef(con.oid), 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'produtor_NNNNN')
+SELECT 'SO NO 00004' AS onde, * FROM (SELECT * FROM a EXCEPT SELECT * FROM b) x
+UNION ALL
+SELECT 'SO NO NOVO', * FROM (SELECT * FROM b EXCEPT SELECT * FROM a) y
+ORDER BY 2, 3, 1;
+
+-- ---------- B4) Produtor de teste: INDICES ----------
+-- ESPERADO: nenhuma linha
+WITH a AS (
+    SELECT tablename AS tabela, indexname AS indice,
+           regexp_replace(indexdef, 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_indexes WHERE schemaname = 'produtor_00004'),
+b AS (
+    SELECT tablename AS tabela, indexname AS indice,
+           regexp_replace(indexdef, 'produtor_[0-9]+\.', '', 'g') AS definicao
+    FROM pg_indexes WHERE schemaname = 'produtor_NNNNN')
+SELECT 'SO NO 00004' AS onde, * FROM (SELECT * FROM a EXCEPT SELECT * FROM b) x
+UNION ALL
+SELECT 'SO NO NOVO', * FROM (SELECT * FROM b EXCEPT SELECT * FROM a) y
+ORDER BY 2, 3, 1;
+
+-- ---------- B5) Produtor de teste: versao e racas ----------
+-- ESPERADO: versao = 2; racas = 107 ou mais (a lista do script popular_racas)
+SELECT (SELECT versao FROM produtor_NNNNN.tb_versao_schema) AS versao,
+       (SELECT count(*) FROM produtor_NNNNN.tb_4005_racas) AS racas;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\14b_conferir_entrega1.sql
+-- =========================================================

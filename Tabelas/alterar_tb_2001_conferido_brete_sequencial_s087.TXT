@@ -1,0 +1,67 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- SCRIPT: alterar_tb_2001_conferido_brete_sequencial_s087.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-05 16:00 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 087 - conferencia no brete da GTA de COMPRA lancada pela
+--     Brincagem Sequencial. A partir do brincagem_sequencial.py v1.16.0 os
+--     animais nascem com conferido_brete = FALSE (a conferir no brete).
+--     As GTAs lancadas ANTES dessa versao (AMA111111 a AMA111114, do teste
+--     do Pacote 087) ficaram com conferido_brete = TRUE (padrao antigo) e
+--     o Leitor/Bastao nao as enxergaria. Este script passa SO esses animais
+--     para "a conferir".
+--
+--     Seguro: so mexe em animal de COMPRA dessas 4 GTAs que esteja
+--     conferido_brete = TRUE e SEM hora de conferencia (conferido_em
+--     vazio) - quem ja foi conferido de verdade no brete nao e tocado.
+--     Pode rodar mais de uma vez (a 2a vez nao atualiza nada).
+--     Para desfazer: UPDATE ... SET conferido_brete = TRUE nas mesmas linhas.
+--
+--     ANTES de rodar: troque produtor_00004 pelo schema do Produtor do teste
+--     e confira a lista de GTAs.
+--
+--     v1.0.0: Criacao (Sessao 087, 05/10/2026, 16:00 -03).
+-- =========================================================
+
+-- 1) ANTES: como estao as 4 GTAs (esperado: conferidos = total em todas)
+SELECT g.numero_gta_completo, g.status_brincagem,
+       COUNT(e.id)                                        AS animais,
+       COUNT(e.id) FILTER (WHERE e.conferido_brete)       AS conferidos
+FROM produtor_00004.tb_4001_gta g
+LEFT JOIN produtor_00004.tb_2001 e ON e.id_gta_entrada = g.id
+WHERE g.numero_gta_completo IN ('AMA111111', 'AMA111112', 'AMA111113', 'AMA111114')
+GROUP BY g.numero_gta_completo, g.status_brincagem
+ORDER BY g.numero_gta_completo;
+
+-- 2) A ATUALIZACAO (esperado: 26 linhas = 8 + 6 + 6 + 6)
+UPDATE produtor_00004.tb_2001
+SET conferido_brete = FALSE,
+    conferido_em    = NULL
+WHERE tipo_entrada = 'COMPRA'
+  AND conferido_brete = TRUE
+  AND conferido_em IS NULL
+  AND id_gta_entrada IN (
+        SELECT id
+        FROM produtor_00004.tb_4001_gta
+        WHERE numero_gta_completo IN ('AMA111111', 'AMA111112', 'AMA111113', 'AMA111114')
+          AND tipo_movimento = 'COMPRA'
+          AND status_brincagem = 'BRINCADO'
+  );
+
+-- 3) DEPOIS (esperado: conferidos = 0 em todas; animais = 8, 6, 6, 6)
+SELECT g.numero_gta_completo, g.status_brincagem,
+       COUNT(e.id)                                        AS animais,
+       COUNT(e.id) FILTER (WHERE e.conferido_brete)       AS conferidos
+FROM produtor_00004.tb_4001_gta g
+LEFT JOIN produtor_00004.tb_2001 e ON e.id_gta_entrada = g.id
+WHERE g.numero_gta_completo IN ('AMA111111', 'AMA111112', 'AMA111113', 'AMA111114')
+GROUP BY g.numero_gta_completo, g.status_brincagem
+ORDER BY g.numero_gta_completo;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alterar_tb_2001_conferido_brete_sequencial_s087.sql
+-- =========================================================

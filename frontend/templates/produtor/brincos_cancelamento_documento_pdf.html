@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_cancelamento_documento_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 17:36 -03
+     ATUALIZADO EM: 2026-09-03 18:10 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         PDF do "Documento de Cancelamento" - Solicitação de
+         Cancelamento de Código SISBOV, formato oficial usado junto
+         a Certificadora. Replica o esboço real desenhado por Benedito
+         (Sessao 045, ajuste pos-entrega) - documento agora COMBINA
+         todas as operações de cancelamento de 1 dia inteiro, com
+         Motivo por linha (podem ser diferentes entre operações
+         distintas do mesmo dia). Retrato (21cm x 29.7cm).
+
+         Variaveis esperadas do router:
+           dados                - SimpleNamespace com os campos de
+                                  Produtor/Propriedade (ver
+                                  _buscar_dados_documento() no router)
+                                  - SEM NIRF (removido em definitivo,
+                                  v1.1.0)
+           nro_pedido            - string, contagem de dias distintos
+                                  com cancelamento ate esta data,
+                                  zfill(6)
+           data_solicitacao       - string ja formatada (dd/mm/aaaa)
+           quantidade              - int, total de brincos cancelados
+                                  no dia (todas as operacoes somadas)
+           quantidade_extenso       - string, quantidade por extenso
+           linhas                   - lista de listas de ate 2
+                                  SimpleNamespace(sisbov, motivo) - 2
+                                  pares Codigo/Motivo por linha da grid
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 17:36 -03).
+     v1.1.0: Sessao 045 (03/09/2026, 18:10 -03) - Reescrita completa a
+         partir de esboco visual de Benedito: (1) campo NIRF removido
+         em definitivo; (2) secao separada "MOTIVO DO CANCELAMENTO"
+         removida - motivo passa a ser coluna da propria grid,
+         variavel linha a linha; (3) grid muda de "so codigo, 4
+         colunas" para "2 pares Codigo SISBOV + Motivo por linha, 4
+         colunas"; (4) campos de Produtor/Propriedade reagrupados de
+         forma mais compacta (varios campos por linha, nao 1 por
+         linha) - documento fica mais curto verticalmente, importante
+         para lotes grandes (20+ brincos); (5) linhas decorativas em
+         L nos cantos superiores, flanqueando o titulo.
+     ========================================================= -->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 21cm 29.7cm;
+        margin: 2cm;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; color: #222222; }
+
+    .linha-decorativa-esq { border-top: 1.5px solid #333333; border-left: 1.5px solid #333333; height: 16px; }
+    .linha-decorativa-dir { border-top: 1.5px solid #333333; border-right: 1.5px solid #333333; height: 16px; }
+
+    .titulo { text-align: center; font-size: 14pt; font-weight: bold; margin-top: 4px; margin-bottom: 4px; }
+    .subtitulo { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 18px; }
+
+    .linha-cabecalho { font-size: 10pt; margin-bottom: 14px; }
+    .linha-cabecalho strong { color: #D4370A; }
+
+    .paragrafo { font-size: 10pt; line-height: 1.6; text-align: justify; margin-bottom: 16px; }
+
+    .secao-titulo {
+        font-size: 10pt; font-weight: bold; background-color: #FBE9E4; color: #D4370A;
+        padding: 5px 8px; margin-top: 12px; margin-bottom: 6px;
+    }
+
+    table.campos { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+    table.campos td { font-size: 10pt; padding: 2px 0; vertical-align: top; }
+    table.campos strong { color: #333333; }
+
+    table.grid-sisbov { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    table.grid-sisbov th {
+        background-color: #FBE9E4; color: #D4370A; font-weight: bold; font-size: 9pt;
+        border: 1px solid #D4370A; padding: 4px 6px; text-align: left; width: 25%;
+    }
+    table.grid-sisbov td {
+        border: 1px solid #cccccc; padding: 4px 6px; font-size: 9pt;
+    }
+
+    .assinatura { margin-top: 50px; text-align: center; }
+    .linha-assinatura { border-bottom: 1.5px solid #333333; width: 60%; margin: 0 auto; padding-top: 20px; }
+    .texto-assinatura { font-size: 9pt; color: #555555; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+    <table style="width:100%; border-collapse: collapse;">
+        <tr>
+            <td class="linha-decorativa-esq" style="width:38%;">&nbsp;</td>
+            <td style="width:24%;">&nbsp;</td>
+            <td class="linha-decorativa-dir" style="width:38%;">&nbsp;</td>
+        </tr>
+    </table>
+
+    <div class="titulo">SOLICITAÇÃO DE CANCELAMENTO</div>
+    <div class="subtitulo">DE CÓDIGO SISBOV</div>
+
+    <div class="linha-cabecalho">
+        <strong>Data Solicitação:</strong> {{ data_solicitacao }}
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <strong>Nro do Pedido:</strong> {{ nro_pedido }}
+    </div>
+
+    <div class="paragrafo">
+        Eu {{ dados.produtor_nome }}, portador do CPF.: {{ dados.produtor_cpf_cnpj }}, venho por meio
+        desta, solicitar o CANCELAMENTO de {{ quantidade }} ({{ quantidade_extenso }} Brinco(s)) na
+        intenção desta entidade certificadora tomar as devidas providências, informo abaixo a
+        numeração inutilizada.
+    </div>
+
+    <div class="secao-titulo">DADOS DE IDENTIFICAÇÃO DO PRODUTOR</div>
+    <table class="campos">
+        <tr>
+            <td colspan="3"><strong>Endereço:</strong> {{ dados.produtor_endereco }}{% if dados.produtor_complemento %} - {{ dados.produtor_complemento }}{% endif %}</td>
+        </tr>
+        <tr>
+            <td style="width:34%;"><strong>Bairro:</strong> {{ dados.produtor_bairro or '-' }}</td>
+            <td style="width:33%;"><strong>Município:</strong> {{ dados.produtor_municipio }} {{ dados.produtor_uf }}</td>
+            <td style="width:33%;"><strong>CEP:</strong> {{ dados.produtor_cep or '-' }}</td>
+        </tr>
+        <tr>
+            <td colspan="2"><strong>Email:</strong> {{ dados.produtor_email }}</td>
+            <td><strong>Fone:</strong> {{ dados.produtor_telefone }}</td>
+        </tr>
+    </table>
+
+    <div class="secao-titulo">DADOS DE IDENTIFICAÇÃO DA PROPRIEDADE</div>
+    <table class="campos">
+        <tr>
+            <td style="width:65%;"><strong>Propriedade:</strong> {{ dados.propriedade_nome }}</td>
+            <td style="width:35%;"><strong>Inscrição:</strong> {{ dados.propriedade_inscricao or '-' }}</td>
+        </tr>
+        <tr>
+            <td><strong>Email:</strong> {{ dados.propriedade_email }}</td>
+            <td><strong>Contato:</strong> {{ dados.contato_nome }}</td>
+        </tr>
+    </table>
+
+    <div class="secao-titulo">Relação dos Códigos para serem Cancelados</div>
+    <table class="grid-sisbov" repeat="1">
+        <thead>
+            <tr>
+                <th>Código SISBOV</th>
+                <th>Motivo</th>
+                <th>Código SISBOV</th>
+                <th>Motivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for par in linhas %}
+            <tr>
+                <td>{{ par[0].sisbov }}</td>
+                <td>{{ par[0].motivo }}</td>
+                <td>{{ (par[1].sisbov if par|length > 1 else '&nbsp;') | safe }}</td>
+                <td>{{ (par[1].motivo if par|length > 1 else '&nbsp;') | safe }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="assinatura">
+        <div class="linha-assinatura">&nbsp;</div>
+        <div class="texto-assinatura">Assinatura do Responsável/Produtor</div>
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_cancelamento_documento_pdf.html
+     ========================================================= -->

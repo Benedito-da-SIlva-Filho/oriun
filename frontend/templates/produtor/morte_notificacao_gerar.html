@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\morte_notificacao_gerar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-01 18:30 -03
+     ATUALIZADO EM: 2026-11-01 18:30 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Gerar Notificacao de Morte - conferencia: todas as mortes sem Notificacao entram (backend/routers/morte_notificacao.py, rota gerar).
+
+     v1.0.0: Criacao (Sessao 111).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Notifica&ccedil;&atilde;o de Morte</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .quadro { background: #F3E5F5; border: 1px solid #CE93D8; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; color: #333; line-height: 1.7; max-width: 900px; }
+        .quadro b { color: #4A148C; }
+        .tabela-box { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; max-width: 900px; }
+        .tab { width: 100%; border-collapse: collapse; }
+        .tab th { text-align: left; padding: 10px 14px; font-size: 12px; color: #999; font-weight: normal; border-bottom: 1px solid #eee; }
+        .tab td { padding: 9px 14px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333; }
+        .tab .mrt { font-weight: bold; font-family: monospace, monospace; color: #4A148C; }
+        .tab .num { text-align: right; font-weight: bold; }
+        .vazio { text-align: center; padding: 40px 20px; color: #999; font-style: italic; }
+        .barra-confirma { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+        .confirmacao-revisao { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #4A148C; background: #F3E5F5; border: 2px solid #6A1B9A; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+        .confirmacao-revisao input { width: 22px; height: 22px; accent-color: #6A1B9A; }
+        .btn-gerar { padding: 11px 28px; border: none; border-radius: 6px; background: #6A1B9A; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gerar:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-nav { padding: 9px 18px; border: 1px solid #888; border-radius: 6px; background: #fff; color: #555; font-size: 13.5px; text-decoration: none; }
+</style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#9904;</span> Gerar Notifica&ccedil;&atilde;o de Morte</div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }}</div>
+
+            {% if itens %}
+            <div class="quadro">A Notifica&ccedil;&atilde;o <b>N&ordm; {{ numero_texto }}</b> vai incluir <b>todas</b> as mortes ainda sem Notifica&ccedil;&atilde;o: <b>{{ itens|length }}</b> controle(s) e <b>{{ total_animais }}</b> animal(is). Depois de gerada, essas mortes <b>n&atilde;o podem mais ser desfeitas</b>.</div>
+            <div class="tabela-box">
+                <table class="tab">
+                    <thead><tr><th>Controle</th><th>Data Morte</th><th>Forma</th><th class="num">Qtde</th></tr></thead>
+                    <tbody>
+                        {% for i in itens %}
+                        <tr><td class="mrt">{{ i.texto }}</td><td>{{ i.data_morte }}</td><td>{{ i.origem }}</td><td class="num">{{ i.qtd }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <form method="post" action="{{ url_gerar }}" id="form-gerar">
+                <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                <div class="barra-confirma">
+                    <label class="confirmacao-revisao"><input type="checkbox" name="confirmo" value="1" id="chk"> Revisei os dados e confirmo.</label>
+                    <a class="btn-nav" href="{{ url_voltar }}">Cancelar</a>
+                    <button type="submit" class="btn-gerar" id="btn" disabled>Gerar Notifica&ccedil;&atilde;o</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="tabela-box"><div class="vazio">N&atilde;o h&aacute; morte sem Notifica&ccedil;&atilde;o nesta Propriedade.</div></div>
+            <div class="barra-confirma"><a class="btn-nav" href="{{ url_voltar }}">Voltar</a></div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+        (function () {
+            var chk = document.getElementById('chk'), btn = document.getElementById('btn');
+            if (!chk || !btn) { return; }
+            chk.addEventListener('change', function () { btn.disabled = !chk.checked; });
+            document.getElementById('form-gerar').addEventListener('submit', function () { btn.disabled = true; });
+        })();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\morte_notificacao_gerar.html
+     ========================================================= -->

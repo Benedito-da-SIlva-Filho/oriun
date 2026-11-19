@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO:      Orion
+     PASTA:        C:\orion\frontend\templates\produtor
+     MODULO:       frontend\templates\produtor\consulta_manejo.html
+     AUTOR:        Benedito Silva Filho
+     CRIADO EM:    2026-10-04 14:10 -03
+     ATUALIZADO EM: 2026-10-04 14:10 -03
+     VERSAO:       1.0.0
+
+     DESCRICAO:
+         Tela do modulo "Consulta por Manejo" (backend/routers/
+         consulta_manejo.py). Campo grande para digitar os 6 numeros
+         do Manejo (teclado numerico no celular, ja selecionado ao
+         abrir e a cada consulta, para consultar o proximo animal
+         rapido no brete) e, abaixo, a ficha do animal em estoque.
+         So leitura - nao grava nada, por isso nao tem aviso de
+         "salvar alteracoes".
+
+         Topo e rodape vem das pecas-mestras produtor_topo.html /
+         produtor_rodape.html (o destino do Voltar chega pronto do
+         router em url_voltar - Regra de Ouro #4). CSS do topo,
+         menu lateral e rodape copiado literalmente de
+         impressao_comunicado_listar.html (confirmado em producao -
+         Regra de Ouro #5).
+
+         Variaveis esperadas do router: id_propriedade,
+         propriedade_nome, produtor_nome, manejo, erro, aviso,
+         ficha (dict de texto ou vazio), url_voltar, usuario_nome,
+         usuario_perfil, cor_primaria, nome_sistema, menu_ativo.
+
+         v1.0.0: Criacao do template (Sessao 085, 04/10/2026,
+                 14:10 -03).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Consulta por Manejo</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar (identico a produtor_home.html) ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; margin-bottom: 4px; }
+        .pagina-subtitulo { font-size: 13px; color: #777777; margin-bottom: 20px; }
+
+        /* ---- Campo do Manejo (grande, para uso no brete) ---- */
+        .form-manejo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+        .form-manejo label { font-size: 22px; font-weight: bold; color: #333333; }
+        .campo-manejo { width: 200px; font-size: 30px; font-weight: bold; letter-spacing: 0.08em; text-align: center; padding: 8px 12px; border: 2px solid #cfd8dc; border-radius: 8px; background: #ffffff; color: #333333; }
+        .campo-manejo:focus { outline: none; border-color: #D4370A; box-shadow: 0 0 0 3px #FBE9E4; }
+        .btn-acao { background: #D4370A; color: #ffffff; border: none; padding: 14px 24px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block; white-space: nowrap; }
+        .btn-acao:hover { opacity: 0.9; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 14px; color: #c62828; margin-bottom: 16px; max-width: 760px; }
+        .aviso-vazio { background: #FBE9E4; border: 1px solid #D4370A; color: #7a2a10; padding: 14px 18px; border-radius: 8px; font-size: 15px; margin-bottom: 16px; max-width: 760px; }
+
+        /* ---- Ficha do animal ---- */
+        .ficha { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 900px; }
+        .ficha-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 18px; }
+        .par .rotulo { display: block; font-size: 12px; color: #777777; margin-bottom: 3px; }
+        .par .valor { display: block; min-height: 38px; padding: 7px 10px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa; font-size: 18px; font-weight: bold; color: #333333; overflow-wrap: anywhere; }
+        .par.largo { grid-column: 1 / -1; }
+        .selo { display: inline-block; margin-top: 8px; padding: 6px 12px; border-radius: 6px; font-size: 16px; font-weight: bold; }
+        .selo.liberado { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .selo.aguardando { background: #fff3e0; color: #8a3b00; border: 1px solid #ffcc80; }
+
+        @media (max-width: 640px) {
+            .conteudo { padding: 14px; }
+            .campo-manejo { width: 100%; }
+            .btn-acao { width: 100%; }
+        }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        <!-- MENU LATERAL -->
+        {% include 'produtor/produtor_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-titulo">&#128269; Consulta por Manejo</div>
+            <div class="pagina-subtitulo">{{ propriedade_nome }} &#8212; {{ produtor_nome }}</div>
+
+            <!-- Campo do Manejo: so numeros, 6 posicoes (tamanho da coluna no banco) -->
+            <form method="get" action="/produtor/consulta-manejo" class="form-manejo" autocomplete="off">
+                <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                <label for="manejo">Digite o Manejo</label>
+                <input type="text" id="manejo" name="manejo" class="campo-manejo"
+                       value="{{ manejo }}" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+                       autocomplete="off" autofocus>
+                <button type="submit" class="btn-acao">Consultar</button>
+            </form>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if aviso %}
+            <div class="aviso-vazio">{{ aviso }}</div>
+            {% endif %}
+
+            {% if ficha %}
+            <div class="ficha">
+                <div class="ficha-grade">
+                    <div class="par"><span class="rotulo">SISBOV</span><span class="valor">{{ ficha.sisbov }}</span></div>
+                    <div class="par"><span class="rotulo">RFid</span><span class="valor">{{ ficha.rfid }}</span></div>
+                    <div class="par"><span class="rotulo">Origem</span><span class="valor">{{ ficha.origem }}</span></div>
+
+                    <div class="par"><span class="rotulo">Espécie</span><span class="valor">{{ ficha.especie }}</span></div>
+                    <div class="par"><span class="rotulo">Sexo</span><span class="valor">{{ ficha.sexo }}</span></div>
+                    <div class="par"><span class="rotulo">Raça</span><span class="valor">{{ ficha.raca }}</span></div>
+
+                    <div class="par"><span class="rotulo">Nascimento</span><span class="valor">{{ ficha.nascimento }}</span></div>
+                    <div class="par"><span class="rotulo">Dias</span><span class="valor">{{ ficha.dias_nascimento }}</span></div>
+                    <div class="par"><span class="rotulo">Idade em Meses</span><span class="valor">{{ ficha.idade_meses }}</span></div>
+
+                    <div class="par"><span class="rotulo">Lote</span><span class="valor">{{ ficha.lote }}</span></div>
+                    <div class="par"><span class="rotulo">GTA</span><span class="valor">{{ ficha.gta }}</span></div>
+                    <div class="par"><span class="rotulo">Entrada</span><span class="valor">{{ ficha.data_entrada }}</span></div>
+
+                    <div class="par"><span class="rotulo">Inserção BND</span><span class="valor">{{ ficha.inclusao_bnd }}</span></div>
+                    <div class="par"><span class="rotulo">COM.</span><span class="valor">{{ ficha.comunicado }}</span></div>
+                    <div class="par"><span class="rotulo">Confinamento (dias)</span><span class="valor">{{ ficha.confinamento }}</span></div>
+
+                    <div class="par"><span class="rotulo">Peso (kg)</span><span class="valor">{{ ficha.peso }}</span></div>
+
+                    <div class="par largo">
+                        <span class="rotulo">Liberação Abate</span>
+                        <span class="valor">{{ ficha.liberacao_abate }}</span>
+                        {% if ficha.selo_texto %}
+                        <span class="selo {{ ficha.selo_classe }}">{{ ficha.selo_texto }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // Campo do Manejo: so numeros (6 posicoes) e ja selecionado, para
+        // digitar por cima do anterior e consultar o proximo animal.
+        (function () {
+            var campo = document.getElementById('manejo');
+            if (!campo) { return; }
+            campo.addEventListener('input', function () {
+                campo.value = campo.value.replace(/\D/g, '').slice(0, 6);
+            });
+            campo.focus();
+            campo.select();
+        })();
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: frontend\templates\produtor\consulta_manejo.html
+     ========================================================= -->

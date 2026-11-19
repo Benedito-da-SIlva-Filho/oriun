@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincagem_consulta_inconformidades.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-20 15:20 -03
+     ATUALIZADO EM: 2026-10-13 11:50 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Lista as tentativas de leitura BLOQUEADAS por duplicidade
+         (tb_5003_rejeicoes_brincagem), filtradas pela Data
+         Brincagem escolhida na tela de Consulta Brincagem.
+         Visual copiado da mesma base (Padrao Reutilizavel N.4 +
+         estilo de lista ja usado em brincagem_consulta_lista.html).
+
+         O mockup do legado (INCONFORMIDADES DE CONFERÊNCIAS DO
+         DIA X) tinha um campo "SALDO DISPONÍVEL" - decidi NAO
+         reproduzir esse rotulo literal aqui: no legado ele parecia
+         ligado a estoque de brincos (outro subsistema, que nao
+         mexemos), e neste modulo o numero e so a contagem de
+         inconformidades da Data - por isso chamei de "Total de
+         Inconformidades", pra nao sugerir um significado que nao
+         existe aqui. Sinalizado no chat - ajustar se Benedito
+         quiser o rotulo original.
+
+     v1.0.0: Criacao do modulo (Sessao 068, 20/09/2026, 15:20 -03).
+     v1.1.0: Sessao 076 (21/09/2026, 17:22 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar (antes
+         escrito direto no HTML, apontando fixo para
+         brincagem_consulta.lista com a mesma Data selecionada)
+         agora e definido via um comando de atribuicao antes do
+         include - mesmo destino de sempre, sem mudanca de
+         comportamento, sem precisar alterar o router. Unico
+         caminho de acesso a esta tela (Regra de Ouro #9 nao se
+         aplica).
+         v1.2.0: Sessao 095 (13/10/2026, 11:50 -03) - AVISO DE DOWNLOAD PADRAO: inclui a peca aviso_download (banner "Gerando", banner verde com o
+                 local do arquivo e trava de clique repetido). Links sem target blank. REVERSAO: .bak_antes_aviso_download_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Inconformidades</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 20px 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+        .subtitulo { font-size: 13.5px; color: #888888; margin-bottom: 16px; }
+
+        .barra-topo-lista { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 6px 20px; text-align: center; background: #ffffff; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 24px; font-weight: bold; color: #c62828; }
+        .btn-imprimir { padding: 9px 16px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-imprimir:hover { background: #C0392B; }
+
+        .lista-vazia-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 40px; text-align: center; color: #aaaaaa; font-size: 14px; }
+
+        .tabela-scroll { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow-x: auto; }
+        .tabela-inconformidades { border-collapse: collapse; width: 100%; font-size: 13px; }
+        .tabela-inconformidades thead th { background: #f7f7f7; text-align: left; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+        .tabela-inconformidades tbody td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; color: #333333; }
+        .tabela-inconformidades tbody tr:hover { background-color: #fafafa; }
+        .col-sisbov { font-weight: bold; }
+        .col-motivo { color: #c62828; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_for('brincagem_consulta.lista', id_propriedade=id_propriedade, data_brincagem=data_selecionada) %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#9888;&#65039;</span> Inconformidades</h2>
+            </div>
+            <div class="subtitulo">{{ propriedade.nome if propriedade else '-' }} — Data Brincagem: {{ data_selecionada or '-' }}</div>
+
+            <div class="barra-topo-lista">
+                <div class="contador-caixa">
+                    <div class="rotulo">Total de Inconformidades</div>
+                    <div class="valor">{{ total }}</div>
+                </div>
+                {% if linhas %}
+                <a href="{{ url_for('brincagem_consulta.inconformidades_imprimir', id_propriedade=id_propriedade, data_brincagem=data_selecionada) }}" class="btn-imprimir" data-aviso-descricao="Inconformidades da Brincagem de {{ data_selecionada }}">&#128424;&#65039; Imprimir</a>
+                {% endif %}
+            </div>
+
+            {% if linhas %}
+            <div class="tabela-scroll">
+                <table class="tabela-inconformidades">
+                    <thead>
+                        <tr>
+                            <th>SISBOV</th>
+                            <th>RFID</th>
+                            <th>Motivo</th>
+                            <th>Data/Hora da Tentativa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for linha in linhas %}
+                        <tr>
+                            <td class="col-sisbov">{{ linha.sisbov }}</td>
+                            <td>{{ linha.rfid }}</td>
+                            <td class="col-motivo">{{ linha.motivo }}</td>
+                            <td>{{ linha.criado_em }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="lista-vazia-container">Nenhuma inconformidade registrada para esta Data.</div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincagem_consulta_inconformidades.html
+     ========================================================= -->

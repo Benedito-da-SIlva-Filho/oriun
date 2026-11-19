@@ -1,0 +1,74 @@
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\certificadora
+     MODULO: templates\certificadora\certificadora_menu.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-26 12:14 -03
+     ATUALIZADO EM: 2026-06-26 12:14 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Menu lateral da plataforma Certificadora.
+         Incluido em todos os templates da plataforma Certificadora
+         via: include 'certificadora/certificadora_menu.html'
+         Variavel menu_ativo define o item destacado em vermelho.
+         v1.0.0: Criacao do modulo.
+     ========================================================= -->
+
+<div class="sidebar" id="sidebar">
+
+    <!-- Home -->
+    <a href="/certificadora/home" class="menu-item {{ 'ativo' if menu_ativo == 'home' else '' }}">
+        <span class="menu-icone">&#127968;</span>
+        <span class="menu-texto">Home</span>
+    </a>
+
+    <!-- GESTAO -->
+    <div class="menu-secao">GESTAO</div>
+
+    <a href="/propriedades" class="menu-item {{ 'ativo' if menu_ativo == 'propriedades' else '' }}">
+        <span class="menu-icone">&#127806;</span>
+        <span class="menu-texto">Propriedades</span>
+    </a>
+
+    <a href="/produtores" class="menu-item {{ 'ativo' if menu_ativo == 'produtores' else '' }}">
+        <span class="menu-icone">&#128104;&#8205;&#127806;</span>
+        <span class="menu-texto">Produtores</span>
+    </a>
+
+    <a href="/cert-usuarios" class="menu-item {{ 'ativo' if menu_ativo == 'cert_usuarios' else '' }}">
+        <span class="menu-icone">&#128101;</span>
+        <span class="menu-texto">Usuarios</span>
+    </a>
+
+    <!-- VALIDACAO -->
+    <div class="menu-secao">VALIDACAO</div>
+
+    <a href="/certificadora/comunicados" class="menu-item {{ 'ativo' if menu_ativo == 'comunicados' else '' }}">
+        <span class="menu-icone">&#128203;</span>
+        <span class="menu-texto">Comunicados</span>
+    </a>
+
+    <a href="/certificadora/inspecao" class="menu-item {{ 'ativo' if menu_ativo == 'inspecao' else '' }}">
+        <span class="menu-icone">&#128269;</span>
+        <span class="menu-texto">Inspecao</span>
+    </a>
+
+    <!-- CONSULTAS -->
+    <div class="menu-secao">CONSULTAS</div>
+
+    <a href="/consultas/produtor-propriedades" class="menu-item {{ 'ativo' if menu_ativo == 'consulta_produtor' else '' }}">
+        <span class="menu-icone">&#128269;</span>
+        <span class="menu-texto">Produtor &#8594; Propriedades</span>
+    </a>
+
+    <a href="/consultas/propriedade-produtores" class="menu-item {{ 'ativo' if menu_ativo == 'consulta_propriedade' else '' }}">
+        <span class="menu-icone">&#128269;</span>
+        <span class="menu-texto">Propriedade &#8594; Produtores</span>
+    </a>
+
+</div>
+
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\certificadora\certificadora_menu.html
+     ========================================================= -->

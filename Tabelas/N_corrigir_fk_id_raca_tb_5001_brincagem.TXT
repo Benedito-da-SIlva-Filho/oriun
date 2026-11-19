@@ -1,0 +1,63 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\N_corrigir_fk_id_raca_tb_5001_brincagem.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-20 14:45 -03
+-- ATUALIZADO EM: 2026-09-20 14:45 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     BUG REAL corrigido (Sessao 065): o script original que
+--     criou tb_5001_brincagem (Sessao 057,
+--     Tabelas_recriar_tb_5001_brincagem_criar_tb_5003.sql) tinha
+--     a FK de id_raca apontando para 'public.tb_4005_racas',
+--     copiado por engano do padrao usado em id_especie. A Sessao
+--     059 confirmou (ao ver backend/routers/racas.py) que
+--     tb_4005_racas NAO vive em public - vive DENTRO do schema
+--     de cada Produtor. O model Python (tb_5001_brincagem.py) ja
+--     foi corrigido na hora (FK sem prefixo 'public.'), mas a
+--     RESTRICAO DE VERDADE ja criada no banco ficou desatualizada -
+--     continuava fisicamente apontando para public.tb_4005_racas,
+--     causando ForeignKeyViolation real em producao (reproduzido
+--     por Benedito, id_raca=108) mesmo com o Python 100% correto.
+--
+--     Este script DROPA e RECRIA a constraint em cada schema
+--     produtor_NNNNN, apontando para a tabela CERTA (a copia
+--     dentro do proprio schema, sem prefixo - resolvida pelo
+--     search_path). NAO mexe em nenhum dado - so na definicao da
+--     restricao. Seguro rodar de novo se precisar (DROP ... IF
+--     EXISTS).
+--
+--     RENOMEIE este arquivo com o proximo numero sequencial da
+--     sua pasta Tabelas\ antes de rodar.
+--
+--     v1.0.0: Criacao do script (Sessao 065, 20/09/2026, 14:45 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_produtor TEXT;
+BEGIN
+    FOR schema_produtor IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE %I.tb_5001_brincagem DROP CONSTRAINT IF EXISTS tb_5001_brincagem_id_raca_fkey',
+            schema_produtor
+        );
+
+        EXECUTE format(
+            'ALTER TABLE %I.tb_5001_brincagem ADD CONSTRAINT tb_5001_brincagem_id_raca_fkey ' ||
+            'FOREIGN KEY (id_raca) REFERENCES %I.tb_4005_racas(id)',
+            schema_produtor, schema_produtor
+        );
+
+        RAISE NOTICE 'FK de id_raca corrigida em %', schema_produtor;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\N_corrigir_fk_id_raca_tb_5001_brincagem.sql
+-- =========================================================

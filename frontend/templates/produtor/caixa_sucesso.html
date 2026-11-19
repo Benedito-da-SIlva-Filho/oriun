@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\caixa_sucesso.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-22 16:15 -03
+     ATUALIZADO EM: 2026-11-06 20:45 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         PADRAO REUTILIZAVEL "Caixa de Sucesso" (backend/utils/caixa_sucesso.py). Tela de confirmacao obrigatoria depois de gravar:
+         titulo, o que mudou (antes -> depois), avisos vermelhos, notas e botoes. Mesmo visual do sucesso do lancamento da GTA.
+
+     v1.0.0: Criacao (Sessao 103).
+     v1.1.0: Sessao 104 (23/10/2026, 08:50 -03) - listas opcionais (cs_tabelas) abaixo do resumo. Sem tabelas, tudo igual a antes. REVERSAO: .bak_antes_s104.
+     v1.2.0: Sessao 117 (06/11/2026, 20:45 -03) - Aviso vermelho pode ser uma LISTA de linhas: icone maior e linhas alinhadas. Aviso em texto simples continua igual. REVERSAO: .bak_antes_s117_aviso2l.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ cs_titulo_pagina }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; }
+
+        .cartao-sucesso { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 40px 40px 36px; max-width: 720px; width: 100%; text-align: center; margin-top: 30px; }
+        .icone-sucesso { font-size: 64px; line-height: 1; margin-bottom: 16px; }
+        .titulo-sucesso { font-size: 20px; font-weight: bold; color: #2e7d32; margin-bottom: 10px; }
+        .numero-gta { font-size: 28px; font-weight: bold; color: #333333; margin-bottom: 6px; letter-spacing: 1px; }
+        .subtitulo-sucesso { font-size: 13.5px; color: #888888; margin-bottom: 32px; }
+
+        .botoes-sucesso { display: flex; gap: 12px; justify-content: center; }
+        .btn-primario { padding: 10px 22px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-primario:hover { background: #C0392B; }
+        .btn-secundario { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-secundario:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .mudancas { margin: 0 auto 22px; max-width: 600px; text-align: left; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+        .mudancas .linha { display: flex; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; align-items: baseline; }
+        .mudancas .linha:last-child { border-bottom: none; }
+        .mudancas .campo { width: 150px; flex-shrink: 0; color: #666666; font-weight: bold; }
+        .mudancas .antes { color: #888888; text-decoration: line-through; }
+        .mudancas .seta { color: #D4370A; font-weight: bold; }
+        .mudancas .depois { color: #1b5e20; font-weight: bold; }
+        .aviso-vermelho.grande { display: flex; align-items: center; gap: 16px; }
+        .aviso-vermelho .aviso-icone { font-size: 38px; line-height: 1; }
+        .aviso-vermelho .aviso-linhas div + div { margin-top: 2px; }
+        .aviso-vermelho { background: #D32F2F; border-left: 6px solid #8e0000; color: #ffffff; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin: 0 auto 22px; max-width: 600px; text-align: left; line-height: 1.5; }
+        .nota { color: #666666; font-size: 13px; margin: 0 auto 18px; max-width: 600px; text-align: left; }
+        /* v1.1.0 - listas opcionais */
+        .bloco-tabela { margin: 0 auto 22px; max-width: 600px; text-align: left; }
+        .bloco-tabela .tit { font-size: 14px; font-weight: bold; color: #333333; margin-bottom: 6px; }
+        .bloco-tabela table { width: 100%; border-collapse: collapse; border: 1px solid #e0e0e0; }
+        .bloco-tabela th { background: #f5f5f5; text-align: left; padding: 7px 10px; font-size: 12px; color: #666666; }
+        .bloco-tabela td { padding: 7px 10px; font-size: 13px; border-top: 1px solid #f0f0f0; color: #333333; }
+        .bloco-tabela td.vermelha { color: #c62828; }
+</style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            <div class="cartao-sucesso">
+                <div class="icone-sucesso">{{ cs_icone|safe }}</div>
+                <div class="titulo-sucesso">{{ cs_titulo }}</div>
+                {% if cs_subtitulo %}<div class="numero-gta">{{ cs_subtitulo }}</div>{% endif %}
+                <div class="subtitulo-sucesso"></div>
+
+                {% if cs_mudancas %}
+                <div class="mudancas">
+                    {% for m in cs_mudancas %}
+                    <div class="linha">
+                        <span class="campo">{{ m.campo }}</span>
+                        <span>{% if m.antes is not none %}<span class="antes">{{ m.antes }}</span> <span class="seta">&#8594;</span> {% endif %}<span class="depois">{{ m.depois }}</span></span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% for a in cs_avisos %}
+                {% if a is string %}
+                <div class="aviso-vermelho">&#9888;&#65039; {{ a }}</div>
+                {% else %}
+                <div class="aviso-vermelho grande"><span class="aviso-icone">&#9888;&#65039;</span><div class="aviso-linhas">{% for linha in a %}<div>{{ linha }}</div>{% endfor %}</div></div>
+                {% endif %}
+                {% endfor %}
+                {% for n in cs_notas %}
+                <div class="nota">{{ n }}</div>
+                {% endfor %}
+
+                {% for t in cs_tabelas %}
+                <div class="bloco-tabela">
+                    <div class="tit">{{ t.titulo }}</div>
+                    <table>
+                        <thead><tr>{% for c in t.colunas %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+                        <tbody>
+                            {% for linha in t.linhas %}
+                            <tr>{% for v in linha %}<td{% if t.ultima_vermelha and loop.last %} class="vermelha"{% endif %}>{{ v }}</td>{% endfor %}</tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+
+                <div class="botoes-sucesso">
+                    {% for b in cs_botoes %}
+                    <a href="{{ b.url }}" class="{{ 'btn-primario' if b.primario else 'btn-secundario' }}">{{ b.texto }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\caixa_sucesso.html
+     ========================================================= -->

@@ -1,0 +1,49 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: 9_verificar_conferido_brete.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-02 20:00 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     SO CONSULTA (nao altera nada). Confere o que o script
+--     7_alter_tb_2001_conferido_brete.sql marcou como PENDENTE DE
+--     CONFERENCIA no brete: lista, por schema de Produtor, cada
+--     Notificacao (NAS) com animais pendentes e a quantidade.
+--     Resultado nas mensagens (aba "Messages" do pgAdmin).
+--     Se aparecer NAS de OUTRO Produtor/teste que ja foi brincado de
+--     verdade, avise - o ajuste e um UPDATE pontual.
+-- =========================================================
+
+DO $$
+DECLARE
+    esquema text;
+    linha   record;
+    achou   boolean;
+BEGIN
+    FOR esquema IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+    LOOP
+        achou := false;
+        IF EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema = esquema AND table_name = 'tb_2001' AND column_name = 'conferido_brete') THEN
+            FOR linha IN EXECUTE format(
+                'SELECT g.numero_gta_completo AS nas, e.data_brincagem AS data, count(*) AS qtde '
+                'FROM %I.tb_2001 e LEFT JOIN %I.tb_4001_gta g ON g.id = e.id_gta_entrada '
+                'WHERE e.conferido_brete = FALSE '
+                'GROUP BY g.numero_gta_completo, e.data_brincagem ORDER BY 2, 1', esquema, esquema)
+            LOOP
+                RAISE NOTICE '% -> % | brincagem % | % animal(is) pendente(s)', esquema, linha.nas, linha.data, linha.qtde;
+                achou := true;
+            END LOOP;
+            IF NOT achou THEN
+                RAISE NOTICE '% -> nenhum animal pendente', esquema;
+            END IF;
+        END IF;
+    END LOOP;
+END $$;
+-- =========================================================
+-- FIM DE ARQUIVO: 9_verificar_conferido_brete.sql
+-- =========================================================

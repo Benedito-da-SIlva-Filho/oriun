@@ -1,0 +1,89 @@
+Comando que Lista Estrutura do Projeto
+C:\Orion> tree /f C:\Orion
+
+Comando que Lista Estrutura de uma pasta
+tree /f C:\Orion\frontend\templates\Certificadoras
+
+-- 1. Renomear nome para razao_social
+ALTER TABLE certificadoras RENAME COLUMN nome TO razao_social;
+
+-- 2. Adicionar a coluna nova nome_fantasia
+ALTER TABLE certificadoras ADD COLUMN nome_fantasia VARCHAR(100);
+
+===========================Separa os campos por tamanho nas tables relacionadas.
+SELECT table_name, column_name, data_type, character_maximum_length, numeric_precision, numeric_scale
+FROM information_schema.columns
+WHERE table_name IN ('produtores', 'propriedades', 'proprietarios')
+ORDER BY table_name, ordinal_position
+
+===========================Limpa o cache
+Remove-Item -Recurse -Force C:\Orion\backend\__pycache__
+Remove-Item -Recurse -Force C:\Orion\backend\routers\__pycache__
+Remove-Item -Recurse -Force C:\Orion\backend\models\__pycache__
+
+==========================
+Mas ao invés de eu só olhar a estrutura de pastas (isso só mostra nomes de arquivo, não o conteúdo), o mais eficiente aqui é uma busca
+de texto por certificadora_id e produtor_id em todo o projeto 
+Get-ChildItem -Path . -Include *.py,*.html -Recurse | Select-String -Pattern "certificadora_id|produtor_id"
+========================== Mostra a estutura dos campos na tabela
+SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'tb_frigorificos'
+ORDER BY ordinal_position;
+========================== Mostra as tabelas que tem WHERE column_name = 'id_produtor'
+SELECT table_name, column_name
+FROM information_schema.columns
+WHERE column_name = 'id_produtor'
+  AND table_schema = 'public'
+ORDER BY table_name;
+==========================[ Checagem de sintaxe (rápida, não testa imports)
+cd C:\orion
+python -m py_compile backend\models\tb_1021_fabricantes_brincos.py
+
+==========================[ Checagem de importação real (mais completa — confirma que o relationship, o Base e o pacote inteiro carregam sem conflito):
+cd C:\orion
+python -c "from backend.models.tb_1021_fabricantes_brincos import Fabricante; print('OK:', Fabricante.__tablename__)"
+                            
+==========================[  Garante que a sessão está apontando pro schema certo
+SET search_path TO produtor_00001;
+SET search_path TO public;
+==========================[  Fazenda Agro Modelo
+Login: teste.agromodelo
+Senha: Teste@2026
+==========================[  Como descobrir o schema dela (sempre o primeiro passo, nunca pula)
+SELECT id, nome, schema_nome FROM produtores WHERE nome ILIKE '%MARIA ANGELICA%';
+
+==========================[  usar esse schema_nome pra entrar na "gaveta" dela
+-- Opção A: aponta a sessão inteira pra dentro do schema dela
+SET search_path TO produtor_00005;
+
+SELECT * FROM tb_2001_animal_entrada WHERE id = 123;  -- localiza o animal errado
+UPDATE tb_2001_animal_entrada SET sexo = 'FEMEA' WHERE id = 123;
+
+-- Opção B: sem trocar o search_path, só qualifica a tabela na consulta
+UPDATE produtor_00005.tb_2001_animal_entrada SET sexo = 'FEMEA' WHERE id = 123;
+
+==========================[  altera a senha hash para 1234
+UPDATE usuarios [tabela]
+SET senha_hash = '$2b$12$CefBdnLchgDzJXW/hok35eywnnTYqIe646U5u0bCwWoJfZXjoj7AK'
+WHERE id = 1; [PK]
+==========================[  altera campo na tabela em todos os schemas
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format('ALTER TABLE %I.tb_3007_brincos_entrada
+                            ADD COLUMN IF NOT EXISTS cpf_produtor VARCHAR(18);',
+                        schema_rec.schema_name);
+
+        RAISE NOTICE 'Alterado: %', schema_rec.schema_name;
+    END LOOP;
+END $$;
+==========================[  nascer vazios o navegador não deve sugerir valores digitados antes.
+autocomplete="off" 
+==========================[

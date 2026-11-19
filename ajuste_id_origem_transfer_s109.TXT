@@ -1,0 +1,44 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\ajuste_id_origem_transfer_s109.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-30 18:55 -03
+-- ATUALIZADO EM: 2026-10-30 18:55 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Ajuste dos animais de teste que entraram por Transferencia ENTRE PRODUTORES na Sessao 108 (produtor_00001, Maria Angelica):
+--     cria (ou reaproveita) o Parceiro que representa o Produtor de origem e a Propriedade de origem dele, e grava o id do Parceiro
+--     em id_origem na tb_2001 e na tb_2017_movimentacoes. O Parceiro nasce SEM id_produtor (vinculo so por confirmacao manual).
+--     Regra de Ouro #19: PASSO 1 faz a copia de seguranca; para desfazer rode reverter_id_origem_transfer_s109.sql.
+--     Pode rodar de novo: so mexe em linha com id_origem vazio e nao refaz a copia de seguranca se ela ja existe.
+--     No pgAdmin rode UM passo por vez (marque so o bloco do passo).
+--
+-- v1.0.0: Sessao 109 (30/10/2026, 18:55 -03) - Criacao.
+-- =========================================================
+
+-- PASSO 0 - Conferencia de colunas (rode sozinho). Esperado: so cpf_cnpj, nome, ativo, criado_em, atualizado_em (tb_parceiros) e
+-- id_parceiro, estabelecimento, ativo, criado_em, atualizado_em (tb_parceiros_propriedades). Se aparecer outra coluna, PARE e avise.
+SELECT table_name, column_name, data_type
+FROM information_schema.columns
+WHERE table_schema = 'produtor_00001' AND table_name IN ('tb_parceiros', 'tb_parceiros_propriedades')
+  AND is_nullable = 'NO' AND column_default IS NULL
+ORDER BY table_name, ordinal_position;
+
+-- PASSO 1 - Copia de seguranca (so cria se ainda nao existir)
+CREATE TABLE IF NOT EXISTS produtor_00001.bkp_s109_tb_2001 AS
+SELECT id, id_origem FROM produtor_00001.tb_2001
+WHERE tipo_entrada::text = 'TRANSFERENCIA' AND id_origem IS NULL AND id_gta_entrada IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS produtor_00001.bkp_s109_tb_2017 AS
+SELECT id, id_origem FROM produtor_00001.tb_2017_movimentacoes
+WHERE tipo_saida IS NULL AND id_origem IS NULL
+  AND id_animal IN (SELECT id FROM produtor_00001.bkp_s109_tb_2001);
+
+CREATE TABLE IF NOT EXISTS produtor_00001.bkp_s109_criados (tipo text, id integer);
+
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\ajuste_id_origem_transfer_s109.sql
+-- =========================================================

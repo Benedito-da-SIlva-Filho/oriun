@@ -1,0 +1,20 @@
+SELECT 'tb_5001 vinculados (sts=true)' AS tabela, COUNT(*) AS qtde
+  FROM produtor_00004.tb_5001_brincagem WHERE id_gta = 1 AND sts = true
+UNION ALL
+SELECT 'tb_2001 rebanho (entrada pela GTA)', COUNT(*)
+  FROM produtor_00004.tb_2001 WHERE id_gta_entrada = 1
+UNION ALL
+SELECT 'tb_2017 movimentacoes', COUNT(*)
+  FROM produtor_00004.tb_2017_movimentacoes WHERE gta_entrada = 'MSA111112'
+UNION ALL
+SELECT 'tb_7002 PIA', COUNT(*)
+  FROM produtor_00004.tb_7002_pia WHERE id_gta = 1
+UNION ALL
+SELECT 'tb_3008 saida de brincos', COUNT(*)
+  FROM produtor_00004.tb_3008_brincos_saida WHERE gta = 'MSA111112'
+UNION ALL
+SELECT 'tb_7017 brincos baixados', COUNT(*)
+  FROM produtor_00004.tb_7017_entrada_brincos_rfid WHERE saida_gta = 'MSA111112'
+UNION ALL
+SELECT 'tb_4001 GTA BRINCADO (1 = sim)', COUNT(*)
+  FROM produtor_00004.tb_4001_gta WHERE id = 1 AND status_brincagem = 'BRINCADO';

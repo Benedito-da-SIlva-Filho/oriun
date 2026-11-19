@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\saida_vincular_conferencia.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-19 16:50 -03
+     ATUALIZADO EM: 2026-10-23 17:40 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Vincular GTA / Embarque - conferencia: Data de Saida obrigatoria e animais marcados por categoria da GTA (marcacao automatica pelos menores SISBOVs, troca pela caixinha); se faltar animal, informa quantos e de quais faixas e nao deixa vincular (backend/routers/saida_vincular.py).
+
+     v1.0.0: Criacao (Sessao 100).
+     v1.1.0: Sessao 100 (19/10/2026, 17:50 -03) - Caixa "Revisei os dados e confirmo o vinculo da GTA" na barra de baixo (entre o Total marcado e Cancelar/Vincular), no padrao da Brincagem. O botao Vincular so liga com a caixa marcada; qualquer mudanca (data ou animais) desmarca a caixa. Barra fixa embaixo da area de rolagem. Sem janela extra de confirmacao: o aviso de GTA vinculada continua sendo a faixa verde da lista de GTAs.
+     v1.2.0: Sessao 105 (23/10/2026, 17:40 -03) - Data de Saida conferida NA HORA em que o usuario termina de digitar (10 digitos): data invalida, anterior ao Embarque ou fora da validade da GTA mostra a faixa vermelha embaixo do campo, pinta o campo e mantem o botao Vincular desligado. O servidor continua conferindo de novo (saida_vincular.py). REVERSAO: devolver .bak_antes_s105a.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Vincular GTA</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e3f2fd; color: #0d47a1; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+    
+        /* Vincular GTA / Embarque (v1.0.0) */
+        .banner-ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
+        .resumo-livres { font-size: 13.5px; color: #555555; margin-bottom: 16px; }
+        .secao-titulo { font-size: 16px; font-weight: bold; color: #D4370A; margin: 22px 0 10px; }
+        .texto-categorias { font-size: 12px; color: #666666; max-width: 340px; }
+        .btn-acao.principal { background: #D4370A; color: #ffffff; }
+        .btn-acao.principal:hover { background: #C0392B; }
+        .caixa-gta { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 28px; }
+        .caixa-gta .item .rot { font-size: 11px; color: #888888; }
+        .caixa-gta .item .val { font-size: 15px; font-weight: bold; color: #333333; }
+        .erro-grande { background: #D32F2F; color: #ffffff; border-left: 6px solid #8e0000; padding: 16px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; margin-bottom: 16px; }
+        .erro-grande ul { margin: 10px 0 0 20px; font-size: 14.5px; font-weight: normal; }
+        .erro-grande li { margin-bottom: 4px; }
+        .aviso-amarelo { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; }
+        .campo-saida { background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+        .campo-saida label { font-size: 16px; font-weight: bold; color: #7a1f04; }
+        .campo-saida input { width: 150px; font-size: 20px; font-weight: bold; text-align: center; padding: 8px; border: 1px solid #D4370A; border-radius: 6px; }
+        .campo-saida .dica { font-size: 12px; color: #7a1f04; }
+        .campo-saida input.invalido { border: 2px solid #D32F2F; background: #ffebee; color: #b71c1c; }
+        .campo-saida .erro-data { flex-basis: 100%; background: #D32F2F; color: #ffffff; padding: 10px 14px; border-radius: 6px; font-size: 13.5px; font-weight: bold; display: none; }
+        .bloco-cat { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+        .bloco-cat .cab { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #f7f7f7; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; gap: 8px; }
+        .bloco-cat .cab .nome { font-size: 15px; font-weight: bold; color: #333333; }
+        .bloco-cat .cab .cont { font-size: 14px; font-weight: bold; }
+        .cont.ok { color: #2e7d32; }
+        .cont.falta { color: #D4370A; }
+        .rolagem { max-height: 260px; overflow-y: auto; }
+        .tab-animais { width: 100%; border-collapse: collapse; }
+        .tab-animais th { text-align: left; padding: 7px 12px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; background: #ffffff; }
+        .tab-animais td { padding: 6px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tab-animais tr.marcada td { background: #fdf3ef; }
+        .tab-animais input[type=checkbox] { width: 17px; height: 17px; accent-color: #D4370A; cursor: pointer; }
+        .barra-total { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 6px -24px -24px; padding: 12px 24px; flex-wrap: wrap; position: sticky; bottom: 0; z-index: 5; background: #ffffff; border-top: 1px solid #e0e0e0; }
+        .confirmacao-revisao { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #7a1f04; background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+        .confirmacao-revisao input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #D4370A; }
+        .total-geral { font-size: 15px; font-weight: bold; }
+        .erro-form { background: #D32F2F; color: #ffffff; padding: 10px 14px; border-radius: 6px; margin-top: 12px; font-size: 13.5px; font-weight: bold; display: none; }
+        .btn-principal { margin-top: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128279;</span> Vincular GTA {{ gta.numero }}</div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; Embarque de <strong>{{ data_embarque }}</strong></div>
+
+            <div class="caixa-gta">
+                <div class="item"><div class="rot">{{ gta.destino_rotulo }}</div><div class="val">{{ gta.frigorifico }}</div></div>
+                <div class="item"><div class="rot">Emiss&atilde;o</div><div class="val">{{ gta.emissao }}</div></div>
+                <div class="item"><div class="rot">Validade</div><div class="val">{{ gta.validade }}</div></div>
+                <div class="item"><div class="rot">Animais na GTA</div><div class="val">{{ gta.qtde }}</div></div>
+            </div>
+
+            {% if faltas %}
+            <div class="erro-grande">
+                &#9888;&#65039; Animais insuficientes para esta GTA. Faltam {{ faltas | sum(attribute='faltam') }} animal(is):
+                <ul>
+                    {% for f in faltas %}
+                    <li><strong>{{ f.rotulo }}</strong>: a GTA pede {{ f.pede }}, h&aacute; {{ f.livres }} livre(s) &#8212; faltam <strong>{{ f.faltam }}</strong></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% if sem_categoria %}
+            <div class="aviso-amarelo">{{ sem_categoria }} animal(is) livre(s) deste embarque n&atilde;o t&ecirc;m categoria (sem nascimento ou idade fora das faixas) e por isso n&atilde;o entram. Confira em Corre&ccedil;&atilde;o.</div>
+            {% endif %}
+            <div class="botoes-topo"><a class="btn-nav" href="{{ url_voltar }}">&larr; Escolher outra GTA</a></div>
+
+            {% else %}
+
+            {% if sem_categoria %}
+            <div class="aviso-amarelo">{{ sem_categoria }} animal(is) livre(s) deste embarque n&atilde;o t&ecirc;m categoria (sem nascimento ou idade fora das faixas) e n&atilde;o aparecem aqui.</div>
+            {% endif %}
+
+            <div class="campo-saida">
+                <label for="data_saida">Data de Sa&iacute;da *</label>
+                <input type="text" id="data_saida" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" inputmode="numeric">
+                <span class="dica">Obrigat&oacute;ria. N&atilde;o pode ser antes de {{ data_embarque }} e precisa estar entre {{ gta.emissao }} e {{ gta.validade }} (validade da GTA).</span>
+                <div class="erro-data" id="erro-data"></div>
+            </div>
+
+            {% for c in categorias %}
+            <div class="bloco-cat" data-cat="{{ c.indice }}" data-pede="{{ c.pede }}">
+                <div class="cab">
+                    <span class="nome">{{ c.rotulo }}</span>
+                    <span class="cont" id="cont-{{ c.indice }}">Marcados: <span class="n">0</span> de {{ c.pede }} <span style="font-weight:normal;color:#888;">(livres: {{ c.livres }})</span></span>
+                </div>
+                <div class="rolagem">
+                    <table class="tab-animais">
+                        <thead><tr><th style="width:40px;"></th><th>SISBOV</th><th>Manejo</th><th>Sexo</th><th>Nascimento</th><th>Idade (no embarque)</th><th>Peso (kg)</th></tr></thead>
+                        <tbody>
+                            {% for a in c.animais %}
+                            <tr class="{{ 'marcada' if a.marcado else '' }}">
+                                <td><input type="checkbox" class="chk" data-cat="{{ c.indice }}" value="{{ a.id }}" {{ 'checked' if a.marcado else '' }}></td>
+                                <td class="numero-gta">{{ a.sisbov }}</td>
+                                <td>{{ a.manejo }}</td>
+                                <td>{{ a.sexo }}</td>
+                                <td>{{ a.nascimento }}</td>
+                                <td>{{ a.faixa }}</td>
+                                <td>{{ a.peso }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if fora_da_gta %}
+            <div class="aviso-amarelo">{{ fora_da_gta }} animal(is) livre(s) deste embarque s&atilde;o de categorias que esta GTA n&atilde;o pede: continuam livres para outra GTA.</div>
+            {% endif %}
+
+            <div class="erro-form" id="erro-form"></div>
+
+            <div class="barra-total">
+                <div class="total-geral">Total marcado: <span id="total-marcado">0</span> de {{ gta.qtde }}</div>
+                <label class="confirmacao-revisao">
+                    <input type="checkbox" id="chk-revisei">
+                    Revisei os dados e confirmo o v&iacute;nculo da GTA.
+                </label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <a class="btn-nav" href="{{ url_voltar }}">Cancelar</a>
+                    <button type="button" class="btn-principal" id="btn-vincular" disabled>Vincular GTA aos animais</button>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROP = {{ id_propriedade }};
+        var ISO = '{{ iso }}';
+        var ID_GTA = {{ gta.id }};
+        var DATA_EMBARQUE = '{{ data_embarque }}';
+        var DATA_EMISSAO = '{{ gta.emissao }}';
+        var DATA_VALIDADE = '{{ gta.validade }}';
+
+        // dd/mm/aaaa -> numero aaaammdd (ou null se a data nao existe)
+        function lerBr(t) {
+            var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(t || '');
+            if (!m) { return null; }
+            var d = parseInt(m[1], 10), mes = parseInt(m[2], 10), a = parseInt(m[3], 10);
+            var dt = new Date(a, mes - 1, d);
+            if (dt.getFullYear() !== a || dt.getMonth() !== mes - 1 || dt.getDate() !== d) { return null; }
+            return a * 10000 + mes * 100 + d;
+        }
+
+        // Mesmas regras do servidor (saida_vincular._validar_data_saida). '' = data ok.
+        function erroDaData(texto) {
+            var v = lerBr(texto);
+            if (v === null) { return 'Data de Saída incorreta! Use o formato dd/mm/aaaa.'; }
+            if (v < lerBr(DATA_EMBARQUE)) { return 'A Data de Saída não pode ser anterior à Data de Embarque (' + DATA_EMBARQUE + ').'; }
+            if (v < lerBr(DATA_EMISSAO) || v > lerBr(DATA_VALIDADE)) {
+                return 'A Data de Saída precisa estar dentro da validade da GTA (' + DATA_EMISSAO + ' a ' + DATA_VALIDADE + ').';
+            }
+            return '';
+        }
+
+        var btn = document.getElementById('btn-vincular');
+        if (btn) {
+            var campoData = document.getElementById('data_saida');
+            var elErro = document.getElementById('erro-form');
+            var chkRevisei = document.getElementById('chk-revisei');
+
+            // Mascara dd/mm/aaaa
+            campoData.addEventListener('input', function () {
+                var d = this.value.replace(/\D/g, '').slice(0, 8);
+                var f = d;
+                if (d.length > 4) { f = d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4); }
+                else if (d.length > 2) { f = d.slice(0, 2) + '/' + d.slice(2); }
+                this.value = f;
+                chkRevisei.checked = false;   // mudou a data: confere de novo
+                atualizar();
+            });
+
+            function contar(cat) {
+                return document.querySelectorAll('.chk[data-cat="' + cat + '"]:checked').length;
+            }
+
+            // Atualiza contadores, cores e o botao
+            function atualizar() {
+                var tudoCerto = true, total = 0;
+                document.querySelectorAll('.bloco-cat').forEach(function (bloco) {
+                    var cat = bloco.getAttribute('data-cat');
+                    var pede = parseInt(bloco.getAttribute('data-pede'), 10);
+                    var n = contar(cat);
+                    total += n;
+                    var cont = document.getElementById('cont-' + cat);
+                    cont.querySelector('.n').textContent = n;
+                    cont.className = 'cont ' + (n === pede ? 'ok' : 'falta');
+                    if (n !== pede) { tudoCerto = false; }
+                });
+                document.getElementById('total-marcado').textContent = total;
+                var msgData = campoData.value.length === 10 ? erroDaData(campoData.value) : '';
+                var elErroData = document.getElementById('erro-data');
+                elErroData.textContent = msgData;
+                elErroData.style.display = msgData ? 'block' : 'none';
+                campoData.classList.toggle('invalido', !!msgData);
+                // "Revisei" so libera com a Data de Saida preenchida e valida (Benedito, Sessao 107)
+                var dataOk = campoData.value.length === 10 && !msgData;
+                chkRevisei.disabled = !dataOk;
+                if (!dataOk) { chkRevisei.checked = false; }
+                if (chkRevisei.parentNode) { chkRevisei.parentNode.style.opacity = dataOk ? '1' : '0.5'; }
+                btn.disabled = !(tudoCerto && dataOk && chkRevisei.checked);
+            }
+
+            // Trava o excesso: nao deixa marcar mais do que a GTA pede na categoria
+            document.querySelectorAll('.chk').forEach(function (chk) {
+                chk.addEventListener('change', function () {
+                    var cat = chk.getAttribute('data-cat');
+                    var bloco = document.querySelector('.bloco-cat[data-cat="' + cat + '"]');
+                    var pede = parseInt(bloco.getAttribute('data-pede'), 10);
+                    if (chk.checked && contar(cat) > pede) {
+                        chk.checked = false;
+                        elErro.textContent = 'Esta categoria já tem os ' + pede + ' animais que a GTA pede. Desmarque outro antes de marcar este.';
+                        elErro.style.display = 'block';
+                    } else {
+                        elErro.style.display = 'none';
+                    }
+                    chk.closest('tr').className = chk.checked ? 'marcada' : '';
+                    chkRevisei.checked = false;   // mudou os animais: confere de novo
+                    atualizar();
+                });
+            });
+
+            chkRevisei.addEventListener('change', atualizar);
+
+            btn.addEventListener('click', function () {
+                elErro.style.display = 'none';
+                btn.disabled = true;
+                var ids = Array.prototype.map.call(document.querySelectorAll('.chk:checked'), function (c) { return parseInt(c.value, 10); });
+                fetch('/produtor/saida-vincular/salvar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_propriedade: ID_PROP, data: ISO, id_gta: ID_GTA, data_saida: campoData.value, ids: ids })
+                }).then(function (r) { return r.json(); }).then(function (d) {
+                    if (d.ok) { window.location.href = d.url; return; }
+                    elErro.textContent = d.erro || 'Não foi possível vincular.';
+                    elErro.style.display = 'block';
+                    atualizar();
+                }).catch(function () {
+                    elErro.textContent = 'Falha de comunicação. Tente novamente.';
+                    elErro.style.display = 'block';
+                    atualizar();
+                });
+            });
+
+            atualizar();
+        }
+
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\saida_vincular_conferencia.html
+     ========================================================= -->

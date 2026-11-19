@@ -1,0 +1,98 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- PASTA:        C:\orion\Tabelas\
+-- MODULO:       Tabelas\alter_tb_4001_gta_nas_por_propriedade_s094.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-10-12 19:40 -03
+-- ATUALIZADO EM: 2026-10-12 19:40 -03
+-- VERSAO:       1.0.0
+--
+-- DESCRICAO:
+--     NAS (Notificacao de Nascimento) com numeracao POR PROPRIEDADE
+--     (decisao de Benedito, Sessao 094): a primeira NAS de cada fazenda
+--     e a NAS0000001. Em TODOS os schemas produtor_NNNNN troca a
+--     constraint uq_tb_4001_gta_uf_serie_numero_sentido por 2 indices
+--     unicos parciais:
+--       1) uq_tb_4001_gta_uf_serie_numero_sentido (mesmo nome) em
+--          (uf_gta, serie_gta, numero_gta_sequencial, sentido)
+--          WHERE serie_gta <> 'NAS'  -> GTA de verdade: jamais repetida.
+--       2) uq_tb_4001_gta_nas_propriedade_numero em
+--          (id_propriedade, numero_gta_sequencial)
+--          WHERE serie_gta = 'NAS'   -> NAS: numero unico por propriedade.
+--     O nome do indice 1 e o mesmo da constraint antiga, entao
+--     backend/utils/gta_duplicada.py (eh_violacao_unicidade_gta)
+--     continua reconhecendo a violacao.
+--
+--     SEGURO: um bloco DO (transacao unica). Nao apaga nem altera
+--     dados. Pode rodar mais de uma vez. Se algum schema ja tiver
+--     NAS repetida na mesma propriedade, PARA sem alterar nada.
+--
+--     REVERSAO (so se nao houver mesmo numero de NAS em propriedades
+--     diferentes do mesmo schema):
+--       DROP INDEX <schema>.uq_tb_4001_gta_uf_serie_numero_sentido;
+--       DROP INDEX <schema>.uq_tb_4001_gta_nas_propriedade_numero;
+--       ALTER TABLE <schema>.tb_4001_gta ADD CONSTRAINT
+--         uq_tb_4001_gta_uf_serie_numero_sentido UNIQUE
+--         (uf_gta, serie_gta, numero_gta_sequencial, sentido);
+--
+--     v1.0.0: Criacao (Sessao 094, 12/10/2026, 19:40 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+    qtd_repetidas INTEGER;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+        ORDER BY schema_name
+    LOOP
+        IF to_regclass(format('%I.%I', schema_rec.schema_name, 'tb_4001_gta')) IS NULL THEN
+            CONTINUE;
+        END IF;
+
+        -- NAS repetida na mesma propriedade? (nao deveria existir) - para tudo.
+        EXECUTE format(
+            'SELECT count(*) FROM (SELECT 1 FROM %I.tb_4001_gta WHERE serie_gta = ''NAS'' GROUP BY id_propriedade, numero_gta_sequencial HAVING count(*) > 1) x',
+            schema_rec.schema_name
+        ) INTO qtd_repetidas;
+        IF qtd_repetidas > 0 THEN
+            RAISE EXCEPTION 'Schema %: % NAS repetida(s) na mesma propriedade. NADA foi alterado em nenhum schema.',
+                schema_rec.schema_name, qtd_repetidas;
+        END IF;
+
+        -- Remove a constraint antiga (se ainda existir).
+        IF EXISTS (
+            SELECT 1 FROM pg_constraint c
+            JOIN pg_namespace n ON n.oid = c.connamespace
+            WHERE n.nspname = schema_rec.schema_name
+              AND c.conname = 'uq_tb_4001_gta_uf_serie_numero_sentido'
+        ) THEN
+            EXECUTE format('ALTER TABLE %I.tb_4001_gta DROP CONSTRAINT uq_tb_4001_gta_uf_serie_numero_sentido', schema_rec.schema_name);
+        END IF;
+
+        -- 1) GTA de verdade (serie diferente de NAS).
+        EXECUTE format(
+            'CREATE UNIQUE INDEX IF NOT EXISTS uq_tb_4001_gta_uf_serie_numero_sentido ON %I.tb_4001_gta (uf_gta, serie_gta, numero_gta_sequencial, sentido) WHERE serie_gta <> ''NAS''',
+            schema_rec.schema_name
+        );
+
+        -- 2) NAS: numero unico por propriedade.
+        EXECUTE format(
+            'CREATE UNIQUE INDEX IF NOT EXISTS uq_tb_4001_gta_nas_propriedade_numero ON %I.tb_4001_gta (id_propriedade, numero_gta_sequencial) WHERE serie_gta = ''NAS''',
+            schema_rec.schema_name
+        );
+    END LOOP;
+END $$;
+
+-- Conferencia: deve listar os 2 indices em cada schema.
+SELECT schemaname, indexname
+FROM pg_indexes
+WHERE tablename = 'tb_4001_gta' AND indexname LIKE 'uq\_tb\_4001\_gta%'
+ORDER BY schemaname, indexname;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_tb_4001_gta_nas_por_propriedade_s094.sql
+-- =========================================================

@@ -1,0 +1,87 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- PASTA:        C:\orion\Tabelas\
+-- MODULO:       Tabelas\alter_tb_4001_gta_unica_uf_serie_numero_sentido_s085.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-10-04 17:50 -03
+-- ATUALIZADO EM: 2026-10-04 17:50 -03
+-- VERSAO:       1.0.0
+--
+-- DESCRICAO:
+--     Trava de GTA UNICA no banco, em TODOS os schemas produtor_NNNNN:
+--     constraint uq_tb_4001_gta_uf_serie_numero_sentido em
+--     tb_4001_gta (uf_gta, serie_gta, numero_gta_sequencial, sentido).
+--
+--     REGRA (Benedito, 04/10/2026): jamais pode haver duas GTAs
+--     iguais - e um documento emitido pelo orgao do Estado. GTA igual
+--     = mesma UF + Serie + Numero + SENTIDO, dentro do mesmo Produtor.
+--     O sentido entra porque a mesma GTA pode existir uma vez como
+--     ENTRADA e outra como SAIDA (Transferencia entre Propriedades do
+--     mesmo Produtor). Zeros a esquerda contam (comparacao exata).
+--
+--     E a segunda barreira: a primeira e a checagem com mensagem clara
+--     no codigo (backend/utils/gta_duplicada.py). Esta garante o "jamais"
+--     mesmo se uma rota esquecer de checar ou se duas pessoas salvarem
+--     a mesma GTA ao mesmo tempo.
+--
+--     SEGURO: se algum schema ja tiver GTA repetida, o script PARA com
+--     uma mensagem dizendo qual schema e quantas repetidas - e NAO
+--     altera NADA (o bloco DO e uma transacao unica: tudo ou nada).
+--     Pode rodar mais de uma vez - nao da erro se a constraint ja
+--     existe. Nao apaga nem altera nenhum dado.
+--
+--     Produtor NOVO: ja nasce com a constraint, porque a tb_4001_gta e
+--     criada pelo onboarding a partir do model backend\models\
+--     tb_4001_gta.py v1.7.0 (instalar o model junto).
+--
+--     v1.0.0: Criacao (Sessao 085, 04/10/2026, 17:50 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+    qtd_repetidas INTEGER;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+        ORDER BY schema_name
+    LOOP
+        -- Schema sem a tabela: nada a fazer.
+        IF to_regclass(format('%I.%I', schema_rec.schema_name, 'tb_4001_gta')) IS NULL THEN
+            CONTINUE;
+        END IF;
+
+        -- Ja tem a constraint: nada a fazer.
+        IF EXISTS (
+            SELECT 1
+            FROM pg_constraint c
+            JOIN pg_namespace n ON n.oid = c.connamespace
+            WHERE n.nspname = schema_rec.schema_name
+              AND c.conname = 'uq_tb_4001_gta_uf_serie_numero_sentido'
+        ) THEN
+            CONTINUE;
+        END IF;
+
+        -- Confere GTA repetida ANTES de criar - se existir, para tudo.
+        EXECUTE format(
+            'SELECT count(*) FROM (SELECT 1 FROM %I.tb_4001_gta GROUP BY uf_gta, serie_gta, numero_gta_sequencial, sentido HAVING count(*) > 1) x',
+            schema_rec.schema_name
+        ) INTO qtd_repetidas;
+
+        IF qtd_repetidas > 0 THEN
+            RAISE EXCEPTION 'Schema %: % GTA(s) repetida(s) (UF + Serie + Numero + sentido). NADA foi alterado em nenhum schema. Resolva as repetidas e rode de novo.',
+                schema_rec.schema_name, qtd_repetidas;
+        END IF;
+
+        EXECUTE format(
+            'ALTER TABLE %I.tb_4001_gta ADD CONSTRAINT uq_tb_4001_gta_uf_serie_numero_sentido UNIQUE (uf_gta, serie_gta, numero_gta_sequencial, sentido)',
+            schema_rec.schema_name
+        );
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_tb_4001_gta_unica_uf_serie_numero_sentido_s085.sql
+-- =========================================================

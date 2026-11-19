@@ -1,0 +1,115 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\3_create_tb_2012_com_entrada.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-14 17:10 -03
+-- ATUALIZADO EM: 2026-10-04 17:50 -03
+-- VERSAO: 1.1.0
+--
+-- DESCRICAO:
+--     Sessao 052 (14/09/2026) - Modulo Gerar Comunicado.
+--     Cria tb_2012_com_entrada em TODOS os schemas produtor_NNNNN
+--     (tabela POR-PRODUTOR, mesma classificacao de tb_2001/
+--     tb_4001_gta - numero_comunicado e sequencial por
+--     Propriedade DENTRO do proprio schema do Produtor, entao a
+--     tabela precisa viver la, nao no schema public).
+--
+--     1 LINHA POR GTA dentro de um Comunicado (um Comunicado com
+--     3 GTAs gera 3 linhas, todas com o mesmo numero_comunicado -
+--     ver Imagem 01 do dicionario de dados real mostrado por
+--     Benedito, Sessao 052).
+--
+--     CAMPO NOVO, fora da lista original de 16 campos do legado -
+--     id_gta (FK interna para tb_4001_gta.id, MESMO SCHEMA, sem
+--     prefixo public.): sugestao do Claude para permitir JOIN
+--     confiavel com a GTA de origem (o legado so guardava o
+--     NUMERO em texto, gta_numero, sem link real) - PENDENTE DE
+--     CONFIRMACAO por Benedito antes de aplicar em producao.
+--
+--     tipo_entrada reaproveita o ENUM publico tipo_entrada_enum
+--     (ja usado por tb_2001.tipo_entrada) - so os valores COMPRA e
+--     TRANSFERENCIA sao usados aqui de fato, mas nao ha necessidade
+--     de criar um ENUM novo so para restringir ainda mais.
+--
+--     SEM indice unico em (id_propriedade_destino, numero_comunicado)
+--     (v1.1.0): a tabela guarda 1 LINHA POR GTA e um Comunicado tem de
+--     1 ate 6 GTAs, entao o MESMO numero se repete em ate 6 linhas da
+--     mesma Propriedade - um indice unico nesse par recusaria a 2a GTA
+--     de qualquer Comunicado. A numeracao fica protegida pelo
+--     pg_advisory_xact_lock + MAX + 1 do Gerar Comunicado.
+--
+--     IDEMPOTENTE: CREATE TABLE IF NOT EXISTS.
+--
+--     v1.0.0: Criacao (Sessao 052).
+--     v1.1.0: Sessao 085 (04/10/2026, 17:50 -03) - REMOVIDO o CONSTRAINT
+--             uq_tb_2012_propriedade_numero do CREATE TABLE. Este script
+--             e rodado de novo quando nasce um Produtor novo; com a trava
+--             ela voltaria ao banco e travaria o Gerar Comunicado com 2 ou
+--             mais GTAs (exemplo real do legado: Comunicado 000008 com 4
+--             GTAs). Nos schemas JA existentes a trava foi removida por
+--             Tabelas\drop_uq_tb_2012_propriedade_numero_s085.sql. Nenhuma
+--             outra mudanca neste script.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format($sql$
+            CREATE TABLE IF NOT EXISTS %I.tb_2012_com_entrada (
+                id                          SERIAL PRIMARY KEY,
+
+                -- Destino (Propriedade/Produtor do proprio schema)
+                id_propriedade_destino       INTEGER NOT NULL REFERENCES public.propriedades(id),
+                cpf_cnpj_produtor_destino    VARCHAR(18),
+
+                -- Numeracao oficial do Comunicado (sequencial por
+                -- Propriedade destino, com pg_advisory_xact_lock)
+                numero_comunicado            INTEGER NOT NULL,
+
+                -- GTA incluida neste Comunicado (1 linha por GTA)
+                id_gta                       INTEGER REFERENCES tb_4001_gta(id),
+                gta_numero                   VARCHAR(30) NOT NULL,
+                gta_data_emissao             DATE,
+                gta_data_validade            DATE,
+                data_brincagem               DATE,
+                gta_data_entrega             DATE,
+                qtd_animais                  INTEGER,
+
+                -- Liberacao para Abate (copiada de tb_2001.liberacao_abate
+                -- - data_brincagem + 90 dias, ja calculada la, nunca
+                -- recalculada aqui)
+                data_liberacao_abate         DATE,
+
+                -- Auditoria de geracao (protege a Plataforma: prova
+                -- quando o Comunicado foi de fato gerado, mesmo que a
+                -- impressao/envio aconteca dias depois)
+                data_inclusao                DATE NOT NULL DEFAULT CURRENT_DATE,
+
+                -- Origem (Parceiro/Propriedade externa - mesmo schema
+                -- do Produtor, sem prefixo public., mesmo padrao de
+                -- tb_4001_gta.id_parceiro_propriedade)
+                id_parceiro_propriedade      INTEGER REFERENCES tb_parceiros_propriedades(id),
+                cpf_cnpj_produtor_origem     VARCHAR(18),
+
+                tipo_entrada                 public.tipo_entrada_enum,
+
+                -- Status/Impressao
+                status                       VARCHAR(20) NOT NULL DEFAULT 'ABERTO',
+                data_envio                   DATE,
+
+                criado_em                    TIMESTAMP NOT NULL DEFAULT now(),
+                atualizado_em                TIMESTAMP NOT NULL DEFAULT now()
+            )
+        $sql$, schema_rec.schema_name);
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\3_create_tb_2012_com_entrada.sql
+-- =========================================================

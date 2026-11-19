@@ -1,0 +1,121 @@
+-- ============================================================
+-- PROJETO: Orion SISBOV
+-- PASTA: database/scripts
+-- MODULO: pessoas_proprietarios_produtores
+-- AUTOR: Clau (Claude Sonnet 5) - Consiste Informatica
+-- CRIADO EM: 06/07/2026 10:20
+-- ATUALIZADO EM: 06/07/2026 10:20
+-- VERSAO: 1.0.0
+-- DESCRICAO: Criacao das tabelas pessoas, proprietarios e produtores.
+--            A tabela pessoas centraliza os dados compartilhados entre
+--            Proprietario e Produtor (CPF/CNPJ, nome, endereco, contato),
+--            evitando duplicidade quando a mesma pessoa atua nos dois papeis.
+--            As tabelas proprietarios e produtores sao tabelas de vinculo
+--            (papel), referenciando pessoas via id_pessoa.
+--            Campos nome_responsavel/cpf_responsavel atendem o caso de
+--            Produtor pessoa juridica (CNPJ), que precisa identificar
+--            o responsavel legal (mesmo padrao ja usado no GERAS).
+--
+-- CHANGELOG:
+-- v1.0.0 - 06/07/2026 - Criacao inicial das 3 tabelas + triggers atualizado_em
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- TABELA: pessoas
+-- ------------------------------------------------------------
+CREATE TABLE pessoas (
+    id                  SERIAL PRIMARY KEY,
+    tipo_documento      VARCHAR(4) NOT NULL,
+    cpf_cnpj            VARCHAR(14) NOT NULL UNIQUE,
+    nome                VARCHAR(150) NOT NULL,
+    nome_responsavel    VARCHAR(150),
+    cpf_responsavel     VARCHAR(11),
+    logradouro          VARCHAR(150) NOT NULL,
+    numero              VARCHAR(10) NOT NULL,
+    bairro              VARCHAR(80) NOT NULL,
+    cep                 VARCHAR(8) NOT NULL,
+    uf                  VARCHAR(2) NOT NULL,
+    municipio           VARCHAR(80) NOT NULL,
+    telefone            VARCHAR(11) NOT NULL,
+    telefone2           VARCHAR(11),
+    email               VARCHAR(150),
+    ativo               BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_pessoas_tipo_documento
+        CHECK (tipo_documento IN ('CPF', 'CNPJ')),
+
+    -- garante que CPF tenha 11 digitos e CNPJ tenha 14 digitos
+    CONSTRAINT chk_pessoas_tamanho_documento
+        CHECK (
+            (tipo_documento = 'CPF'  AND LENGTH(cpf_cnpj) = 11) OR
+            (tipo_documento = 'CNPJ' AND LENGTH(cpf_cnpj) = 14)
+        )
+);
+
+-- funcao e trigger dedicados (padrao do projeto: um trigger por tabela)
+CREATE OR REPLACE FUNCTION trg_pessoas_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_pessoas_atualizado_em
+    BEFORE UPDATE ON pessoas
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_pessoas_atualizado_em();
+
+
+-- ------------------------------------------------------------
+-- TABELA: proprietarios (vinculo/papel)
+-- ------------------------------------------------------------
+CREATE TABLE proprietarios (
+    id                  SERIAL PRIMARY KEY,
+    id_pessoa           INTEGER NOT NULL REFERENCES pessoas(id),
+    ativo               BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION trg_proprietarios_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_proprietarios_atualizado_em
+    BEFORE UPDATE ON proprietarios
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_proprietarios_atualizado_em();
+
+
+-- ------------------------------------------------------------
+-- TABELA: produtores (vinculo/papel)
+-- ------------------------------------------------------------
+CREATE TABLE produtores (
+    id                  SERIAL PRIMARY KEY,
+    id_pessoa           INTEGER NOT NULL REFERENCES pessoas(id),
+    ativo               BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION trg_produtores_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_produtores_atualizado_em
+    BEFORE UPDATE ON produtores
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_produtores_atualizado_em();
+
+-- FIM DE ARQUIVO

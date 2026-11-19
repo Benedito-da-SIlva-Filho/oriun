@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_fornecedor_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-01 11:00 -03
+     ATUALIZADO EM: 2026-09-21 17:20
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Listagem SOMENTE LEITURA dos Fabricantes de Brincos
+         (tb_1021_fabricantes_brincos, schema public). Sem busca,
+         sem botao "+ Novo", sem Editar/Inativar - e catalogo de
+         consulta, nao cadastro (decisao de Benedito, Sessao 043).
+
+         Layout em CARDS EMPILHADOS (nao tabela) - decisao de
+         Benedito, Sessao 043: com 9 campos por Fabricante
+         (Cadastro Completo), tabela ficaria apertada demais.
+         1 card por Fabricante, logo em miniatura a esquerda,
+         dados completos ao lado, selo Ativo/Inativo no canto.
+
+         Variaveis esperadas do router:
+           fabricantes - lista de SimpleNamespace(id, nome, logo,
+                         endereco, complemento, bairro, cidade,
+                         uf, cep, ativo)
+
+     v1.0.0: Criacao do modulo (Sessao 043, 01/09/2026, 11:00 -03).
+     v1.1.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Destino do
+         Voltar (fixo para /produtor/hub/brincos) definido antes
+         do include, exatamente como ja era antes - sem mudanca
+         de comportamento, sem precisar alterar o router. Unico
+         caminho de acesso a esta tela (Regra de Ouro #9 nao se
+         aplica - sinalizado no chat: se no futuro esta tela
+         passar a ser acessivel por mais de um caminho, revisar).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Fornecedor de Brincos</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .lista-cards { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
+
+        .card-fabricante { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 18px 20px; display: flex; gap: 18px; align-items: flex-start; position: relative; }
+
+        .logo-fabricante { width: 76px; height: 76px; border-radius: 8px; border: 1px solid #e0e0e0; background: #f7f7f7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+        .logo-fabricante img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .logo-fabricante .sem-logo { font-size: 26px; color: #cccccc; }
+
+        .dados-fabricante { flex: 1; }
+        .nome-fabricante { font-size: 16px; font-weight: bold; color: #333333; margin-bottom: 6px; padding-right: 90px; }
+        .endereco-fabricante { font-size: 13px; color: #666666; line-height: 1.6; }
+        .endereco-fabricante .linha-vazia { color: #aaaaaa; font-style: italic; }
+
+        .status-ativo { color: #2e7d32; font-weight: bold; font-size: 12px; position: absolute; top: 18px; right: 20px; }
+        .status-inativo { color: #c62828; font-weight: bold; font-size: 12px; position: absolute; top: 18px; right: 20px; }
+
+        .vazio { text-align: center; padding: 40px; color: #999999; font-size: 14px; background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; max-width: 900px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/hub/brincos' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#127991;&#65039;</span> Fornecedor de Brincos</h2>
+            </div>
+
+            {% if fabricantes %}
+            <div class="lista-cards">
+                {% for f in fabricantes %}
+                <div class="card-fabricante">
+                    <div class="logo-fabricante">
+                        {% if f.logo %}
+                        <img src="{{ url_for('static', filename='img/' + f.logo) }}" alt="Logo {{ f.nome }}">
+                        {% else %}
+                        <span class="sem-logo">&#127991;&#65039;</span>
+                        {% endif %}
+                    </div>
+                    <div class="dados-fabricante">
+                        <div class="nome-fabricante">{{ f.nome }}</div>
+                        <div class="endereco-fabricante">
+                            {% if f.endereco or f.complemento or f.bairro or f.cidade %}
+                                {{ f.endereco or '' }}{% if f.complemento %} &#8212; {{ f.complemento }}{% endif %}<br>
+                                {% if f.bairro %}{{ f.bairro }} &#8212; {% endif %}{{ f.cidade or '-' }} / {{ f.uf or '-' }}{% if f.cep %} &#8212; CEP {{ f.cep }}{% endif %}
+                            {% else %}
+                            <span class="linha-vazia">Endereço não cadastrado.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if f.ativo %}
+                    <span class="status-ativo">&#9679; Ativo</span>
+                    {% else %}
+                    <span class="status-inativo">&#9679; Inativo</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vazio">Nenhum Fabricante de Brincos cadastrado ainda.</div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_fornecedor_lista.html
+     ========================================================= -->

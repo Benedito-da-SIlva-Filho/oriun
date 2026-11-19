@@ -1,0 +1,60 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\alter_tb_2012_impressao_s091.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-08 20:45 -03
+-- ATUALIZADO EM: 2026-10-08 20:45 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 091 - Registro de QUEM e QUANDO imprimiu o Comunicado de
+--     Entrada. Duas colunas novas em tb_2012_com_entrada, em TODOS os
+--     schemas produtor_NNNNN:
+--       - impresso_em          TIMESTAMP  (data E HORA da 1a impressao)
+--       - id_usuario_impressao INTEGER    (usuario que imprimiu)
+--     Ambas aceitam vazio: comunicados ja IMPRESSOS antes desta sessao
+--     ficam sem hora (a tela mostra so a data_envio, como ate aqui).
+--     Pode rodar mais de uma vez sem erro (IF NOT EXISTS).
+--     RODAR ANTES de instalar os arquivos novos (o model passa a ler as
+--     colunas; sem elas a Impressao/Reimpressao dao erro).
+--
+--   v1.0.0: Criacao (Sessao 091).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+          FROM information_schema.schemata
+         WHERE schema_name LIKE 'produtor_%'
+         ORDER BY schema_name
+    LOOP
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables
+             WHERE table_schema = schema_rec.schema_name
+               AND table_name   = 'tb_2012_com_entrada'
+        ) THEN
+            EXECUTE format(
+                'ALTER TABLE %I.tb_2012_com_entrada ADD COLUMN IF NOT EXISTS impresso_em TIMESTAMP',
+                schema_rec.schema_name
+            );
+            EXECUTE format(
+                'ALTER TABLE %I.tb_2012_com_entrada ADD COLUMN IF NOT EXISTS id_usuario_impressao INTEGER',
+                schema_rec.schema_name
+            );
+        END IF;
+    END LOOP;
+END $$;
+
+-- Conferencia (deve listar as 2 colunas em cada schema):
+SELECT table_schema, column_name FROM information_schema.columns
+ WHERE table_name = 'tb_2012_com_entrada'
+   AND column_name IN ('impresso_em','id_usuario_impressao')
+ ORDER BY table_schema, column_name;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_tb_2012_impressao_s091.sql
+-- =========================================================

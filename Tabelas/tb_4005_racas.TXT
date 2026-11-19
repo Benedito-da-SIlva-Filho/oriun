@@ -1,0 +1,165 @@
+-- =============================================================
+-- PROJETO: Orion SISBOV
+-- PASTA: database/scripts/catalogos
+-- MODULO: tb_4005_racas
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 25/07/2026 08:51 -03
+-- ATUALIZADO EM: 25/07/2026 08:51 -03
+-- VERSAO: 1.0.0
+-- DESCRICAO: Catalogo oficial de Racas SISBOV (108 valores no
+--            legado, 107 no seed). Origem: GR4005 (GERAS) -
+--            pasta 4-Animais.
+--            Registro "AA" (sem descricao) do legado foi
+--            INTENCIONALMENTE ignorado - mesma decisao ja
+--            aplicada em tb_4004_aptidao (lixo residual, tela
+--            deve oferecer "Selecione...").
+--            A flag booleana do legado (True somente para a raca
+--            que aquele Produtor especifico trabalha) NAO faz
+--            parte deste catalogo global - ela representa uma
+--            filtragem por Produtor sobre o catalogo unico e
+--            oficial (vinculo Produtor<->Raca fica para desenho
+--            futuro, pendencia ja registrada na Referencia).
+--            Correcao de encoding aplicada em 9 descricoes que
+--            vieram com caracteres quebrados no export original
+--            (cp1252 -> UTF-8): BS, CH, CZ, GT, HO, MD, PI, RW, SB, TB.
+--            Schema publico. Trigger dedicada (nao compartilhada).
+-- CHANGELOG:
+--   v1.0.0 - 25/07/2026 - Criacao inicial (tabela + trigger + seed) - Benedito Silva Filho
+-- =============================================================
+
+-- 1) TABELA
+CREATE TABLE public.tb_4005_racas (
+    id              SERIAL PRIMARY KEY,
+    codigo          VARCHAR(2) NOT NULL UNIQUE,
+    descricao       VARCHAR(60) NOT NULL,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.tb_4005_racas IS 'Catalogo oficial de Racas SISBOV - origem GR4005 (GERAS). Registro AA do legado intencionalmente fora do seed.';
+
+-- 2) TRIGGER DEDICADA (atualizado_em)
+CREATE OR REPLACE FUNCTION public.trg_tb_4005_racas_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_4005_racas_atualizado_em
+BEFORE UPDATE ON public.tb_4005_racas
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_tb_4005_racas_atualizado_em();
+
+-- 3) SEED (dados reais do GR4005.TXT - 107 racas, codigo "AA" fora do seed)
+INSERT INTO public.tb_4005_racas (codigo, descricao) VALUES
+('AF', 'Africander'),
+('AN', 'Aberdeen Angus'),
+('AR', 'Red Angus'),
+('AU', 'Aubrac'),
+('AY', 'Ayrshire'),
+('BA', 'Barzona'),
+('BB', 'Belgian Blue'),
+('BD', 'Blonde D''Aquitaine'),
+('BE', 'Beefalo'),
+('BH', 'Brahmental'),
+('BL', 'Braler'),
+('BM', 'Beefmaster'),
+('BN', 'Brangus'),
+('BO', 'Braford'),
+('BR', 'Brahman'),
+('BS', 'Pardo Suíço Leite Brown Swuiss'),
+('BT', 'Belmont Red'),
+('CA', 'Chianina'),
+('CB', 'Charbray'),
+('CC', 'Canchim'),
+('CG', 'Kangaian'),
+('CH', 'Charolês'),
+('CL', 'Curraleiro'),
+('CN', 'Canadiense'),
+('CO', 'Carabao'),
+('CP', 'Campino Red Pied'),
+('CR', 'Caracu'),
+('CZ', 'Guzerá'),
+('DB', 'Danish Black & White'),
+('DE', 'Devon'),
+('DR', 'Dexter'),
+('DS', 'South Devon'),
+('ER', 'Eringer'),
+('FA', 'Flamenga'),
+('FP', 'East Fleming Red Pied'),
+('FR', 'Fribourg'),
+('GA', 'Galloway'),
+('GD', 'Guzolando'),
+('GH', 'Gir Leiteiro Mocho'),
+('GI', 'Grauvieh'),
+('GL', 'Gir Leiteiro'),
+('GM', 'Gir Mocho'),
+('GO', 'Gyrolando'),
+('GR', 'Gronninger'),
+('GS', 'Gascone'),
+('GT', 'Guzerá Leiteiro'),
+('GU', 'Guernsev'),
+('GV', 'Gelbvieh'),
+('GY', 'Gir'),
+('HC', 'Hays Converter'),
+('HH', 'Hereford'),
+('HI', 'Highland'),
+('HO', 'Holandês'),
+('HP', 'Hereford Mocho'),
+('IB', 'Indubrasil'),
+('JA', 'Jafarabadi'),
+('JE', 'Jersey'),
+('KB', 'Kobe (Wagyu)'),
+('LA', 'Lavinia'),
+('LM', 'Limousin'),
+('LR', 'Lincoln Red'),
+('LU', 'Luing'),
+('MA', 'Maine-Anjou'),
+('MD', 'Mediterrâneo'),
+('ME', 'Maremmana'),
+('MG', 'Murray Gray'),
+('MI', 'Mueserhineissel'),
+('MR', 'Marchigiana'),
+('NE', 'Nelore'),
+('NM', 'Nelore Mocho'),
+('NO', 'Normando'),
+('NR', 'Norwegian Red'),
+('NS', 'Bonsmara'),
+('PA', 'Pathenais'),
+('PI', 'Piemontês'),
+('PN', 'Pantaneiro'),
+('PR', 'Pirenaico'),
+('PT', 'Pitangueiras'),
+('PZ', 'Pinzgauer'),
+('RA', 'Ranger'),
+('RB', 'Red Brangus'),
+('RD', 'Red Dane'),
+('RG', 'Rubia Galega'),
+('RN', 'Romagnola'),
+('RW', 'Dinamarquês Vermelho'),
+('SB', 'Pardo Suíço (Brown Swiss Beef)'),
+('SD', 'Sindi'),
+('SE', 'Senepol'),
+('SG', 'Santa Gertrudis'),
+('SI', 'Simbrasil'),
+('SL', 'Salers'),
+('SM', 'Simental'),
+('SN', 'Senangus'),
+('SO', 'Siboney'),
+('SS', 'Shorton (Beef)'),
+('SW', 'Sahiwal'),
+('SX', 'Sussex'),
+('TA', 'Tarentaise'),
+('TB', 'Tabapuã'),
+('TG', 'Tasmanian Grey'),
+('TI', 'Tuli'),
+('TX', 'Texas Longhorn'),
+('UM', 'Murrah'),
+('WB', 'Welsh Black'),
+('WF', 'West Flemish Rer'),
+('WW', 'Holandes Vermelho'),
+('XX', 'Composto');
+
+-- FIM DE ARQUIVO

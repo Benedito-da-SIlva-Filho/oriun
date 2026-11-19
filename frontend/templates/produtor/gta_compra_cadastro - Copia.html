@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_compra_cadastro.html
+     AUTOR: Benedito Silva Filho.
+     CRIADO EM: 2026-07-29 12:49 -03
+     ATUALIZADO EM: 2026-10-05 11:05 -03
+     VERSAO: 2.16.0
+
+     DESCRICAO:
+         Formulario de leitura/cadastro de GTA de Entrada por
+         Compra. Plataforma Produtor/Fazenda — requer perfil
+         PRODUTOR ou FAZENDA. Menu lateral via include
+         produtor/produtor_menu.html.
+
+         LAYOUT (Sessao 026 a Sessao 029 + Sessao 034 continuacao):
+         - Titulos de secao em destaque (17px).
+         - UF/Serie/Numero/Emissao/Validade/Entrega usam a classe
+           .campo-destaque (fonte 18px bold) - Entrega ganhou o
+           destaque na v2.7.0, junto com os demais campos de
+           identificacao/data da tela.
+         - Serie e mais estreita (col-1) desde a v2.5.0. Emissao/
+           Validade em col-2 (largura original, revertida na v2.6.0
+           apos a v2.5.0 ter empurrado a Entrega pra linha de baixo).
+         - TRAVA DE DIGITACAO (v2.6.0): todos os campos vindos do
+           documento fisico da GTA sao readonly - usuario so
+           confere, nao edita. EXCECAO: Data de Entrega continua
+           digitavel (informacao do Destinatario, nao do documento).
+         - NAVEGACAO POR TAB (Sessao 034 continuacao, v2.7.0):
+           campos readonly recebem tabIndex = -1 via JavaScript,
+           tirando-os da ordem de navegacao por TAB - o usuario
+           ainda pode clicar neles pra copiar/conferir, mas o TAB
+           pula direto pra Entrega e pros 4 checkboxes de
+           confirmacao, sem parar em cada campo travado no meio do
+           caminho. Aplicado via
+           querySelectorAll('input[readonly]') dentro do bloco de
+           inicializacao - nao precisa editar tabindex campo a
+           campo no HTML.
+         - MASCARA DE DATA (v2.6.0): Emissao, Validade e Entrega
+           inserem "/" automaticamente ao digitar.
+         - Procedencia e Destino lado a lado, espelhados, com
+           divisor vertical entre os dois (igual ao papel).
+         - Animais: tabela SEM botao de adicionar/excluir linha
+           (v2.4.0), campos readonly (v2.6.0).
+         - TRAVA DO BOTAO SALVAR (v2.5.0): so habilita quando os 4
+           checkboxes estao marcados E todos os campos required
+           estao preenchidos.
+         - TELA DE ACESSO (quando gta e None - Sessao 029 a 056):
+           3 CARDS VISUAIS (v2.14.0), estilo 3D/cartoon igual aos
+           cards de Hub (ver Padrao de organizacao de imagens de
+           Hub) - substituem a antiga dropzone + botoes de texto.
+
+         v1.0.0 a v2.6.0: ver historico anterior (nao repetido aqui).
+         v2.7.0: Sessao 034 (continuacao, 07/08/2026) - 2 ajustes
+             pedidos por Benedito apos novo teste real:
+               (1) Data de Entrega ganhou a classe .campo-destaque
+                   (fonte maior), igual aos demais campos de
+                   identificacao/data da tela;
+               (2) Navegacao por TAB: campos readonly tiram
+                   tabIndex via JS, TAB pula direto pra Entrega e
+                   pros checkboxes - Benedito identificou que
+                   navegar por TAB em campos que nao recebem
+                   digitacao e perda de tempo pro usuario.
+         v2.8.0: Sessao 034 (continuacao 4, 10/08/2026) - Adicionados
+             2 campos hidden novos: procedencia_municipio_codigo e
+             destino_municipio_codigo (codigo oficial do Municipio,
+             ex.: 5006408 - ja vinha no documento mas so o nome era
+             capturado ate agora, ver leitor_ms_iagro.py v1.1.0).
+             Mesmo padrao ja usado por arquivo_pdf_caminho/
+             arquivo_pdf_hash: viaja escondido no formulario, sem
+             nenhuma mudanca visivel na tela. Motivo: alimentar a
+             futura funcao resolver_parceiro() (backend/servicos/),
+             que precisa do codigo do Municipio para a cascata de
+             busca em tb_parceiros_propriedades. NAO MEXE em nenhum
+             campo ou comportamento ja validado em producao.
+         v2.9.0: Sessao 034 (continuacao 9, 13/08/2026, 19:10 -03) -
+             Cracha "PRODUTOR" removido do topo para este perfil
+             (mesma decisao de produtor_home.html v1.1.0 - ver
+             changelog la para o motivo completo).
+         v2.10.0: Sessao 036 (21/08/2026, 13:10 -03) - Adicionado
+             link "PREENCHIMENTO MANUAL DA GTA" logo abaixo da
+             dropzone, apontando para /produtor/parceiro-manual -
+             primeiro passo do fluxo manual (resolve/cadastra a
+             Procedencia antes de abrir a GTA Manual propriamente
+             dita). Disponivel em 2 situacoes: quando a leitura
+             automatica falha, ou por opcao direta do usuario, sem
+             nem tentar o upload do PDF. PENDENCIA: a GTA Manual em
+             si (backend/routers/gta_manual.py) ainda nao existe -
+             o link ja funciona ate o Cadastro Manual de Parceiro,
+             que hoje redireciona para uma URL que ainda da 404.
+         v2.11.0: Sessao 036 (21/08/2026, 13:20 -03) - A pedido de
+             Benedito, link "PREENCHIMENTO MANUAL DA GTA" ficou
+             maior e mais visivel: virou um bloco com borda e fundo
+             destacados (mesmo tom rosado do padrao .confirma-
+             quadro), emoji em 26px, texto em 18px - antes era so
+             um link discreto de 13.5px, pouco perceptivel.
+         v2.12.0: Sessao 037/038 (21/08/2026, 19:55 -03) - DOIS
+             pontos resolvidos, fechando o ciclo de acesso desta
+             sessao: (1) CORRECAO DE BUG real: o link "PREENCHIMENTO
+             MANUAL DA GTA" apontava direto para
+             /produtor/parceiro-manual, PULANDO a resolucao de
+             Propriedade (/produtor/gta-manual/iniciar) - construida
+             DEPOIS deste link, especificamente para Produtor com
+             mais de uma Propriedade (ex.: Claudenor Zopone Junior).
+             Corrigido: link agora aponta para
+             /produtor/gta-manual/iniciar; (2) NOVO botao "CONSULTAR
+             GTAs" adicionado ao LADO do link manual (nao embaixo),
+             ambos dividindo a largura em 2 colunas iguais dentro do
+             mesmo container de 1100px - dimensionamento conferido
+             contra a tela real enviada por Benedito (botao unico
+             ocupava a largura toda; com 2 botoes lado a lado, cada
+             um fica com area confortavel para o emoji + texto, sem
+             apertar). Aponta para /produtor/gta-consulta/iniciar -
+             ate esta versao, a Consulta de GTAs (gta_consulta.py)
+             nao tinha NENHUM ponto de acesso visivel no sistema.
+         v2.13.0: Sessao 037/038 (21/08/2026, 20:20 -03) -
+             CORRECAO DE BUG real apontada por Benedito: o botao
+             unico "Voltar" do topo estava fixo em
+             /produtor/home, mesmo esta tela sendo alcancada a
+             partir do Hub de Entrada (/produtor/hub/entrada, card
+             "GTA Compra") - clicar em Voltar pulava o Hub e ia
+             direto pra Home. Separado em 2 botoes: "Voltar"
+             (volta para /produtor/hub/entrada, de onde a tela
+             realmente e alcancada) e "Home" (icone de casa, vai
+             direto para /produtor/home) - agora o usuario escolhe
+             entre os dois destinos, em vez de um unico botao
+             ambiguo.
+         v2.14.0: Sessao 056 (18/09/2026, 11:30 -03) - Tela de
+             acesso (dropzone de upload + 2 botoes de texto)
+             SUBSTITUIDA por 3 CARDS VISUAIS, a pedido de Benedito,
+             seguindo o mesmo padrao estetico dos cards de Hub
+             (moldura .card-hub copiada literalmente de
+             hub_generico.html v1.2.0 - Regra de Ouro #5, nunca
+             inventada): "Importar e-GTA (PDF)", "GTA Preenchimento
+             Manual", "Consultar GTAs", nesta ordem (mesma ordem
+             visual anterior). Imagens definitivas, confirmadas por
+             Benedito, salvas em img/hubs/entrada/:
+               - importar_egta.jpg
+               - gta_manual.jpg
+               - consultar_gtas.jpg
+             Nenhum destino mudou: "GTA Preenchimento Manual"
+             continua indo para /produtor/gta-manual/iniciar;
+             "Consultar GTAs" continua indo para
+             /produtor/gta-consulta/iniciar; "Importar e-GTA"
+             continua submetendo para gta_compra.ler (POST) - so a
+             INTERACAO mudou: antes era clicar/arrastar numa caixa
+             pontilhada com texto, agora e clicar (ou arrastar) no
+             card da imagem, que abre o seletor de arquivo e envia
+             automaticamente ao escolher o PDF (mesmo comportamento
+             de antes, input file escondido reaproveitado). Estado
+             de "Lendo o documento..." (antes escrito dentro da
+             dropzone) passa a aparecer como uma mensagem abaixo dos
+             3 cards, com os cards desabilitados visualmente
+             (opacidade reduzida) durante o processamento. CSS antigo
+             .dropzone/.dropzone-icone/.dropzone-titulo/.dropzone-
+             subtitulo/.linha-acoes-extra/.link-manual/.link-consulta
+             REMOVIDO (nao usado mais); substituido por
+             .cards-acesso-gta (grade) + .card-hub (moldura, igual
+             hub_generico.html) + .status-upload (mensagem de
+             processamento). Nenhuma outra tela, rota ou campo do
+             formulario principal (quando gta existe) foi alterado.
+         v2.15.0: Sessao 076 (21/09/2026, 17:27 -03) - TOPO e RODAPE
+             substituidos por comandos de INCLUDE das pecas-mestras
+             produtor_topo.html / produtor_rodape.html. Voltar
+             (fixo para /produtor/hub/entrada desde a v2.13.0)
+             passado via um comando de atribuicao antes do include -
+             mesmo destino de sempre, sem mudanca de comportamento.
+             Home continua aparecendo normalmente (mostrar_home
+             default True). Botao "Cancelar" dentro do formulario
+             (quando gta existe) NAO mexido - continua apontando
+             para /produtor/home, sem relacao com o Voltar do topo.
+     v2.16.0: Sessao 087 (05/10/2026, 11:05 -03) - VOLTAR PELO CAMINHO
+         INVERSO (Regra de Ouro #4, pedido de Benedito): no formulario de
+         leitura do e-GTA, o botao Cancelar ia para a Home e o Voltar do
+         topo ia para o Hub de Entrada, pulando a tela dos 3 cards (onde
+         o usuario escolheu Importar e-GTA). Agora os dois voltam para
+         /produtor/entrada/compra/nova. Na propria tela dos 3 cards o
+         Voltar do topo continua indo para o Hub de Entrada. Nenhuma
+         outra mudanca de HTML, CSS ou JavaScript.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; GTA de Entrada &#8212; Compra</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include produtor_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 36px; line-height: 1; }
+
+        /* ---- Formulario ---- */
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1100px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-1  { grid-column: span 1; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+
+        /* ---- Destaque visual de UF/Serie/Numero/Emissao/Validade/
+             Entrega ---- */
+        .campo-destaque input { font-size: 18px; font-weight: bold; }
+
+        /* ---- Campos travados (v2.6.0) ---- */
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+
+        /* ---- Procedencia / Destino lado a lado ---- */
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; }
+        .divisor-vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+        .linha-dupla { display: flex; gap: 12px; margin-bottom: 12px; }
+        .linha-dupla .form-group.maior { flex: 1.5; }
+        .linha-dupla .form-group.menor { flex: 1; }
+        .linha-dupla .form-group.uf { flex: 0.5; }
+        .linha-dupla .form-group.municipio { flex: 2.2; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .sucesso { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #2e7d32; margin-bottom: 16px; }
+
+        /* ---- Tela de acesso: 3 cards visuais (Sessao 056, v2.14.0)
+             Moldura .card-hub copiada literalmente de
+             hub_generico.html v1.2.0 (Regra de Ouro #5) - mesma
+             classe, mesmo comportamento visual dos cards de Hub. ---- */
+        .cards-acesso-container { max-width: 1100px; margin-bottom: 20px; }
+        .cards-acesso-gta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 260px)); gap: 20px; }
+        .card-hub { border-radius: 16px; overflow: hidden; display: block; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; }
+        .card-hub img { width: 100%; display: block; }
+        .card-hub:hover { transform: scale(1.03); box-shadow: 0 6px 16px rgba(0,0,0,0.18); }
+        .card-hub.processando { pointer-events: none; opacity: 0.55; }
+        .status-upload { margin-top: 16px; font-size: 14px; color: #7a1f04; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 12px 16px; display: none; }
+        .status-upload.visivel { display: block; }
+
+        /* ---- Tabela de Animais ---- */
+        .tabela-animais { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .tabela-animais th { text-align: left; font-size: 12px; color: #666666; padding: 8px 6px; border-bottom: 2px solid #e0e0e0; }
+        .tabela-animais th.col-qtd { width: 12%; }
+        .tabela-animais td { padding: 6px; border-bottom: 1px solid #f0f0f0; }
+        .tabela-animais input { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; width: 100%; font-family: Arial, sans-serif; }
+
+        /* ---- Painel de resumo ---- */
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr 1fr 2.5fr; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-resumo .valor { font-size: 19px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.total { color: #D4370A; }
+        .painel-resumo .valor.extenso { font-size: 15px; }
+
+        /* ---- Confirmacao de conferencia por Quadro ---- */
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro label { font-size: 13px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+
+        /* ---- Botoes ---- */
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/entrada/compra/nova' if gta else '/produtor/hub/entrada' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — plataforma Produtor/Fazenda -->
+        {% include 'produtor/produtor_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128229;</span> GTA de Entrada &#8212; Compra</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if captura_confirmada %}
+            <div class="sucesso">&#9989; Dados capturados corretamente. A gravação definitiva no banco (junto com a checagem de Propriedade/Parceiro) entra na próxima etapa.</div>
+            {% endif %}
+
+            {% if gta %}
+            <!-- ===================================================
+                 FORMULARIO COMPLETO - gta existe.
+                 =================================================== -->
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('gta_compra.salvar') }}" autocomplete="off" id="form-gta-compra">
+
+                    <input type="hidden" name="codigo_autenticidade" value="{{ gta.codigo_autenticidade if gta else '' }}">
+                    <input type="hidden" name="arquivo_pdf_caminho" value="{{ gta.arquivo_pdf_caminho if gta else '' }}">
+                    <input type="hidden" name="arquivo_pdf_hash" value="{{ gta.arquivo_pdf_hash if gta else '' }}">
+                    <input type="hidden" name="procedencia_municipio_codigo" value="{{ gta.procedencia_municipio_codigo if gta else '' }}">
+                    <input type="hidden" name="destino_municipio_codigo" value="{{ gta.destino_municipio_codigo if gta else '' }}">
+
+                    <!-- Dados do Documento -->
+                    <div class="form-secao">Dados do Documento (GTA)</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-1 campo-destaque">
+                            <label>UF *</label>
+                            <input type="text" name="uf_gta" required readonly maxlength="2" class="upper centralizado" autocomplete="off"
+                                value="{{ gta.uf_gta if gta else '' }}">
+                        </div>
+
+                        <div class="form-group col-1 campo-destaque">
+                            <label>Série *</label>
+                            <input type="text" name="serie_gta" required readonly maxlength="5" class="upper centralizado" autocomplete="off"
+                                value="{{ gta.serie_gta if gta else '' }}">
+                        </div>
+
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Número *</label>
+                            <input type="text" name="numero_gta_sequencial" required readonly maxlength="15" class="upper centralizado" autocomplete="off"
+                                value="{{ gta.numero_gta_sequencial if gta else '' }}">
+                        </div>
+
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Emissão *</label>
+                            <input type="text" name="data_emissao" id="data_emissao" required readonly maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa"
+                                value="{{ gta.data_emissao if gta else '' }}">
+                        </div>
+
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Validade *</label>
+                            <input type="text" name="data_validade" id="data_validade" required readonly maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa"
+                                value="{{ gta.data_validade if gta else '' }}">
+                        </div>
+
+                        <div class="form-group col-3 campo-destaque">
+                            <label>Entrega *</label>
+                            <input type="text" name="data_entrega" id="data_entrega" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa"
+                                value="{{ gta.data_entrega if gta else '' }}">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Meio de Transporte *</label>
+                            <input type="text" name="meio_transporte" required readonly maxlength="30" class="upper" autocomplete="off"
+                                placeholder="Ex: RODOVIÁRIO, COMITIVA"
+                                value="{{ gta.meio_transporte if gta else '' }}">
+                        </div>
+
+                    </div>
+
+                    <div class="confirma-quadro">
+                        <input type="checkbox" id="confirma_documento" name="confirma_documento"
+                            {% if gta and gta.confirma_documento %}checked{% endif %}>
+                        <label for="confirma_documento">Confirmo que os Dados do Documento conferem com a GTA física.</label>
+                    </div>
+
+                    <!-- Procedencia e Destino, lado a lado -->
+                    <div class="duas-colunas" style="margin-top: 24px;">
+                        <div class="divisor-vertical"></div>
+
+                        <div>
+                            <div class="form-secao">Procedência</div>
+
+                            <div class="linha-dupla">
+                                <div class="form-group maior">
+                                    <label>CPF / CNPJ *</label>
+                                    <input type="text" name="procedencia_documento" required readonly maxlength="18" autocomplete="off"
+                                        value="{{ gta.procedencia_documento if gta else '' }}">
+                                </div>
+                                <div class="form-group menor">
+                                    <label>Região</label>
+                                    <input type="text" name="procedencia_regiao" readonly maxlength="50" class="upper" autocomplete="off"
+                                        value="{{ gta.procedencia_regiao if gta else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Nome / Razão Social *</label>
+                                <input type="text" name="procedencia_nome" required readonly maxlength="150" class="upper" autocomplete="off"
+                                    value="{{ gta.procedencia_nome if gta else '' }}">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Estabelecimento</label>
+                                <input type="text" name="procedencia_propriedade" readonly maxlength="150" class="upper" autocomplete="off"
+                                    value="{{ gta.procedencia_propriedade if gta else '' }}">
+                            </div>
+
+                            <div class="linha-dupla">
+                                <div class="form-group maior">
+                                    <label>Código MAPA</label>
+                                    <input type="text" name="procedencia_codigo_mapa" readonly maxlength="30" autocomplete="off"
+                                        value="{{ gta.procedencia_codigo_mapa if gta else '' }}">
+                                </div>
+                                <div class="form-group menor">
+                                    <label>Insc. Estadual</label>
+                                    <input type="text" name="procedencia_insc_estadual" readonly maxlength="30" class="upper" autocomplete="off"
+                                        value="{{ gta.procedencia_insc_estadual if gta else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="linha-dupla" style="margin-bottom: 0;">
+                                <div class="form-group municipio">
+                                    <label>Município</label>
+                                    <input type="text" name="procedencia_municipio" readonly maxlength="100" class="upper" autocomplete="off"
+                                        value="{{ gta.procedencia_municipio if gta else '' }}">
+                                </div>
+                                <div class="form-group uf">
+                                    <label>UF</label>
+                                    <input type="text" name="procedencia_uf" readonly maxlength="2" class="upper centralizado" autocomplete="off"
+                                        value="{{ gta.procedencia_uf if gta else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="confirma-quadro">
+                                <input type="checkbox" id="confirma_procedencia" name="confirma_procedencia"
+                                    {% if gta and gta.confirma_procedencia %}checked{% endif %}>
+                                <label for="confirma_procedencia">Confirmo os dados de Procedência.</label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="form-secao">Destino</div>
+
+                            <div class="linha-dupla">
+                                <div class="form-group maior">
+                                    <label>CPF / CNPJ</label>
+                                    <input type="text" name="destino_documento" readonly maxlength="18" autocomplete="off"
+                                        value="{{ gta.destino_documento if gta else '' }}">
+                                </div>
+                                <div class="form-group menor">
+                                    <label>Região</label>
+                                    <input type="text" name="destino_regiao" readonly maxlength="50" class="upper" autocomplete="off"
+                                        value="{{ gta.destino_regiao if gta else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Produtor de Destino</label>
+                                <input type="text" name="destino_produtor" readonly maxlength="150" class="upper" autocomplete="off"
+                                    value="{{ gta.destino_produtor if gta else '' }}">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Estabelecimento *</label>
+                                <input type="text" name="destino_propriedade" required readonly maxlength="150" class="upper" autocomplete="off"
+                                    value="{{ gta.destino_propriedade if gta else '' }}">
+                            </div>
+
+                            <div class="linha-dupla">
+                                <div class="form-group maior">
+                                    <label>Código MAPA</label>
+                                    <input type="text" name="destino_codigo_mapa" readonly maxlength="30" autocomplete="off"
+                                        value="{{ gta.destino_codigo_mapa if gta else '' }}">
+                                </div>
+                                <div class="form-group menor">
+                                    <label>Insc. Estadual</label>
+                                    <input type="text" name="destino_insc_estadual" readonly maxlength="30" class="upper" autocomplete="off"
+                                        value="{{ gta.destino_insc_estadual if gta else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="linha-dupla" style="margin-bottom: 0;">
+                                <div class="form-group municipio">
+                                    <label>Município</label>
+                                    <input type="text" name="destino_municipio" readonly maxlength="100" class="upper" autocomplete="off"
+                                        value="{{ gta.destino_municipio if gta else '' }}">
+                                </div>
+                                <div class="form-group uf">
+                                    <label>UF</label>
+                                    <input type="text" name="destino_uf" readonly maxlength="2" class="upper centralizado" autocomplete="off"
+                                        value="{{ gta.destino_uf if gta else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="confirma-quadro">
+                                <input type="checkbox" id="confirma_destino" name="confirma_destino"
+                                    {% if gta and gta.confirma_destino %}checked{% endif %}>
+                                <label for="confirma_destino">Confirmo os dados de Destino.</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Animais (categorias) -->
+                    <div class="form-secao">Animais (por categoria)</div>
+
+                    <table class="tabela-animais" id="tabela-animais">
+                        <thead>
+                            <tr>
+                                <th style="width: 27%;">Espécie</th>
+                                <th style="width: 22%;">Sexo</th>
+                                <th style="width: 36%;">Idade (meses)</th>
+                                <th class="col-qtd">Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-animais">
+                            {% for animal in animais %}
+                            <tr class="linha-animal">
+                                <td><input type="text" name="especie[]" readonly class="upper" maxlength="20" value="{{ animal.especie }}"></td>
+                                <td><input type="text" name="sexo[]" readonly class="upper" maxlength="10" placeholder="Ex: FÊMEA" value="{{ animal.sexo }}"></td>
+                                <td><input type="text" name="idade_meses[]" readonly class="upper" maxlength="30" placeholder="Ex: ACIMA DE 36" value="{{ animal.idade_meses }}"></td>
+                                <td><input type="number" name="quantidade[]" readonly min="1" maxlength="6" class="campo-quantidade" value="{{ animal.quantidade }}"></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="painel-resumo">
+                        <div>
+                            <div class="rotulo">Fêmea</div>
+                            <div class="valor" id="resumo-femea">{{ resumo_animais.femea }}</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Macho</div>
+                            <div class="valor" id="resumo-macho">{{ resumo_animais.macho }}</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Total</div>
+                            <div class="valor total" id="resumo-total">{{ resumo_animais.total }}</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Total por Extenso</div>
+                            <div class="valor extenso" id="resumo-extenso">{{ resumo_animais.total_extenso }}</div>
+                        </div>
+                    </div>
+
+                    <div class="confirma-quadro">
+                        <input type="checkbox" id="confirma_animais" name="confirma_animais"
+                            {% if gta and gta.confirma_animais %}checked{% endif %}>
+                        <label for="confirma_animais">Confirmo os dados de Animais (categorias e quantidades).</label>
+                    </div>
+
+                    <!-- Botoes -->
+                    <div class="form-botoes">
+                        <a href="/produtor/entrada/compra/nova" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-salvar" disabled>Salvar</button>
+                    </div>
+
+                </form>
+            </div>
+
+            {% else %}
+            <!-- ===================================================
+                 TELA DE ACESSO - 3 cards visuais (Sessao 056, v2.14.0)
+                 Moldura .card-hub copiada literalmente de
+                 hub_generico.html v1.2.0 (Regra de Ouro #5).
+                 =================================================== -->
+            <div class="cards-acesso-container">
+
+                <!-- Formulario oculto usado so pelo card "Importar e-GTA" -
+                     mesmo input file de sempre, agora acionado pelo card
+                     em vez da antiga dropzone. -->
+                <form method="POST" action="{{ url_for('gta_compra.ler') }}" enctype="multipart/form-data" id="form-upload-gta">
+                    <input type="file" name="arquivo_gta" id="input-arquivo-gta" accept="application/pdf,.pdf" hidden>
+                </form>
+
+                <div class="cards-acesso-gta">
+
+                    <div class="card-hub" id="card-importar-egta">
+                        <img src="/static/img/hubs/entrada/importar_egta.jpg" alt="Importar e-GTA (PDF)">
+                    </div>
+
+                    <a href="/produtor/gta-manual/iniciar" class="card-hub">
+                        <img src="/static/img/hubs/entrada/gta_manual.jpg" alt="GTA Preenchimento Manual">
+                    </a>
+
+                    <a href="/produtor/gta-consulta/iniciar" class="card-hub">
+                        <img src="/static/img/hubs/entrada/consultar_gtas.jpg" alt="Consultar GTAs">
+                    </a>
+
+                </div>
+
+                <p class="status-upload" id="status-upload">&#8987; Lendo o documento... Isso pode levar alguns segundos. Aguarde.</p>
+
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        // ---- Mascara de data (v2.6.0) ----
+        function aplicarMascaraData(campo) {
+            if (!campo) return;
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                var formatado = digitos;
+                if (digitos.length > 4) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                } else if (digitos.length > 2) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                }
+                this.value = formatado;
+            });
+        }
+        aplicarMascaraData(document.getElementById('data_emissao'));
+        aplicarMascaraData(document.getElementById('data_validade'));
+        aplicarMascaraData(document.getElementById('data_entrega'));
+
+        // ---- Numero por extenso em portugues ----
+        var UNIDADES = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        var DEZ_A_DEZENOVE = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+        var DEZENAS = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+        var CENTENAS = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+        function grupoAte999PorExtenso(n) {
+            if (n === 0) return '';
+            if (n === 100) return 'cem';
+            var partes = [];
+            var centena = Math.floor(n / 100);
+            var resto = n % 100;
+            if (centena) partes.push(CENTENAS[centena]);
+            if (resto) {
+                if (partes.length) partes.push('e');
+                if (resto < 10) {
+                    partes.push(UNIDADES[resto]);
+                } else if (resto < 20) {
+                    partes.push(DEZ_A_DEZENOVE[resto - 10]);
+                } else {
+                    var dezena = Math.floor(resto / 10);
+                    var unidade = resto % 10;
+                    if (unidade) {
+                        partes.push(DEZENAS[dezena] + ' e ' + UNIDADES[unidade]);
+                    } else {
+                        partes.push(DEZENAS[dezena]);
+                    }
+                }
+            }
+            return partes.join(' ');
+        }
+
+        function numeroPorExtenso(n) {
+            if (n < 0 || n > 999999) return String(n);
+            if (n === 0) return 'zero';
+            var milhar = Math.floor(n / 1000);
+            var restoGrupo = n % 1000;
+            var partes = [];
+            if (milhar) {
+                if (milhar === 1) {
+                    partes.push('mil');
+                } else {
+                    partes.push(grupoAte999PorExtenso(milhar) + ' mil');
+                }
+            }
+            if (restoGrupo) {
+                var textoResto = grupoAte999PorExtenso(restoGrupo);
+                if (milhar) {
+                    if (restoGrupo < 100) {
+                        partes.push('e ' + textoResto);
+                    } else {
+                        partes[partes.length - 1] = partes[partes.length - 1] + ',';
+                        partes.push(textoResto);
+                    }
+                } else {
+                    partes.push(textoResto);
+                }
+            }
+            return partes.join(' ');
+        }
+
+        function atualizarResumoAnimais() {
+            var femea = 0;
+            var macho = 0;
+
+            document.querySelectorAll('.linha-animal').forEach(function(linha) {
+                var sexo = (linha.querySelector('input[name="sexo[]"]').value || '').trim().toUpperCase();
+                var qtdCampo = linha.querySelector('.campo-quantidade');
+                var qtd = parseInt(qtdCampo.value, 10);
+                if (isNaN(qtd)) qtd = 0;
+
+                if (sexo.charAt(0) === 'F') {
+                    femea += qtd;
+                } else if (sexo.charAt(0) === 'M') {
+                    macho += qtd;
+                }
+            });
+
+            var total = femea + macho;
+
+            document.getElementById('resumo-femea').textContent = femea;
+            document.getElementById('resumo-macho').textContent = macho;
+            document.getElementById('resumo-total').textContent = total;
+            document.getElementById('resumo-extenso').textContent = total > 0 ? (numeroPorExtenso(total) + ' animais').toUpperCase() : '';
+        }
+
+        function atualizarBotaoSalvar() {
+            var checks = document.querySelectorAll('.confirma-quadro input[type="checkbox"]');
+            var todosMarcados = Array.prototype.every.call(checks, function(chk) {
+                return chk.checked;
+            });
+
+            var camposObrigatorios = document.querySelectorAll('#form-gta-compra [required]');
+            var todosPreenchidos = Array.prototype.every.call(camposObrigatorios, function(campo) {
+                return campo.value.trim() !== '';
+            });
+
+            document.getElementById('btn-salvar').disabled = !(todosMarcados && todosPreenchidos);
+        }
+
+        var formularioGtaPresente = document.getElementById('form-gta-compra');
+        if (formularioGtaPresente) {
+            document.querySelectorAll('.linha-animal').forEach(function(linha) {
+                linha.querySelector('input[name="sexo[]"]').addEventListener('input', atualizarResumoAnimais);
+                linha.querySelector('.campo-quantidade').addEventListener('input', atualizarResumoAnimais);
+            });
+
+            document.querySelectorAll('.confirma-quadro input[type="checkbox"]').forEach(function(chk) {
+                chk.addEventListener('change', atualizarBotaoSalvar);
+            });
+
+            document.querySelectorAll('#form-gta-compra [required]').forEach(function(campo) {
+                campo.addEventListener('input', atualizarBotaoSalvar);
+            });
+
+            // ---- Navegacao por TAB (Sessao 034 continuacao, v2.7.0 -
+            // NOVIDADE) - campos readonly saem da ordem de TAB, mas
+            // continuam clicaveis normalmente. TAB passa direto pra
+            // Entrega e pros checkboxes. ----
+            document.querySelectorAll('#form-gta-compra input[readonly]').forEach(function(campo) {
+                campo.tabIndex = -1;
+            });
+
+            atualizarBotaoSalvar();
+        }
+
+        // ---- Card "Importar e-GTA" (Sessao 056, v2.14.0) - substitui
+        // a antiga dropzone. Clique no card abre o seletor de arquivo;
+        // arrastar o PDF sobre o card tambem funciona (mesmo
+        // comportamento de arrastar-e-soltar de antes, so o alvo
+        // visual mudou de uma caixa pontilhada para o card). ----
+        var cardImportarEgta = document.getElementById('card-importar-egta');
+        if (cardImportarEgta) {
+            var inputArquivoGta = document.getElementById('input-arquivo-gta');
+            var formUploadGta = document.getElementById('form-upload-gta');
+            var statusUpload = document.getElementById('status-upload');
+            var todosCardsAcesso = document.querySelectorAll('.cards-acesso-gta .card-hub');
+
+            function enviarArquivoGta() {
+                todosCardsAcesso.forEach(function(card) {
+                    card.classList.add('processando');
+                });
+                statusUpload.classList.add('visivel');
+                formUploadGta.submit();
+            }
+
+            cardImportarEgta.addEventListener('click', function() {
+                inputArquivoGta.click();
+            });
+
+            inputArquivoGta.addEventListener('change', function() {
+                if (inputArquivoGta.files.length > 0) {
+                    enviarArquivoGta();
+                }
+            });
+
+            cardImportarEgta.addEventListener('dragover', function(evento) {
+                evento.preventDefault();
+                cardImportarEgta.style.outline = '3px dashed #D4370A';
+            });
+
+            cardImportarEgta.addEventListener('dragleave', function() {
+                cardImportarEgta.style.outline = 'none';
+            });
+
+            cardImportarEgta.addEventListener('drop', function(evento) {
+                evento.preventDefault();
+                cardImportarEgta.style.outline = 'none';
+                if (evento.dataTransfer.files.length > 0) {
+                    inputArquivoGta.files = evento.dataTransfer.files;
+                    enviarArquivoGta();
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_compra_cadastro.html
+     ========================================================= -->

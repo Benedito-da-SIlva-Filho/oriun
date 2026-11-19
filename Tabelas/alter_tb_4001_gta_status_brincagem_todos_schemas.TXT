@@ -1,0 +1,146 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\alter_tb_4001_gta_status_brincagem_todos_schemas.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-28 19:50 -03
+-- ATUALIZADO EM: 2026-09-28 19:50 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Correcao da coluna tb_4001_gta.status_brincagem (criada na
+--   Sessao 048), que foi aplicada SOMENTE no schema
+--   produtor_00004 (Zopone). Varredura da Sessao 081 mostrou a
+--   coluna faltando em produtor_00001, produtor_00005 e
+--   produtor_00010 - qualquer tela que le GTAs quebraria para
+--   esses Produtores (o model pede todas as colunas).
+--   O script original (alter_tb_4001_gta_status_brincagem.TXT)
+--   se perdeu; a definicao foi copiada do banco do Zopone:
+--   VARCHAR(20), DEFAULT 'NAO_APLICA', aceita NULL.
+--
+--   PASSO 1 (bloco DO, atomico): percorre TODOS os schemas
+--     produtor_NNNNN que tem a tb_4001_gta. Onde a coluna ja
+--     existe, nao toca em nada. Onde falta:
+--       a) cria a coluna (ADD COLUMN IF NOT EXISTS);
+--       b) GTA de COMPRA ja brincada -> 'BRINCADO'. "Brincada" =
+--          tem animal na tb_2001 (id_gta_entrada) OU tem linha
+--          no kardex tb_2017 (gta_entrada = numero da GTA) -
+--          o kardex cobre animais que ja sairam do rebanho
+--          (a tb_2001 sofre DELETE fisico na saida);
+--       c) GTA de COMPRA nao brincada -> 'PENDENTE';
+--       d) demais tipos ficam com o padrao 'NAO_APLICA'.
+--   PASSO 2: consultas de conferencia (rodar UMA DE CADA VEZ:
+--     selecionar a consulta e apertar F5).
+--
+--   Resultado esperado para os dados de hoje: produtor_00001
+--   ganha a coluna e a GTA MST123456 fica PENDENTE;
+--   produtor_00005 e produtor_00010 ganham a coluna (sem GTAs);
+--   produtor_00004 nao e alterado.
+--
+--   v1.0.0: Criacao (Sessao 081).
+-- =========================================================
+
+
+-- =========================================================
+-- PASSO 1 - Correcao (rodar este bloco inteiro de uma vez)
+-- =========================================================
+DO $$
+DECLARE
+    r            RECORD;
+    v_existia    BOOLEAN;
+    v_brincado   INTEGER;
+    v_pendente   INTEGER;
+BEGIN
+    FOR r IN
+        SELECT t.table_schema AS esquema
+        FROM information_schema.tables t
+        WHERE t.table_schema LIKE 'produtor\_%'
+          AND t.table_name = 'tb_4001_gta'
+        ORDER BY t.table_schema
+    LOOP
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns c
+            WHERE c.table_schema = r.esquema
+              AND c.table_name   = 'tb_4001_gta'
+              AND c.column_name  = 'status_brincagem'
+        ) INTO v_existia;
+
+        IF v_existia THEN
+            RAISE NOTICE '% : coluna ja existia - nada alterado', r.esquema;
+            CONTINUE;
+        END IF;
+
+        -- a) cria a coluna, igual ao Zopone
+        EXECUTE format(
+            'ALTER TABLE %I.tb_4001_gta ADD COLUMN IF NOT EXISTS status_brincagem VARCHAR(20) DEFAULT %L',
+            r.esquema, 'NAO_APLICA'
+        );
+
+        -- b) COMPRA ja brincada -> BRINCADO
+        EXECUTE format($sql$
+            UPDATE %1$I.tb_4001_gta g
+               SET status_brincagem = 'BRINCADO'
+             WHERE g.tipo_movimento = 'COMPRA'
+               AND (
+                    EXISTS (SELECT 1 FROM %1$I.tb_2001 e
+                             WHERE e.id_gta_entrada = g.id)
+                 OR EXISTS (SELECT 1 FROM %1$I.tb_2017_movimentacoes m
+                             WHERE m.gta_entrada = g.numero_gta_completo)
+               )
+        $sql$, r.esquema);
+        GET DIAGNOSTICS v_brincado = ROW_COUNT;
+
+        -- c) COMPRA ainda nao brincada -> PENDENTE
+        EXECUTE format($sql$
+            UPDATE %1$I.tb_4001_gta g
+               SET status_brincagem = 'PENDENTE'
+             WHERE g.tipo_movimento = 'COMPRA'
+               AND g.status_brincagem = 'NAO_APLICA'
+        $sql$, r.esquema);
+        GET DIAGNOSTICS v_pendente = ROW_COUNT;
+
+        RAISE NOTICE '% : coluna CRIADA - % BRINCADO, % PENDENTE',
+                     r.esquema, v_brincado, v_pendente;
+    END LOOP;
+END $$;
+
+
+-- =========================================================
+-- PASSO 2 - Conferencia (selecionar UMA consulta e apertar F5)
+-- =========================================================
+
+-- 2.1) Colunas da tb_4001_gta por schema - esperado: 29 em TODOS
+SELECT table_schema, COUNT(*) AS colunas
+FROM information_schema.columns
+WHERE table_name = 'tb_4001_gta'
+  AND table_schema LIKE 'produtor\_%'
+GROUP BY table_schema
+ORDER BY table_schema;
+
+-- 2.2) GTA do produtor_00001 - esperado: MST123456 = PENDENTE
+SELECT id, numero_gta_completo, tipo_movimento, data_entrega, status_brincagem
+FROM produtor_00001.tb_4001_gta
+ORDER BY id;
+
+-- 2.3) Referencia: como o Zopone esta distribuido hoje (confere
+--      se a regra deste script bate com a do Zopone)
+SELECT tipo_movimento,
+       status_brincagem,
+       (data_entrega IS NOT NULL) AS tem_entrega,
+       COUNT(*) AS qtde
+FROM produtor_00004.tb_4001_gta
+GROUP BY 1, 2, 3
+ORDER BY 1, 2, 3;
+
+-- 2.4) Indices da tb_4001_gta em cada schema - se o Zopone tiver
+--      algum indice que os outros nao tem, ele aparece aqui
+SELECT schemaname, indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'tb_4001_gta'
+  AND schemaname LIKE 'produtor\_%'
+ORDER BY indexname, schemaname;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_tb_4001_gta_status_brincagem_todos_schemas.sql
+-- =========================================================

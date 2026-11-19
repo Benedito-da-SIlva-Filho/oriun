@@ -1,0 +1,41 @@
+
+SET search_path TO produtor_00004;
+-- 1) tb_2001 — deve dar total=50, sem_especie=0, sem_propriedade=0
+SELECT
+    count(*) AS total,
+    count(*) FILTER (WHERE id_especie IS NULL) AS sem_especie,
+    count(*) FILTER (WHERE id_propriedade IS NULL) AS sem_propriedade,
+    count(*) FILTER (WHERE id_raca IS NULL) AS sem_raca
+FROM tb_2001
+WHERE id_gta_entrada = 10;
+
+SET search_path TO produtor_00004;
+-- 2) tb_2017_movimentacoes — mesma checagem, via gta_entrada (texto)
+SELECT
+    count(*) AS total,
+    count(*) FILTER (WHERE id_especie IS NULL) AS sem_especie
+FROM tb_2017_movimentacoes
+WHERE gta_entrada = 'MSA111114';
+
+
+SET search_path TO produtor_00004;
+-- 3) tb_7017 — os 50 brincos usados devem aparecer com status atualizado e data_brincagem preenchida
+SELECT status, count(*), min(data_brincagem) AS data_brincagem
+FROM tb_7017_entrada_brincos_rfid
+WHERE sisbov IN (SELECT sisbov FROM tb_2001 WHERE id_gta_entrada = 10)
+GROUP BY status;
+
+SET search_path TO produtor_00004;
+-- 4) tb_7002_pia — 50 registros, numero_pia sem duplicidade dentro da GTA
+SELECT count(*) AS total, count(DISTINCT numero_pia) AS pia_distintos
+FROM tb_7002_pia
+WHERE id_gta = 10;
+
+SET search_path TO produtor_00004;
+-- 5) numero_pia duplicado em QUALQUER GTA (checagem geral de integridade do sequencial)
+SELECT numero_pia, count(*)
+FROM tb_7002_pia
+GROUP BY numero_pia
+HAVING count(*) > 1;
+
+

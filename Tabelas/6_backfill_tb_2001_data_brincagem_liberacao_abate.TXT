@@ -1,0 +1,56 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\6_backfill_tb_2001_data_brincagem_liberacao_abate.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-14 17:10 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Sessao 052 (14/09/2026) - Backfill do BUG REAL descrito em
+--     5_alter_tb_2001_data_brincagem.sql. Para todo animal de
+--     tb_2001 com data_brincagem ainda NULA (ou seja, todo animal
+--     gravado ANTES desta correcao), busca a data_brincagem real
+--     em tb_7017_entrada_brincos_rfid (join por SISBOV - nao ha FK
+--     direta entre as duas tabelas) e recalcula liberacao_abate =
+--     data_brincagem + 90 dias.
+--
+--     RODAR DEPOIS de 5_alter_tb_2001_data_brincagem.sql (precisa
+--     da coluna existir) e DEPOIS de trocar brincagem_sequencial.py
+--     para v1.12.0 (senao qualquer Brincagem nova feita entre os
+--     dois passos volta a gravar errado).
+--
+--     IDEMPOTENTE: so atualiza linhas com data_brincagem IS NULL -
+--     rodar 2x nao faz mal, a segunda vez nao encontra nada pra
+--     corrigir.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+    total_corrigido INTEGER;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format($sql$
+            UPDATE %I.tb_2001 AS e
+            SET data_brincagem   = r.data_brincagem,
+                liberacao_abate  = r.data_brincagem + 90
+            FROM %I.tb_7017_entrada_brincos_rfid AS r
+            WHERE e.sisbov = r.sisbov
+              AND e.data_brincagem IS NULL
+              AND r.data_brincagem IS NOT NULL
+        $sql$, schema_rec.schema_name, schema_rec.schema_name);
+
+        GET DIAGNOSTICS total_corrigido = ROW_COUNT;
+        IF total_corrigido > 0 THEN
+            RAISE NOTICE '% - % linha(s) corrigida(s)', schema_rec.schema_name, total_corrigido;
+        END IF;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\6_backfill_tb_2001_data_brincagem_liberacao_abate.sql
+-- =========================================================

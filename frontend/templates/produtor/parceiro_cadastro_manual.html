@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\parceiro_cadastro_manual.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-21 10:31 -03
+     ATUALIZADO EM: 2026-11-12 19:20 -03
+     VERSAO: 1.21.0
+     v1.20.0: Sessao 115 (2026-11-05 17:55 -03) - origem posse (Cadastrar Produtor novo da DTA). REVERSAO: .bak_antes_s115_dta3a.
+     v1.19.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Tela de resolucao de Parceiro para a GTA Manual (Sessao
+         036). Passo 1 - digita CPF/CNPJ, chama /api/busca-parceiro
+         (JS/fetch):
+           - Encontrado, 1 Propriedade: segue direto para a GTA
+             Manual (redirecionamento automatico).
+           - Encontrado, mais de 1 Propriedade: mostra lista para
+             o usuario escolher (padrao "Lista Clicavel" do Orion).
+           - Nao encontrado: revela o formulario de Cadastro Novo,
+             que envia via POST para parceiro_cadastro_manual.salvar.
+
+         v1.0.0 a v1.5.0: ver historico completo em sessoes 036/037.
+         v1.18.0: Sessao 108 (29/10/2026, 20:00 -03) - Dica sob o Codigo do Estabelecimento (OESA); TODOS os campos sem sugestoes do navegador (autocomplete=nope). REVERSAO: .bak_antes_s108_oesa_geral.
+         v1.6.0: Sessao 047 (07/09/2026, 10:30) - CPF/CNPJ visivel e
+             editavel no formulario de cadastro (antes hidden);
+             busca automatica de Propriedade por Insc. Estadual
+             (busca_propriedade.py); reorganizacao de campos.
+         v1.7.0: Sessao 047 (07/09/2026, 11:05) - Ajustes reais
+             identificados em teste de producao por Benedito:
+               (1) BUG CORRIGIDO: CPF/CNPJ aparecia DUPLICADO na
+                   tela apos a busca - a caixinha de busca do
+                   Passo 1 nunca era escondida quando o formulario
+                   de cadastro era revelado via JavaScript (so era
+                   escondida no reload via servidor, apos erro de
+                   validacao). Corrigido: caixa-busca-doc agora
+                   soma da tela (classList.add('oculto')) nos dois
+                   caminhos JS que revelam o formulario de cadastro
+                   (Parceiro nao encontrado / encontrado sem
+                   Propriedade).
+               (2) VALIDACAO NA FONTE: replicado em JavaScript o
+                   MESMO algoritmo de digito verificador de
+                   backend/utils/validadores.py (validar_cpf/
+                   validar_cnpj) - o CPF/CNPJ agora e validado
+                   ainda no Passo 1, ANTES de chamar /api/busca-
+                   parceiro. Documento incorreto trava ali mesmo,
+                   com a mesma mensagem que o back-end ja usa
+                   ("CPF da Procedência incorreto.", "CNPJ da
+                   Procedência incorreto.", "...quantidade de
+                   dígitos incorreta."), sem gastar chamada de API.
+               (3) Como consequencia direta de (2) - o documento so
+                   chega ao formulario de cadastro ja validado -
+                   o campo CPF/CNPJ deixou de ser editavel: agora e
+                   travado (readonly) e exibido em destaque visual
+                   (caixa vermelha, mesmo espirito da "Quantidade
+                   de Animais na GTA" do gta_manual_cadastro.html),
+                   sem precisar de mascara JS nem de link de
+                   "trocar" - se estiver errado, trava antes mesmo
+                   de chegar aqui.
+               (4) REORGANIZACAO final do formulario de cadastro
+                   (alinhada com desenho do Benedito): CPF/CNPJ
+                   confirmado (linha propria, destacada) -> Nome/
+                   Razao Social -> Insc. Estadual + Regiao + Codigo
+                   MAPA + UF (mesma linha) -> Estabelecimento ->
+                   Cod. Municipio + Municipio automatico (mesma
+                   linha).
+     v1.8.0: Sessao 047 (07/09/2026, 11:20) - Ajuste fino de largura
+         de coluna na linha Insc. Estadual/Regiao/Codigo MAPA/UF,
+         pedido por Benedito apos teste real (campos UF e Codigo
+         MAPA sobravam espaco vazio, Regiao ficava apertado pro
+         nome real de uma regiao): Insc. Estadual mantida em 3/12;
+         Regiao cresceu de 3 para 6/12 (absorve o excedente); Codigo
+         MAPA reduzido de 3 para 2/12 (cabe as 8 posicoes numericas
+         reais); UF reduzido de 3 para 1/12 (so 2 letras). Soma
+         3+6+2+1 = 12, sem mudanca de comportamento, so layout.
+     v1.9.0: Sessao 047 (07/09/2026, 11:20) - 2 ajustes reais apos
+         teste de Benedito:
+           (1) CORRECAO de estimativa: Codigo MAPA real tem 15
+               digitos (nao 8, como assumido na v1.8.0) - coluna
+               alargada de 2 para 4/12 pra caber o valor real sem
+               cortar visualmente. Regiao ajustada de 6 para 3/12
+               pra abrir esse espaco; UF ajustada de 1 para 2/12
+               (leve folga visual pro <select>). Nova soma: Insc.
+               Estadual(3) + Regiao(3) + Codigo MAPA(4) + UF(2) = 12.
+           (2) DECISAO DE ARQUITETURA: campo UF permanece VISIVEL e
+               editavel manualmente (planos anteriores cogitavam
+               esconde-lo, preenchido so via Cod. Municipio) -
+               Benedito alertou que GTAs de outros estados nem
+               sempre trazem o Codigo do Municipio impresso no
+               documento, entao nao da pra depender exclusivamente
+               dele pra resolver a UF. Continua sendo preenchida
+               sozinha quando o Codigo do Municipio E encontrado,
+               mas o usuario sempre pode escolher manualmente.
+           (3) Fonte aumentada em TODOS os campos do formulario
+               (labels e inputs/selects), pedido de legibilidade:
+               label de 12px para 13px; input/select de 13px para
+               15px, com padding um pouco maior (9px 10px -> 11px
+               13px) pra acompanhar o aumento.
+     v1.10.0: Sessao 047 (07/09/2026, 11:40) - CORRECAO DE LAYOUT:
+         com a fonte maior da v1.9.0, o campo UF (2/12) cortava
+         visualmente a sigla selecionada. Espaco tirado de Regiao
+         (que sobrava largura no teste real, "PLANALTO" com folga),
+         nao de Insc. Estadual (que tambem precisa de folga pros
+         numeros com a fonte maior). Nova soma: Insc. Estadual(3) +
+         Regiao(2) + Codigo MAPA(4, mantido - precisa dos 15
+         digitos) + UF(3, cresceu e resolve o corte) = 12.
+     v1.10.1: Sessao 047 (07/09/2026, 11:40) - CORRECAO DE BUG real,
+         identificado por Benedito em teste (campo Codigo MAPA
+         minusculo, cortando o valor, mesmo com col-4 aplicado no
+         HTML): a classe CSS .col-4 NUNCA FOI DEFINIDA no bloco
+         <style> - so existiam .col-1/.col-2/.col-3/.col-6/.col-9/
+         .col-12 desde a v1.8.0. Sem regra CSS correspondente, o
+         navegador ignorava o span e o item caia no comportamento
+         padrao do grid (1 coluna so), explicando a caixa minuscula.
+         Corrigido: adicionada `.col-4 { grid-column: span 4; }` ao
+         bloco de estilos. Nenhuma mudanca de HTML - so a definicao
+         de CSS que faltava.
+     v1.11.0: Sessao 047 (07/09/2026, 11:59) - Ajuste final de
+         largura, calculado por caracteres reais que cada campo
+         precisa (nao mais por tentativa/erro visual): Insc.
+         Estadual(3, cabe 11 digitos) + Regiao(4, maior, texto
+         livre) + Codigo MAPA(3, cabe 15 digitos) + UF(2, so 2
+         letras) = 12.
+     v1.12.0: Sessao 076 (21/09/2026, 21:47 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar (fixo
+         para /produtor/home) passado via um comando de atribuicao
+         antes do include - mesmo destino de sempre, sem mudanca
+         de comportamento (nao avaliado sob a Regra de Ouro #9
+         nesta rodada - fica registrado que este e um destino
+         fixo, para revisao futura se fizer sentido calcular
+         dinamicamente). Botao "Cancelar" do rodape do formulario
+         NAO mexido - continua indo para /produtor/home, com seu
+         proprio aviso de "dados nao salvos" via id="link-cancelar".
+     v1.13.0: Sessao 077 (22/09/2026, 10:20 -03) - CORRECAO DE BUG
+         REAL (Regra de Ouro #9), identificado por Benedito com
+         print do usuario Claudenor Zopone Junior: o Voltar do
+         topo apontava fixo para a Home, ignorando que esta tela e
+         alcancada de verdade pelo fluxo Entrada -> Compras -> GTA
+         Preenchimento Manual -> GTA Manual -> Selecionar
+         Propriedade/Produtor -> Cadastro Manual de Parceiro.
+         Corrigido: a variavel que define o destino do Voltar
+         passou a apontar para o inicio desse fluxo real
+         (/produtor/gta-manual/iniciar), mesmo padrao ja usado em
+         Impressao/Reimpressao de Comunicado. Nenhuma outra parte
+         do arquivo foi alterada - o botao "Cancelar" do rodape do
+         formulario continua indo para /produtor/home, como antes.
+     v1.14.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). Incluida a peca modal_confirmacao.html.
+     v1.15.0: Sessao 087 (05/10/2026, 10:50 -03) - VOLTAR PELO CAMINHO
+         INVERSO (Regra de Ouro #4, pedido de Benedito): (1) o campo
+         CPF/CNPJ da Procedencia chega preenchido com o ultimo digitado
+         (parametro documento, vindo do Voltar do formulario da GTA) -
+         so preenche, o usuario continua clicando em Buscar; (2) o
+         Voltar do topo e o botao Cancelar passam a usar a variavel
+         url_origem do router (Selecao de Propriedade com 2+ pares, card
+         GTA Preenchimento Manual com 1 par) em vez de Home / destino
+         fixo. Nenhuma outra mudanca de HTML, CSS ou JavaScript.
+         v1.17.0: Sessao 108 (29/10/2026, 19:45 -03) - Rotulo 'Codigo MAPA' passa a 'Código do Estabelecimento (OESA)' e o campo deixa de oferecer sugestoes do navegador (autocomplete=nope). REVERSAO: .bak_antes_s108_rotulo_mapa.
+         v1.16.0: Sessao 095 (13/10/2026, 19:10 -03) - UF deixa de sair repetida na lista de propriedades do Parceiro encontrado. REVERSAO: .bak_antes_novo_parceiro_s095.
+         v1.21.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Cadastro Manual de Parceiro</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 900px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-1  { grid-column: span 1; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-9  { grid-column: span 9; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 11px 13px; border: 1px solid #cccccc; border-radius: 6px; font-size: 15px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+
+        /* v1.7.0 - CPF/CNPJ confirmado: linha propria, travada e em destaque,
+           mesmo espirito visual da caixa "Quantidade de Animais na GTA" */
+        .cpf-confirmado { background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 4px; }
+        .cpf-confirmado label { font-size: 11px; font-weight: bold; color: #7a1f04; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cpf-confirmado input { background: transparent !important; border: none !important; font-size: 22px; font-weight: bold; color: #333333; padding: 4px 0 0; cursor: default; }
+        .cpf-confirmado input:focus { outline: none; }
+
+        .caixa-busca-doc { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 24px; max-width: 900px; margin-bottom: 20px; }
+        .caixa-busca-doc .linha-busca { display: flex; gap: 10px; align-items: flex-end; }
+        .caixa-busca-doc .form-group { flex: 1; }
+        .btn-buscar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; height: 38px; }
+        .btn-buscar:hover { background: #C0392B; }
+        .btn-buscar:disabled { background: #cccccc; cursor: not-allowed; }
+        .status-busca { margin-top: 12px; font-size: 13px; }
+        .status-busca.buscando { color: #888888; }
+        .status-busca.achou { color: #2e7d32; font-weight: bold; }
+        .status-busca.nao-achou { color: #D4370A; font-weight: bold; }
+
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 8px 0 4px; font-style: italic; }
+        .tabela-propriedades { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        .tabela-propriedades th { text-align: left; padding: 8px 10px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 10px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+
+        /* v1.6.0 - status da busca automatica por Insc. Estadual, abaixo do campo */
+        .status-insc-estadual { font-size: 11px; margin-top: 2px; min-height: 14px; }
+        .status-insc-estadual.achou { color: #2e7d32; font-weight: bold; }
+        .status-insc-estadual.nao-achou { color: #999999; font-style: italic; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .oculto { display: none !important; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_origem if url_origem else '/produtor/gta-manual/iniciar' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#129309;</span> Cadastro Manual de Parceiro ({{ 'Comprador' if origem == 'venda' else ('Produtor de destino' if origem == 'posse' else ('Destino' if origem == 'transfer' else 'Procedência')) }})</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <!-- ===================== PASSO 1 - BUSCA CPF/CNPJ ===================== -->
+            <div class="caixa-busca-doc {{ 'oculto' if mostrar_cadastro else '' }}" id="caixa-busca-doc">
+                <div class="linha-busca">
+                    <div class="form-group">
+                        <label>CPF / CNPJ da Procedência *</label>
+                        <input type="text" id="campo-documento" maxlength="18" placeholder="Digite o CPF ou CNPJ" autocomplete="nope" value="{{ documento if documento else '' }}">
+                    </div>
+                    <button type="button" class="btn-buscar" id="btn-buscar-doc">Buscar</button>
+                </div>
+                <div class="status-busca" id="status-busca"></div>
+            </div>
+
+            <!-- ===================== RESULTADO: PROPRIEDADES PARA ESCOLHER ===================== -->
+            <div class="form-container oculto" id="bloco-propriedades">
+                <div class="form-secao">Propriedade da Procedência</div>
+                <div class="aviso-clicavel">Este Parceiro tem mais de uma Propriedade. Clique na Propriedade correta abaixo.</div>
+                <table class="tabela-propriedades">
+                    <thead>
+                        <tr>
+                            <th>Estabelecimento</th>
+                            <th>Município/UF</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-propriedades"></tbody>
+                </table>
+            </div>
+
+            <!-- ===================== FORMULARIO DE CADASTRO NOVO ===================== -->
+            <div class="form-container {{ 'oculto' if not mostrar_cadastro else '' }}" id="bloco-cadastro">
+                <form method="POST" action="{{ url_for('parceiro_cadastro_manual.salvar') }}" id="form-parceiro-manual" autocomplete="nope">
+
+                    <input type="hidden" name="id_propriedade_interna" id="campo-propriedade-interna-hidden" value="{{ id_propriedade_interna if id_propriedade_interna else '' }}">
+                    <input type="hidden" name="origem" id="campo-origem-hidden" value="{{ origem if origem else '' }}">
+
+                    <div class="form-secao">Dados da Procedência (Parceiro Novo)</div>
+                    <div class="form-grid">
+
+                        <!-- v1.7.0: CPF/CNPJ ja chega validado (Passo 1) - linha
+                             propria, travada e em destaque, sem edicao -->
+                        <div class="form-group col-12 cpf-confirmado">
+                            <label>CPF / CNPJ da Procedência (confirmado)</label>
+                            <input type="text" name="cpf_cnpj" id="campo-cpf-cnpj" required readonly tabindex="-1"
+                                value="{{ dados.cpf_cnpj if dados else '' }}">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Nome / Razão Social *</label>
+                            <input type="text" name="nome" required maxlength="150" class="upper" autocomplete="nope"
+                                value="{{ dados.nome if dados else '' }}">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Insc. Estadual</label>
+                            <input type="text" name="insc_estadual" id="campo-insc-estadual" maxlength="15" class="upper" autocomplete="nope"
+                                value="{{ dados.insc_estadual if dados else '' }}">
+                            <div class="status-insc-estadual" id="status-insc-estadual"></div>
+                        </div>
+                        <div class="form-group col-4">
+                            <label>Região</label>
+                            <input type="text" name="regiao" id="campo-regiao" maxlength="50" class="upper" autocomplete="nope"
+                                value="{{ dados.regiao if dados else '' }}">
+                        </div>
+                        <div class="form-group col-3">
+                            <label>Código do Estabelecimento (OESA)</label>
+                            <input type="text" name="codigo_mapa" id="campo-codigo-mapa" maxlength="15" autocomplete="nope" inputmode="numeric"
+                                value="{{ dados.codigo_mapa if dados else '' }}">
+                            <div style="font-size:12px;color:#777;margin-top:4px;">11 dígitos (Estabelecimento) ou 15 (Código MAPA / Exploração Pecuária)</div>
+                        </div>
+                        <div class="form-group col-2">
+                            <label>UF *</label>
+                            <select name="uf" id="campo-uf" required>
+                                <option value="">--</option>
+                                {% set ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if dados and dados.uf == sigla else '' }}>{{ sigla }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Estabelecimento (nome da Fazenda) *</label>
+                            <input type="text" name="estabelecimento" id="campo-estabelecimento" required maxlength="150" class="upper" autocomplete="nope"
+                                value="{{ dados.estabelecimento if dados else '' }}">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Cód. Município *</label>
+                            <input type="text" name="municipio_codigo" id="campo-municipio-codigo" required maxlength="7" class="centralizado" autocomplete="nope" inputmode="numeric" placeholder="5006408"
+                                value="{{ dados.municipio_codigo if dados else '' }}">
+                        </div>
+                        <div class="form-group col-9">
+                            <label>Município (automático)</label>
+                            <input type="text" name="municipio_nome" id="campo-municipio-nome" required maxlength="100" class="upper" readonly autocomplete="nope" placeholder="Digite o código ao lado"
+                                value="{{ dados.municipio_nome if dados else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="{{ url_voltar }}" class="btn-cancelar" id="link-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar">Salvar e Continuar para a GTA Manual</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        // ---- Aviso de alteracoes nao salvas ----
+        var formularioAlterado = false;
+        document.getElementById('form-parceiro-manual').addEventListener('input', function() {
+            formularioAlterado = true;
+        });
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioAlterado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+        document.getElementById('form-parceiro-manual').addEventListener('submit', function() {
+            formularioAlterado = false;
+        });
+        // v1.14.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return formularioAlterado; },
+                function() { formularioAlterado = false; }
+            );
+        });
+
+        // ==========================================================
+        // v1.7.0 - Validacao de CPF/CNPJ (digito verificador), MESMO
+        // algoritmo de backend/utils/validadores.py (validar_cpf/
+        // validar_cnpj) - replicado aqui pra travar o erro na fonte,
+        // no Passo 1, antes de gastar chamada de API.
+        // ==========================================================
+        function validarCPF(cpf) {
+            if (!/^[0-9]{11}$/.test(cpf) || cpf === cpf[0].repeat(11)) return false;
+
+            var soma = 0;
+            for (var i = 0; i < 9; i++) { soma += parseInt(cpf[i], 10) * (10 - i); }
+            var resto = (soma * 10) % 11;
+            var dv1 = (resto === 10) ? 0 : resto;
+            if (dv1 !== parseInt(cpf[9], 10)) return false;
+
+            soma = 0;
+            for (var i = 0; i < 10; i++) { soma += parseInt(cpf[i], 10) * (11 - i); }
+            resto = (soma * 10) % 11;
+            var dv2 = (resto === 10) ? 0 : resto;
+            if (dv2 !== parseInt(cpf[10], 10)) return false;
+
+            return true;
+        }
+
+        function validarCNPJ(cnpj) {
+            // CNPJ alfanumerico (Receita, jul/2026): 12 primeiros caracteres letra ou numero, 2 ultimos numeros; cada caractere vale (codigo ASCII - 48).
+            cnpj = (cnpj || '').toUpperCase();
+            if (!/^[0-9A-Z]{12}[0-9]{2}$/.test(cnpj) || cnpj === cnpj[0].repeat(14)) return false;
+
+            var pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+            var soma = 0;
+            for (var i = 0; i < 12; i++) { soma += (cnpj.charCodeAt(i) - 48) * pesos1[i]; }
+            var resto = soma % 11;
+            var dv1 = (resto < 2) ? 0 : 11 - resto;
+            if (dv1 !== parseInt(cnpj[12], 10)) return false;
+
+            var pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+            soma = 0;
+            for (var i = 0; i < 13; i++) { soma += (cnpj.charCodeAt(i) - 48) * pesos2[i]; }
+            resto = soma % 11;
+            var dv2 = (resto < 2) ? 0 : 11 - resto;
+            if (dv2 !== parseInt(cnpj[13], 10)) return false;
+
+            return true;
+        }
+
+        // Mesmas mensagens do back-end (parceiro_cadastro_manual.py salvar()),
+        // pra ficar identico independente de onde o erro for pego.
+        function validarDocumento(documentoLimpo) {
+            if (!documentoLimpo) {
+                return { valido: false, mensagem: 'Informe o CPF/CNPJ da Procedência.' };
+            }
+            if (documentoLimpo.length === 11) {
+                return validarCPF(documentoLimpo)
+                    ? { valido: true }
+                    : { valido: false, mensagem: 'CPF da Procedência incorreto.' };
+            }
+            if (documentoLimpo.length === 14) {
+                return validarCNPJ(documentoLimpo)
+                    ? { valido: true }
+                    : { valido: false, mensagem: 'CNPJ da Procedência incorreto.' };
+            }
+            return { valido: false, mensagem: 'CPF/CNPJ da Procedência com quantidade de caracteres incorreta.' };
+        }
+
+        // ==========================================================
+        // PASSO 1 - Busca de Parceiro por CPF/CNPJ
+        // ==========================================================
+        var caixaBuscaDoc    = document.getElementById('caixa-busca-doc');
+        var campoDocumento   = document.getElementById('campo-documento');
+        var btnBuscarDoc     = document.getElementById('btn-buscar-doc');
+        var statusBusca      = document.getElementById('status-busca');
+        var blocoPropriedades= document.getElementById('bloco-propriedades');
+        var corpoPropriedades= document.getElementById('corpo-propriedades');
+        var blocoCadastro    = document.getElementById('bloco-cadastro');
+        var campoCpfCnpjForm = document.getElementById('campo-cpf-cnpj');
+
+        // PENDENCIA: trocar a URL fixa abaixo por url_for assim que
+        // gta_manual.py existir e for registrado no app.py.
+        function irParaGtaManual(idParceiro, idPropriedade) {
+            var idPropriedadeInterna = document.getElementById('campo-propriedade-interna-hidden').value;
+            // v1.5.0 - veio da GTA de Transferencia: volta para ela com o CPF/CNPJ preenchido
+            var origemVolta = document.getElementById('campo-origem-hidden').value;
+            if (origemVolta === 'transfer' || origemVolta === 'venda' || origemVolta === 'posse') {
+                window.location.href = '/produtor/gta-saida/nova?id_propriedade=' + idPropriedadeInterna + '&tipo=' + (origemVolta === 'venda' ? 'VENDA' : (origemVolta === 'posse' ? 'POSSE' : 'TRANSFER')) + '&documento=' + campoDocumento.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+                return;
+            }
+            window.location.href = '/produtor/gta-manual/nova?id_parceiro=' + idParceiro + '&id_propriedade=' + idPropriedade + '&id_propriedade_interna=' + idPropriedadeInterna;
+        }
+
+        if (btnBuscarDoc) {
+            btnBuscarDoc.addEventListener('click', function() {
+                var documento = campoDocumento.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+
+                // v1.7.0 - trava o erro na fonte, antes de chamar a API
+                var validacao = validarDocumento(documento);
+                if (!validacao.valido) {
+                    statusBusca.className = 'status-busca nao-achou';
+                    statusBusca.textContent = validacao.mensagem;
+                    return;
+                }
+
+                blocoPropriedades.classList.add('oculto');
+                blocoCadastro.classList.add('oculto');
+                statusBusca.className = 'status-busca buscando';
+                statusBusca.textContent = 'Buscando...';
+                btnBuscarDoc.disabled = true;
+
+                fetch('/api/busca-parceiro?documento=' + encodeURIComponent(documento))
+                    .then(function(resposta) { return resposta.json(); })
+                    .then(function(dados) {
+                        btnBuscarDoc.disabled = false;
+
+                        if (dados.encontrado) {
+                            statusBusca.className = 'status-busca achou';
+                            statusBusca.textContent = 'Parceiro encontrado: ' + dados.parceiro.nome;
+
+                            if (dados.propriedades.length === 1) {
+                                irParaGtaManual(dados.parceiro.id, dados.propriedades[0].id);
+                            } else if (dados.propriedades.length > 1) {
+                                corpoPropriedades.innerHTML = '';
+                                dados.propriedades.forEach(function(prop) {
+                                    var linha = document.createElement('tr');
+                                    linha.className = 'linha-clicavel';
+                                    linha.onclick = function() { irParaGtaManual(dados.parceiro.id, prop.id); };
+                                    linha.innerHTML =
+                                        '<td>' + prop.estabelecimento + '</td>' +
+                                        '<td>' + String(prop.municipio_nome || '-').replace(prop.uf ? ' / ' + prop.uf : '\u0000', '') + (prop.uf ? ' / ' + prop.uf : '') + '</td>' +
+                                        '<td class="coluna-acao"><button type="button" class="btn-ver-detalhes">Selecionar &#8250;</button></td>';
+                                    corpoPropriedades.appendChild(linha);
+                                });
+                                blocoPropriedades.classList.remove('oculto');
+                            } else {
+                                // v1.7.0 - some com a caixa de busca, evita duplicar
+                                // a exibicao do CPF/CNPJ na tela
+                                caixaBuscaDoc.classList.add('oculto');
+                                campoCpfCnpjForm.value = documento;
+                                blocoCadastro.classList.remove('oculto');
+                            }
+                        } else {
+                            statusBusca.className = 'status-busca nao-achou';
+                            statusBusca.textContent = 'Parceiro não encontrado. Complete o cadastro abaixo.';
+                            // v1.7.0 - some com a caixa de busca, evita duplicar
+                            // a exibicao do CPF/CNPJ na tela
+                            caixaBuscaDoc.classList.add('oculto');
+                            campoCpfCnpjForm.value = documento;
+                            blocoCadastro.classList.remove('oculto');
+                        }
+                    })
+                    .catch(function() {
+                        btnBuscarDoc.disabled = false;
+                        statusBusca.className = 'status-busca nao-achou';
+                        statusBusca.textContent = 'Erro ao buscar. Tente novamente.';
+                    });
+            });
+        }
+
+        // ==========================================================
+        // Codigo MAPA - so aceita numeros (v1.2.0)
+        // ==========================================================
+        var campoCodigoMapa = document.getElementById('campo-codigo-mapa');
+        campoCodigoMapa.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+        });
+
+        // ==========================================================
+        // Municipio por Codigo IBGE exato (v1.2.0) - usuario digita
+        // o codigo (como vem impresso na GTA), sistema busca e
+        // preenche o Nome/UF automaticamente, campo travado.
+        // ==========================================================
+        var campoMunicipioCodigo = document.getElementById('campo-municipio-codigo');
+        var campoMunicipioNome   = document.getElementById('campo-municipio-nome');
+        var campoUf              = document.getElementById('campo-uf');
+        var timeoutBuscaMunicipio = null;
+
+        campoMunicipioCodigo.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 7);
+            campoMunicipioNome.value = '';
+
+            clearTimeout(timeoutBuscaMunicipio);
+
+            if (this.value.length !== 7) {
+                return;
+            }
+
+            var codigo = this.value;
+            timeoutBuscaMunicipio = setTimeout(function() {
+                fetch('/api/busca-municipio?codigo=' + encodeURIComponent(codigo))
+                    .then(function(resposta) { return resposta.json(); })
+                    .then(function(municipio) {
+                        if (municipio && municipio.nome) {
+                            campoMunicipioNome.value = municipio.nome + ' / ' + municipio.uf;
+                            campoUf.value = municipio.uf;
+                        } else {
+                            campoMunicipioNome.value = 'CÓDIGO NÃO ENCONTRADO';
+                        }
+                    });
+            }, 300);
+        });
+
+        // ==========================================================
+        // v1.6.0 - Busca automatica de Propriedade por Insc. Estadual
+        // (busca_propriedade.py) - cobre o cenario de 2 CPFs
+        // diferentes donos da mesma fazenda fisica. Achou = preenche
+        // Estabelecimento/Codigo MAPA/Municipio/UF (EDITAVEL, o
+        // usuario confere antes de salvar). Nao achou = so avisa,
+        // sem travar nada - segue digitando manualmente.
+        // ==========================================================
+        var campoInscEstadual   = document.getElementById('campo-insc-estadual');
+        var statusInscEstadual  = document.getElementById('status-insc-estadual');
+        var campoEstabelecimento = document.getElementById('campo-estabelecimento');
+        var campoRegiao          = document.getElementById('campo-regiao');
+        var timeoutBuscaPropriedade = null;
+
+        campoInscEstadual.addEventListener('input', function() {
+            statusInscEstadual.className = 'status-insc-estadual';
+            statusInscEstadual.textContent = '';
+
+            clearTimeout(timeoutBuscaPropriedade);
+
+            var valor = this.value.trim();
+            if (valor.length < 5) {
+                return;
+            }
+
+            timeoutBuscaPropriedade = setTimeout(function() {
+                fetch('/api/busca-propriedade?insc_estadual=' + encodeURIComponent(valor))
+                    .then(function(resposta) { return resposta.json(); })
+                    .then(function(dados) {
+                        if (dados.encontrado) {
+                            var p = dados.propriedade;
+
+                            statusInscEstadual.className = 'status-insc-estadual achou';
+                            statusInscEstadual.textContent = '✔ Propriedade encontrada — dados preenchidos, confira antes de salvar.';
+
+                            campoEstabelecimento.value = p.estabelecimento || '';
+                            campoCodigoMapa.value = p.codigo_mapa || '';
+                            campoUf.value = p.uf || '';
+                            if (p.regiao) {
+                                campoRegiao.value = p.regiao;
+                            }
+
+                            if (p.municipio_codigo) {
+                                campoMunicipioCodigo.value = p.municipio_codigo;
+                                // reaproveita a busca de Municipio ja existente pra
+                                // preencher o Nome automaticamente
+                                campoMunicipioCodigo.dispatchEvent(new Event('input'));
+                            }
+                        } else {
+                            statusInscEstadual.className = 'status-insc-estadual nao-achou';
+                            statusInscEstadual.textContent = 'Não encontrada — preencha os dados manualmente.';
+                        }
+                    });
+            }, 400);
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\parceiro_cadastro_manual.html
+     ========================================================= -->

@@ -1,0 +1,76 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\criar_tb_log_alteracao_gta.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-09 17:25 -03
+-- ATUALIZADO EM: 2026-09-09 17:25 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--     Cria a tabela tb_log_alteracao_gta em TODOS os schemas
+--     produtor_NNNNN automaticamente (Regra de Ouro do projeto -
+--     bloco DO $$ percorrendo os schemas, nunca manual schema por
+--     schema).
+--
+--     BUG REAL encontrado por Benedito em teste (Sessao 048,
+--     09/09/2026): o model backend/models/tb_log_alteracao_gta.py
+--     e o codigo de gta_consulta.py (rota salvar_edicao) ja
+--     existiam desde a Sessao 037/038 e ja tentavam gravar nesta
+--     tabela a cada edicao de GTA - mas o CREATE TABLE em si nunca
+--     foi executado no banco. Erro real:
+--     psycopg2.errors.UndefinedTable: nao existe a relacao
+--     "tb_log_alteracao_gta", ao clicar em Salvar Alteracoes na
+--     tela de Alterar GTA.
+--
+--     Estrutura espelha exatamente o model LogAlteracaoGta
+--     (tb_log_alteracao_gta.py v1.0.0): log detalhado de
+--     alteracoes feitas numa GTA ja gravada - 1 linha por CAMPO
+--     alterado (nao 1 linha por edicao inteira).
+--
+--     Mora dentro do schema de cada Produtor (Schema-por-Produtor,
+--     igual tb_4001_gta) - FK id_gta aponta para a tb_4001_gta do
+--     MESMO schema; FK id_usuario aponta para public.usuarios
+--     (fora do schema do Produtor, mesmo padrao de outras tabelas
+--     de log do projeto, ex.: tb_log_operacoes).
+--
+--     v1.0.0: Criacao do script (Sessao 048, 09/09/2026, 17:25 -03).
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name
+        FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'CREATE TABLE IF NOT EXISTS %I.tb_log_alteracao_gta (
+                id               SERIAL PRIMARY KEY,
+                id_gta           INTEGER NOT NULL REFERENCES %I.tb_4001_gta(id),
+                id_usuario       INTEGER NOT NULL REFERENCES public.usuarios(id),
+                usuario_nome     VARCHAR(150) NOT NULL,
+                campo_alterado   VARCHAR(60) NOT NULL,
+                valor_anterior   TEXT,
+                valor_novo       TEXT,
+                alterado_em      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
+            )',
+            schema_rec.schema_name, schema_rec.schema_name
+        );
+
+        RAISE NOTICE 'tb_log_alteracao_gta criada em %', schema_rec.schema_name;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- VERIFICACAO (rode depois do script acima, um schema por vez,
+-- trocando produtor_00001 pelo schema que quiser conferir)
+-- =========================================================
+-- SET search_path TO produtor_00001;
+-- SELECT * FROM tb_log_alteracao_gta ORDER BY id;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\criar_tb_log_alteracao_gta.sql
+-- =========================================================

@@ -1,0 +1,59 @@
+-- =============================================================
+-- PROJETO: Orion SISBOV
+-- PASTA: database/scripts/catalogos
+-- MODULO: tb_4006_idade_meses
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 25/07/2026 08:46 -03
+-- ATUALIZADO EM: 25/07/2026 08:46 -03
+-- VERSAO: 1.0.0
+-- DESCRICAO: Catalogo de faixas de Idade em Meses, por intervalo
+--            de dias. Origem: GR4006 (GERAS) - pasta 4-Animais.
+--            Formaliza o que hoje e texto livre na
+--            tb_5001_brincagem. Schema publico.
+--            Trigger dedicada (nao compartilhada).
+-- CHANGELOG:
+--   v1.0.0 - 25/07/2026 - Criacao inicial (tabela + trigger + seed) - Benedito Silva Filho
+-- =============================================================
+
+-- 1) TABELA
+CREATE TABLE public.tb_4006_idade_meses (
+    id              SERIAL PRIMARY KEY,
+    codigo_geras    SMALLINT NOT NULL UNIQUE,
+    descricao       VARCHAR(30) NOT NULL,
+    dias_min        INTEGER NOT NULL,
+    dias_max        INTEGER NOT NULL,
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.tb_4006_idade_meses IS 'Catalogo de faixas de Idade em Meses (por dias) - origem GR4006 (GERAS)';
+
+-- 2) TRIGGER DEDICADA (atualizado_em)
+CREATE OR REPLACE FUNCTION public.trg_tb_4006_idade_meses_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_4006_idade_meses_atualizado_em
+BEFORE UPDATE ON public.tb_4006_idade_meses
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_tb_4006_idade_meses_atualizado_em();
+
+-- 3) SEED (dados reais do GR4006.TXT, confirmados por Benedito)
+INSERT INTO public.tb_4006_idade_meses (codigo_geras, descricao, dias_min, dias_max) VALUES
+(1, 'Zero a 04 Meses', 0, 120),
+(2, '04 a 12 Meses', 121, 394),
+(3, '13 a 24 Meses', 395, 759),
+(4, '25 a 36 Meses', 760, 1125),
+(5, '+ 36 Meses', 1126, 9999);
+
+-- FIM DE ARQUIVO
+
+ 1    0  120 Zero a 04 Meses
+ 2  121  394 04  a 12 Meses
+ 3  395  759 13  a 24 Meses
+ 4  760 1125 25  a 36 Meses
+ 5 1126 9999 + 36 Meses

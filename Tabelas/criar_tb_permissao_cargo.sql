@@ -1,0 +1,24 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- ARQUIVO: criar_tb_permissao_cargo.sql
+-- CRIADO EM: 2026-10-15 10:05 -03 (Sessao 097)
+-- DESCRICAO: Ajustes de permissao por cargo feitos pelo Titular
+--            (Etapa 2 vai ter a tela). Sem linha aqui, vale o padrao do
+--            codigo (backend/utils/permissoes.py). Rodar no schema public.
+-- =========================================================
+CREATE TABLE IF NOT EXISTS public.permissao_cargo (
+    id              SERIAL PRIMARY KEY,
+    id_propriedade  INTEGER NOT NULL REFERENCES public.propriedades(id),
+    cargo           VARCHAR(40) NOT NULL,
+    modulo          VARCHAR(40) NOT NULL,
+    nivel           VARCHAR(12) NOT NULL
+                    CHECK (nivel IN ('SEM_ACESSO','CONSULTA','LANCA','TUDO')),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_por  INTEGER NULL REFERENCES public.usuarios(id),
+    CONSTRAINT ux_permissao_cargo UNIQUE (id_propriedade, cargo, modulo)
+);
+
+-- Conferencia (deve voltar 1 linha):
+SELECT table_name FROM information_schema.tables
+ WHERE table_schema = 'public' AND table_name = 'permissao_cargo';

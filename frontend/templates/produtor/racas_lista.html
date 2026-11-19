@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\racas_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-07 17:45 -03
+     ATUALIZADO EM: 2026-09-21 16:40 -03
+     VERSAO: 1.3.0
+
+     DESCRICAO:
+         Tela de selecao de Racas comuns ao Produtor (Sessao 047).
+         Lista simples, 1 checkbox por linha, SEM botao Salvar -
+         cada marcar/desmarcar dispara fetch/AJAX (POST /produtor/
+         racas/toggle) e grava na hora. Sem paginacao/busca -
+         volume baixo o suficiente (~106 racas).
+
+         Se `pode_editar` for False (Cargo sem permissao), os
+         checkboxes chegam desabilitados (visivel, mas travado) -
+         mesma logica ja usada no Backup/Restore.
+
+     v1.0.0: Criacao do modulo (Sessao 047).
+     v1.1.0: Sessao 047 (07/09/2026, 17:55 -03) - Ajuste visual
+         pedido por Benedito em teste real: Nome e Sigla da Raca
+         reorganizados em COLUNAS DISTINTAS (grid 3 colunas: Nome |
+         Sigla | Status+Checkbox), com cabecalho de coluna acima da
+         lista - antes a sigla vinha entre parenteses colada no
+         nome, dificultando a leitura em lista longa.
+     v1.2.0: Sessao 047 (07/09/2026, 17:58 -03) - Sigla em negrito
+         mais forte (font-weight 900, cor de #999999 para #333333)
+         a pedido de Benedito - ficava fraca demais pra se destacar
+         na coluna propria.
+     v1.3.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, sem alteracao) nem de nenhuma outra logica desta
+         tela - so a extracao do bloco de HTML repetido.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Raças da Fazenda</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { margin-bottom: 6px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+        .subtitulo { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+
+        .aviso-sem-permissao { background: #fff3e0; border-left: 4px solid #e6a23c; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #7a5200; margin-bottom: 16px; }
+
+        .cabecalho-colunas { display: grid; grid-template-columns: 1fr 70px auto; gap: 12px; padding: 8px 20px; font-size: 11px; color: #999999; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; max-width: 700px; }
+        .lista-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; max-width: 700px; overflow: hidden; }
+        .linha-raca { display: grid; grid-template-columns: 1fr 70px auto; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #f0f0f0; }
+        .linha-raca:last-child { border-bottom: none; }
+        .linha-raca:hover { background-color: #fafafa; }
+        .raca-nome { font-size: 14px; color: #333333; }
+        .raca-codigo { font-size: 13px; color: #333333; font-weight: 900; text-align: center; background: #f5f5f5; border-radius: 4px; padding: 3px 0; }
+        .raca-check { width: 20px; height: 20px; cursor: pointer; accent-color: #D4370A; flex-shrink: 0; }
+        .raca-check:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .status-linha { font-size: 11px; margin-left: 10px; min-width: 60px; text-align: right; }
+        .status-linha.salvando { color: #999999; }
+        .status-linha.salvo { color: #2e7d32; }
+        .status-linha.erro { color: #c62828; font-weight: bold; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128220;</span> Raças da Fazenda</h2>
+            </div>
+            <div class="subtitulo">Marque as raças que você usa — só elas vão aparecer no dropdown de Raça na Entrada.</div>
+
+            {% if not pode_editar %}
+            <div class="aviso-sem-permissao">Seu Cargo não tem permissão para alterar esta lista — apenas visualização.</div>
+            {% endif %}
+
+            <div class="cabecalho-colunas">
+                <span>Raça</span>
+                <span style="text-align: center;">Sigla</span>
+                <span></span>
+            </div>
+            <div class="lista-container" id="lista-racas">
+                {% for raca in racas %}
+                <div class="linha-raca" data-id="{{ raca.id }}">
+                    <span class="raca-nome">{{ raca.nome }}</span>
+                    <span class="raca-codigo">{{ raca.codigo }}</span>
+                    <span style="display: flex; align-items: center;">
+                        <span class="status-linha" id="status-{{ raca.id }}"></span>
+                        <input type="checkbox" class="raca-check" data-id="{{ raca.id }}"
+                            {{ 'checked' if raca.comum else '' }}
+                            {{ 'disabled' if not pode_editar else '' }}>
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // ==========================================================
+        // Autosave por linha - marca/desmarca dispara o toggle na
+        // hora, sem botao Salvar (decisao de Benedito, Sessao 047).
+        // ==========================================================
+        document.querySelectorAll('.raca-check').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                var id = this.dataset.id;
+                var novoValor = this.checked;
+                var statusEl = document.getElementById('status-' + id);
+                var checkboxEl = this;
+
+                statusEl.className = 'status-linha salvando';
+                statusEl.textContent = 'Salvando...';
+                checkboxEl.disabled = true;
+
+                fetch('/produtor/racas/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: parseInt(id, 10), comum: novoValor })
+                })
+                    .then(function(resposta) { return resposta.json(); })
+                    .then(function(dados) {
+                        checkboxEl.disabled = false;
+
+                        if (dados.ok) {
+                            statusEl.className = 'status-linha salvo';
+                            statusEl.textContent = '✔ Salvo';
+                            setTimeout(function() { statusEl.textContent = ''; }, 1500);
+                        } else {
+                            // Reverte o checkbox pro estado anterior - erro real
+                            // (permissao, raca nao encontrada, etc.)
+                            checkboxEl.checked = !novoValor;
+                            statusEl.className = 'status-linha erro';
+                            statusEl.textContent = dados.erro || 'Erro ao salvar';
+                        }
+                    })
+                    .catch(function() {
+                        checkboxEl.disabled = false;
+                        checkboxEl.checked = !novoValor;
+                        statusEl.className = 'status-linha erro';
+                        statusEl.textContent = 'Erro de conexão';
+                    });
+            });
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\racas_lista.html
+     ========================================================= -->

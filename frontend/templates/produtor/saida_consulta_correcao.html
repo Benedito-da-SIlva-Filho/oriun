@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\saida_consulta_correcao.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-17 17:15 -03
+     ATUALIZADO EM: 2026-11-05 17:05 -03
+     VERSAO: 1.4.0
+     v1.4.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Consulta Embarque - Correcao: animais da Data Embarque; so Data Embarque e Peso Saida sao editaveis. Mudar a data de apenas alguns animais desmembra o embarque. Tudo ou nada (backend/routers/saida_consulta.py).
+
+     v1.0.0: Criacao (Sessao 099).
+     v1.3.3: Sessao 107 (28/10/2026) - Aviso de saida no PADRAO do Orion (modal_confirmacao.html, vigiarSaidaPorLinks: 'Ficar na tela' / 'Sair sem salvar') para Voltar, Home e menu; o aviso do navegador fica so para fechar aba/F5.  REVERSAO: .bak_antes_s107zc.
+     v1.3.2: Sessao 107 (28/10/2026) - Avisa o usuario se tentar sair com alteracoes ainda nao gravadas (beforeunload).  REVERSAO: .bak_antes_s107zb.
+     v1.3.1: Sessao 107 (28/10/2026) - Transferencia tambem tem a coluna Peso Saida (opcional).  REVERSAO: .bak_antes_s107za.
+     v1.3.0: Sessao 107 (28/10/2026) - Tela mais clara: coluna 'Excluir' com rotulo e hint nas caixas, duas instrucoes (corrigir / excluir), contador de animais marcados, linha marcada em destaque, cadeado nos animais com GTA.  REVERSAO: .bak_antes_s107w.
+     v1.2.0: Sessao 107 (28/10/2026) - Coluna de caixas e botao 'Excluir selecionados': apaga a leitura dos animais marcados (so sem GTA e sem Comunicado), com confirmacao e Log.  REVERSAO: .bak_antes_s107u.
+     v1.1.0: Sessao 100 (19/10/2026, 18:20 -03) - Animal ligado a GTA aparece travado (Data Embarque e Peso nao editaveis), com o numero da GTA; aviso para desvincular antes de corrigir.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Corre&ccedil;&atilde;o de Embarque</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e3f2fd; color: #0d47a1; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-liberar { border-color: #D4370A; color: #D4370A; font-weight: bold; background: #fff; }
+        .btn-liberar:not(:disabled) { background: #D4370A; color: #fff; }
+        .btn-liberar:hover:not(:disabled) { background: #C0392B; }
+        .contador-excluir { font-size: 13px; color: #888888; margin-right: 10px; align-self: center; }
+        .contador-excluir.ativo { color: #D4370A; font-weight: bold; }
+        .rotulo-excluir { display: block; font-size: 12px; color: #999999; margin-bottom: 3px; }
+        .marca-travada { font-size: 15px; cursor: help; opacity: .6; }
+        .instrucoes div { margin-bottom: 4px; }
+        .instrucoes strong { color: #555555; font-style: normal; }
+        tr.marcada td { background: #FDECEA; }
+        .btn-liberar:disabled { border-color: #ccc; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .col-marcar { width: 38px; text-align: center; }
+        .tabela-gtas th.col-marcar { text-align: center; padding: 10px 8px; }
+        .col-marcar input { width: 17px; height: 17px; cursor: pointer; accent-color: #D4370A; padding: 0; }
+        .tabela-gtas td.col-marcar { padding: 7px 8px; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .selo-gta { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; font-family: Arial, sans-serif; }
+        .tabela-gtas tr.travada td { background: #f5f5f5; color: #888888; }
+        .tabela-gtas td input:disabled { background: #eeeeee; color: #888888; cursor: not-allowed; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_lista %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#9998;</span> Corre&ccedil;&atilde;o &#8212; Embarque {{ data_atual }}</div>
+                <div class="botoes-topo">
+                    <a class="btn-nav" href="{{ url_lista }}">Voltar</a>
+                    <span class="contador-excluir" id="contador-excluir">Nenhum animal marcado</span>
+                    <button type="button" class="btn-nav btn-liberar" id="btn-liberar" disabled title="Marque um ou mais animais na coluna Excluir">Excluir selecionados</button>
+                    <button type="button" class="btn-principal" style="margin-top:0" id="btn-gravar" disabled>Gravar</button>
+                </div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }}{% if destino_nome %} &#8212; Transfer&ecirc;ncia para {{ destino_nome }}{% endif %} &#8212; {{ animais|length }} animais</div>
+            <div class="faixa-erro" id="faixa-erro" style="margin:0 0 12px"></div>
+
+            {% if animais|selectattr('travado')|list|length %}
+            <div class="faixa-aviso" style="display:block; margin:0 0 12px">Os animais com a etiqueta <strong>GTA</strong> est&atilde;o ligados a uma GTA de Sa&iacute;da e ficam travados. Para corrigir, desvincule a GTA em Vincular GTA / Embarque.</div>
+            {% endif %}
+
+            <div class="tabela-container">
+                <div class="aviso-clicavel instrucoes">
+                    <div><strong>Corrigir a data{% if not sem_peso %} e o peso{% endif %}:</strong> altere o campo do animal e clique em <strong>Gravar</strong>. Mudar a data de apenas alguns animais separa (desmembra) o embarque. A faixa de idade &eacute; recalculada pela nova data.</div>
+                    <div><strong>Excluir animais:</strong> marque a caixa do animal na coluna <strong>Excluir</strong> e clique em <strong>Excluir selecionados</strong>. Os animais voltam a ficar livres para uma nova leitura.</div>
+                </div>
+                <table class="tabela-gtas">
+                    <thead>
+                        <tr>
+                            <th class="col-marcar"><span class="rotulo-excluir">Excluir</span><input type="checkbox" id="marcar-todos" title="Excluir todos os animais" aria-label="Excluir todos os animais"></th><th>SISBOV</th><th>RFID</th><th>Sexo</th><th>Idade</th><th>Ra&ccedil;a</th>
+                            <th>Data Embarque</th>{% if not sem_peso %}<th>Lote Sa&iacute;da</th>{% endif %}{% if not sem_peso %}<th>Peso Sa&iacute;da (kg)</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in animais %}
+                        <tr data-id="{{ a.id }}"{% if a.travado %} class="travada"{% endif %}>
+                            <td class="col-marcar">{% if a.travado %}<span class="marca-travada" title="Vinculado &agrave; GTA {{ a.gta }}. Desvincule a GTA para poder excluir este animal.">&#128274;</span>{% else %}<input type="checkbox" class="f-marcar" title="Excluir animal {{ a.sisbov }}" aria-label="Excluir animal {{ a.sisbov }}">{% endif %}</td>
+                            <td class="numero-gta">{{ a.sisbov }}{% if a.travado %}<span class="selo-gta">GTA {{ a.gta }}</span>{% endif %}</td>
+                            <td>{{ a.rfid }}</td>
+                            <td>{{ a.sexo }}</td>
+                            <td>{{ a.faixa }}</td>
+                            <td>{{ a.raca }}</td>
+                            <td><input type="text" class="f-data" maxlength="10" inputmode="numeric" value="{{ a.data }}" data-orig="{{ a.data }}"{% if a.travado %} disabled{% endif %}></td>
+                            {% if not sem_peso %}<td>{{ a.lote_saida }}</td>{% endif %}
+                            {% if not sem_peso %}<td><input type="text" class="f-peso" inputmode="decimal" value="{{ a.peso }}" data-orig="{{ a.peso }}"{% if a.travado %} disabled{% endif %}></td>{% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-fundo" id="modal-liberar">
+                <div class="modal-caixa">
+                    <p id="modal-liberar-texto"></p>
+                    <button type="button" class="btn-principal" id="btn-liberar-sim">Sim, excluir</button>
+                    <button type="button" class="btn-nav" id="btn-liberar-nao" style="margin-left:8px">N&atilde;o</button>
+                </div>
+            </div>
+
+            <div class="modal-fundo" id="modal-sucesso">
+                <div class="modal-caixa">
+                    <p id="modal-ok-texto"></p>
+                    <button type="button" class="btn-principal" id="btn-modal-sair">OK</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROP = {{ id_propriedade }};
+        var TIPO = "{{ tipo }}";
+        var DEST = "{{ dest if dest else '' }}";
+        var URL_LISTA = "{{ url_lista }}";
+        var btn = document.getElementById('btn-gravar');
+        var elErro = document.getElementById('faixa-erro');
+        var linhas = Array.prototype.slice.call(document.querySelectorAll('tbody tr'));
+        var ISO = "{{ iso }}";
+        var btnLiberar = document.getElementById('btn-liberar');
+        var marcarTodos = document.getElementById('marcar-todos');
+        var caixas = Array.prototype.slice.call(document.querySelectorAll('.f-marcar:not(:disabled)'));
+
+        function mascaraData(e) {
+            var v = e.target.value.replace(/\D/g, '').slice(0, 8);
+            if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+            else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+            e.target.value = v;
+        }
+        function atualizar() {
+            var n = 0;
+            linhas.forEach(function (tr) {
+                var d = tr.querySelector('.f-data'), p = tr.querySelector('.f-peso');
+                var mudou = d.value !== d.dataset.orig || (p && p.value !== p.dataset.orig);
+                d.classList.toggle('alterado', d.value !== d.dataset.orig);
+                if (p) { p.classList.toggle('alterado', p.value !== p.dataset.orig); }
+                tr.dataset.mudou = mudou ? '1' : '';
+                if (mudou) n++;
+            });
+            btn.disabled = n === 0;
+            btn.textContent = n ? 'Gravar (' + n + ')' : 'Gravar';
+        }
+        linhas.forEach(function (tr) {
+            tr.querySelector('.f-data').addEventListener('input', function (e) { mascaraData(e); atualizar(); });
+            var fp = tr.querySelector('.f-peso');
+            if (fp) { fp.addEventListener('input', atualizar); }
+        });
+
+        function erro(msg, tr) {
+            elErro.textContent = msg; elErro.style.display = 'block';
+            if (tr) { tr.scrollIntoView({ block: 'center' }); }
+        }
+
+        btn.addEventListener('click', function () {
+            elErro.style.display = 'none';
+            var alteracoes = [];
+            for (var i = 0; i < linhas.length; i++) {
+                var tr = linhas[i];
+                if (!tr.dataset.mudou) continue;
+                var d = tr.querySelector('.f-data'), p = tr.querySelector('.f-peso');
+                d.classList.remove('invalido'); if (p) { p.classList.remove('invalido'); }
+                if (!/^\d{2}\/\d{2}\/\d{4}$/.test(d.value)) { d.classList.add('invalido'); return erro('Data incorreta! Use dd/mm/aaaa.', tr); }
+                if (p && TIPO !== 'TRANSFER' && TIPO !== 'VENDA' && !p.value.trim()) { p.classList.add('invalido'); return erro('Informe o peso de todos os animais alterados.', tr); }
+                alteracoes.push({ id: tr.dataset.id, data: d.value, peso: p ? p.value : '' });
+            }
+            if (!alteracoes.length) return;
+            btn.disabled = true;
+            fetch('/produtor/saida-consulta/correcao/salvar', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: ID_PROP, tipo: TIPO, dest: DEST, alteracoes: alteracoes })
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (!d.ok) { erro(d.erro || 'Não foi possível gravar.'); btn.disabled = false; return; }
+                document.getElementById('modal-ok-texto').textContent = d.total + ' animal(is) corrigido(s).';
+                gravadoOk = true;
+                document.getElementById('btn-modal-sair').onclick = function () { window.location.href = URL_LISTA; };
+                document.getElementById('modal-sucesso').classList.add('aberto');
+            }).catch(function () { erro('Falha de comunicação.'); btn.disabled = false; });
+        });
+
+        // ---- Sessao 107: aviso ao sair com alteracoes nao gravadas ----
+        var gravadoOk = false;
+        window.addEventListener('beforeunload', function (evento) {
+            var pendente = linhas.some(function (tr) { return tr.dataset.mudou; });
+            if (pendente && !gravadoOk) { evento.preventDefault(); evento.returnValue = ''; }
+        });
+        // Padrao 4 (modal_confirmacao.html): qualquer link da tela abre a janela do Orion
+        document.addEventListener('DOMContentLoaded', function () {
+            vigiarSaidaPorLinks(
+                function () { return !gravadoOk && linhas.some(function (tr) { return tr.dataset.mudou; }); },
+                function () { gravadoOk = true; }
+            );
+        });
+
+        // ---- Sessao 107: Liberar animais (apaga a leitura; animal volta a ficar livre) ----
+        function marcados() { return caixas.filter(function (c) { return c.checked; }); }
+        function atualizarLiberar() {
+            var n = marcados().length;
+            btnLiberar.disabled = n === 0;
+            btnLiberar.textContent = n ? 'Excluir selecionados (' + n + ')' : 'Excluir selecionados';
+            btnLiberar.title = n ? 'Excluir os animais marcados deste embarque' : 'Marque um ou mais animais na coluna Excluir';
+            var cont = document.getElementById('contador-excluir');
+            cont.textContent = n === 0 ? 'Nenhum animal marcado' : (n === 1 ? '1 animal marcado' : n + ' animais marcados');
+            cont.classList.toggle('ativo', n > 0);
+            caixas.forEach(function (c) { c.closest('tr').classList.toggle('marcada', c.checked); });
+            if (marcarTodos) { marcarTodos.checked = caixas.length > 0 && n === caixas.length; }
+        }
+        caixas.forEach(function (c) { c.addEventListener('change', atualizarLiberar); });
+        if (marcarTodos) {
+            if (!caixas.length) { marcarTodos.disabled = true; }
+            marcarTodos.addEventListener('change', function () {
+                caixas.forEach(function (c) { c.checked = marcarTodos.checked; });
+                atualizarLiberar();
+            });
+        }
+        btnLiberar.addEventListener('click', function () {
+            elErro.style.display = 'none';
+            if (!btn.disabled) { return erro('Grave a correção (ou desfaça as alterações) antes de excluir animais.'); }
+            var n = marcados().length;
+            if (!n) return;
+            document.getElementById('modal-liberar-texto').textContent =
+                'Excluir ' + n + ' animal(is) deste embarque? A leitura deles será apagada e eles voltam a ficar livres para uma nova leitura.';
+            document.getElementById('modal-liberar').classList.add('aberto');
+        });
+        document.getElementById('btn-liberar-nao').addEventListener('click', function () {
+            document.getElementById('modal-liberar').classList.remove('aberto');
+        });
+        document.getElementById('btn-liberar-sim').addEventListener('click', function () {
+            var ids = marcados().map(function (c) { return c.closest('tr').dataset.id; });
+            var sim = document.getElementById('btn-liberar-sim');
+            sim.disabled = true;
+            fetch('/produtor/saida-consulta/correcao/liberar', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: ID_PROP, data: ISO, tipo: TIPO, dest: DEST, ids: ids })
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                document.getElementById('modal-liberar').classList.remove('aberto');
+                sim.disabled = false;
+                if (!d.ok) { erro(d.erro || 'Não foi possível excluir.'); return; }
+                document.getElementById('modal-ok-texto').textContent = d.total + ' animal(is) excluído(s) do embarque.';
+                document.getElementById('btn-modal-sair').onclick = function () { window.location.href = d.url; };
+                document.getElementById('modal-sucesso').classList.add('aberto');
+            }).catch(function () {
+                document.getElementById('modal-liberar').classList.remove('aberto');
+                sim.disabled = false; erro('Falha de comunicação.');
+            });
+        });
+    </script>
+    <script src="/static/js/auto_fechar_gravacao.js"></script>
+    <script>AutoFecharGravacao.iniciar({ modal: 'modal-sucesso', botao: 'btn-modal-sair', segundos: 3 });</script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>

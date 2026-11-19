@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\produtor_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-06 20:48 -03
+     ATUALIZADO EM: 2026-11-17 22:12 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Listagem de Produtores cadastrados pela Consiste.
+         Espelha proprietario_lista.html v1.1.0. Busca simples
+         por nome/razao social. Colunas: nome, razao social,
+         tipo de pessoa, cpf/cnpj, municipio/UF e status
+         (Ativo/Inativo). SEM botao "Novo" - nao existe cadastro
+         avulso, todo Produtor nasce vinculado a uma Propriedade
+         (fluxo "Adicionar Produtor" dentro da tela de
+         Propriedade). Esta tela serve so para consulta,
+         alteracao e impressao (relatorio em PDF).
+         v1.0.0: Criacao do modulo (Sessao 011.1).
+         v: Sessao 095 (13/10/2026, 14:10 -03) - AVISO DE DOWNLOAD PADRAO (lote 3): inclui a peca
+                 aviso_download e marca o link do PDF com data-aviso-*. REVERSAO: .bak_antes_aviso_download_s095.
+1.1.0     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Produtores</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include consiste_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        /* ---- Barra de busca ---- */
+        .barra-acoes { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+        .form-busca { display: flex; gap: 8px; flex: 1; max-width: 360px; }
+        .form-busca input { flex: 1; padding: 9px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; }
+        .form-busca input:focus { outline: none; border-color: #D4370A; }
+        .btn-buscar { padding: 9px 16px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .btn-buscar:hover { background: #FBE9E4; }
+        .btn-manual { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none; white-space: nowrap; margin-left: auto; }
+        .btn-manual:hover { background: #FBE9E4; text-decoration: none; }
+
+        /* ---- Tabela ---- */
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; text-align: left; padding: 12px 16px; font-size: 12px; color: #666666; text-transform: uppercase; border-bottom: 1px solid #e0e0e0; }
+        td { padding: 12px 16px; font-size: 14px; color: #333333; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+        .status-ativo { color: #2e7d32; font-weight: bold; font-size: 12px; }
+        .status-inativo { color: #c62828; font-weight: bold; font-size: 12px; }
+        .acoes { display: flex; gap: 10px; }
+        .link-editar { color: #D4370A; text-decoration: none; font-size: 13px; font-weight: bold; }
+        .link-editar:hover { text-decoration: underline; }
+        .btn-toggle { background: none; border: none; color: #666666; font-size: 13px; cursor: pointer; text-decoration: underline; }
+        .btn-toggle:hover { color: #333333; }
+        .vazio { text-align: center; padding: 40px; color: #999999; font-size: 14px; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — plataforma Consiste -->
+        {% include 'consiste/consiste_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="pagina-header">
+                <h2>&#128104;&#8205;&#127806; Produtores</h2>
+            </div>
+
+            <div class="barra-acoes">
+                <form method="GET" action="{{ url_for('produtores.lista') }}" class="form-busca">
+                    <input type="text" name="busca" placeholder="Buscar por nome ou razão social..." value="{{ termo_busca }}">
+                    <button type="submit" class="btn-buscar">Buscar</button>
+                </form>
+                <a href="/consiste/manual/produtor" target="_blank" class="btn-manual">&#128214; Manual (PDF)</a>
+            </div>
+
+            <div class="tabela-container">
+                {% if produtores %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Razão Social</th>
+                            <th>Tipo</th>
+                            <th>CPF/CNPJ</th>
+                            <th>Município / UF</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pr in produtores %}
+                        <tr>
+                            <td>{{ pr.nome }}</td>
+                            <td>{{ pr.razao_social }}</td>
+                            <td>{{ 'Física' if pr.tipo_pessoa == 'FISICA' else 'Jurídica' }}</td>
+                            <td>{{ pr.cpf_cnpj }}</td>
+                            <td>{{ pr.municipio }} / {{ pr.uf }}</td>
+                            <td>
+                                {% if pr.ativo %}
+                                <span class="status-ativo">&#9679; Ativo</span>
+                                {% else %}
+                                <span class="status-inativo">&#9679; Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td class="acoes">
+                                <a href="{{ url_for('produtores.editar', id=pr.id) }}" class="link-editar">Editar</a>
+                                <a href="{{ url_for('produtores.relatorio_pdf', id=pr.id) }}" class="link-editar" data-aviso-descricao="Relatório do Produtor {{ pr.nome }}" data-aviso-arquivo="produtor_{{ pr.id }}_relatorio.pdf">Imprimir</a>
+                                <form method="POST" action="{{ url_for('produtores.toggle', id=pr.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn-toggle">
+                                        {{ 'Inativar' if pr.ativo else 'Ativar' }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="vazio">
+                    {% if termo_busca %}
+                    Nenhum Produtor encontrado para "{{ termo_busca }}".
+                    {% else %}
+                    Nenhum Produtor cadastrado ainda.
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\produtor_lista.html
+     ========================================================= -->

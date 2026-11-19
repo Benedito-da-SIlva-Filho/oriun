@@ -1,0 +1,56 @@
+# =========================================================
+# PROJETO: Orion
+# MODULO: .gitignore
+# AUTOR: Benedito Silva Filho
+# CRIADO EM: 2026-06-20 19:39 -03
+# ATUALIZADO EM: 2026-11-19 14:05 -03
+# VERSAO: 1.1.1
+#     v1.1.1: Sessao 133 - notas pessoais da raiz fora do Git (uma tinha chave de API).
+#     v1.1.0: Sessao 133 - preparado para o servidor: fora do Git ficam
+#             backups, temporarios, dados de teste, fotos/GTAs enviadas,
+#             documentos soltos e o zip de entrega.
+# =========================================================
+
+# Nunca enviar para o GitHub! (segredos)
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Backups e temporarios de trabalho
+*.bak*
+*.aposentado_*
+_to_delete/
+_tmp*/
+entrega*/
+XX Orion/
+Claude outputs/
+Orion_servidor_*.zip
+
+# Dados do cliente / de teste (cada ambiente tem os seus)
+storage/
+frontend/static/uploads/
+
+# Documentos e arquivos soltos
+# Notas pessoais da raiz (NAO usar /*.TXT: no Windows pegaria o requirements.txt)
+Bom dia Clau.TXT
+Novo bom dia.TXT
+Onde paramos.TXT
+Resumo 2026-09-29.TXT
+Padrão Prompts.TXT
+*.docx
+*.xlsx
+*.mhtml
+data-*.csv
+Pesagem data-*.csv
+/*.png
+/*.jpg
+/*.pdf
+
+# =========================================================
+# FIM DE ARQUIVO: .gitignore
+# =========================================================

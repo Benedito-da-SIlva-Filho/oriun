@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincagem_formulario.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-09 15:15 -03
+     ATUALIZADO EM: 2026-10-23 10:40 -03
+     VERSAO: 1.12.0
+
+     DESCRICAO:
+         Formulario de Brincagem Sequencial (BLOCO B - Sessao 048;
+         BLOCO C - Sessao 049).
+
+         Variaveis esperadas do router (brincagem_sequencial.
+         formulario / salvar):
+           gta_id               - id da GTA (agora usado de
+                                  verdade - campo oculto do form)
+           cabecalho_documento  - dict com numero_gta_completo,
+                                  data_emissao_br, data_validade_br,
+                                  data_entrega_br, tipo_movimento,
+                                  meio_transporte, qtde_animais,
+                                  sentido
+           procedencia          - dict com nome, cpf_cnpj,
+                                  estabelecimento, regiao,
+                                  municipio_uf
+           destino              - dict com produtor_nome,
+                                  propriedade_nome, municipio_uf
+           categorias           - lista de dicts: especie, sexo,
+                                  idade_meses, quantidade,
+                                  meses_estimado, faixas_brincos
+                                  (lista de dicts com 'texto')
+           racas                - lista de objetos Raca (codigo,
+                                  nome)
+           saldo_disponivel     - int
+           primeiro_brinco      - string (15 digitos) ou None
+           estoque_suficiente   - bool
+           total_femea/total_macho/total_geral - int
+           aviso_prazo          - string ou None
+           erro                 - string ou None (NOVO v1.7.0 -
+                                  reexibicao apos falha de
+                                  validacao no Salvar)
+           url_voltar           - path do botao Voltar/Cancelar
+
+     v1.0.0 a v1.6.0: ver historico da Sessao 048 no cabecalho
+         anterior deste arquivo - construcao completa do Bloco B
+         (visualizacao, sem gravar nada).
+     v1.7.0: Sessao 049 (10/09/2026, 13:40 -03) - AJUSTES
+         ESTRUTURAIS para o Bloco C (Salvar, POST) funcionar de
+         verdade - nenhuma mudanca visual, so atributos que
+         faltavam:
+           (1) Tabela + campos passam a ficar dentro de um
+               <form method="POST" action="/produtor/brincagem-
+               sequencial/salvar">, envolvendo desde "Dados
+               Gerais" ate os botoes.
+           (2) Campo oculto <input type="hidden" name="id_gta">
+               adicionado logo no inicio do form.
+           (3) Campos que nao tinham "name" (so "id", usado pelo
+               JS) ganharam name= tambem: raca (ja tinha),
+               nro_meses_N, nascimento_N.
+           (4) Campo Lote nao tinha nem "id" nem "name" - ganhou
+               os dois (id="lote_N" name="lote_N").
+           (5) Checkbox de confirmacao ganhou name=
+               "confirmo_brincagem".
+           (6) Botao Salvar trocado de type="button" para
+               type="submit" - agora envia o form de verdade.
+         Nenhuma linha de CSS ou logica JS existente foi alterada.
+     v1.8.0: Sessao 076 (21/09/2026, 12:10 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Sem mudanca de
+         comportamento do Voltar (url_voltar continua vindo do
+         router, sem alteracao) nem de nenhuma outra logica desta
+         tela - so a extracao do bloco de HTML repetido.
+     v1.9.0: Sessao 087 (05/10/2026, 13:10 -03) - DATA E PESO (pedidos de
+         Benedito, testes do Pacote 087). (1) O formulario inteiro e os
+         campos Data Brincagem e Peso Balancao ganham autocomplete
+         desligado: o navegador sugeria datas antigas digitadas em testes
+         (uma porta para erro). (2) Peso Balancao ganha mascara de numero
+         inteiro com ponto de milhar (14.410), sem virgula. (3) BUG: apos
+         um erro de validacao do servidor, o formulario voltava com TODOS
+         os campos vazios - o template nunca usava dados_repostos. Agora
+         Raca, Data Brincagem, Peso Balancao e, por linha, Nro Meses,
+         Nascimento e Lote voltam preenchidos (o checkbox de confirmacao
+         volta desmarcado de proposito). Data e Peso continuam sendo
+         conferidos no servidor (brincagem_sequencial.py v1.15.0).
+     v1.10.0: Sessao 087 (05/10/2026, 19:00 -03) - SEQUENCIA VISIVEL E AJUSTE (acordo
+         com Benedito: o brete prevalece, a Sequencial se adapta). (1) Novo quadro "Sequencia
+         desta GTA": total de brincos, do primeiro ao ultimo, e - se a Sequencial pulou
+         brincos que o brete ja leu e ainda nao vinculou a GTA - quais foram pulados.
+         (2) Aviso amarelo quando o Salvar ajusta a sequencia (o brete levou um brinco ou
+         a reserva expirou): a Brincagem NAO e gravada, os dados digitados voltam e o
+         escritorio confere os numeros novos e confirma de novo (o checkbox volta
+         desmarcado). Dica: so repasse/imprima a lista de brincos DEPOIS do Salvar final.
+         Servidor: brincagem_sequencial.py v1.17.0. Nenhuma outra mudanca.
+         v1.11.0: Sessao 096 (14/10/2026, 10:05 -03) - AVISO DA COTA HILTON NA COMPRA: aviso amarelo quando
+             a idade na brincagem de uma linha passa do limite da Cota Hilton (nao trava o Salvar) e quando
+             o Nascimento digitado e posterior a Data Brincagem (o servidor bloqueia: brincagem_sequencial.py
+             v1.21.0). Nenhuma outra mudanca. REVERSAO: devolver .bak_antes_nasc_cth_s096.
+     v1.12.0: Sessao 104 (23/10/2026, 10:40 -03) - ERROS BEM VISIVEIS: faixas rosa de erro e de estoque mais fortes (borda grossa, letra maior).
+         Nenhuma outra mudanca. REVERSAO: .bak_antes_s104c.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Brincagem Sequencial</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; margin-bottom: 20px; max-width: 1100px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; }
+        .divisor-vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .painel-documento { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 8px; }
+        .painel-documento > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-documento > div:last-child { border-right: none; }
+        .painel-documento .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-documento .valor { font-size: 17px; font-weight: bold; color: #333333; }
+        .painel-documento .valor.destaque { color: #D4370A; }
+
+        .caixa-topo { display: grid; grid-template-columns: 2fr 1fr; gap: 0; margin: 20px 0; border: 2px solid #D4370A; border-radius: 8px; overflow: hidden; }
+        .caixa-brinco-disponivel { background: #FBE9E4; padding: 16px 20px; text-align: center; border-right: 1px solid #e3b5a5; }
+        .caixa-brinco-disponivel .rotulo { font-size: 13px; font-weight: bold; color: #7a1f04; text-transform: uppercase; letter-spacing: 0.5px; }
+        .caixa-brinco-disponivel .valor { font-size: 26px; font-weight: bold; color: #333333; margin-top: 4px; letter-spacing: 1px; }
+        .caixa-saldo { background: #FBE9E4; padding: 16px 20px; text-align: center; }
+        .caixa-saldo .rotulo { font-size: 13px; font-weight: bold; color: #7a1f04; text-transform: uppercase; letter-spacing: 0.5px; }
+        .caixa-saldo .valor { font-size: 26px; font-weight: bold; color: #333333; margin-top: 4px; }
+        .caixa-saldo .valor.insuficiente { color: #c62828; }
+
+        .aviso-estoque { background: #ffcdd2; border: 2px solid #c62828; border-left: 8px solid #b71c1c; padding: 16px 20px; border-radius: 6px; font-size: 16px; color: #b71c1c; margin: 16px 0; font-weight: bold; }
+
+        .caixa-sequencia { background: #f1f8e9; border: 1px solid #aed581; border-left: 4px solid #558b2f; border-radius: 6px; padding: 10px 16px; margin: 12px 0 0 0; font-size: 13.5px; color: #33691e; }
+        .caixa-sequencia .mono { font-family: monospace, monospace; letter-spacing: 0.5px; }
+        .caixa-sequencia .pulou { margin-top: 6px; color: #8d4b00; }
+        .aviso-sequencia { background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 18px; border-radius: 6px; font-size: 13.5px; color: #6d4c00; margin: 16px 0; font-weight: bold; }
+        .aviso-erro { background: #ffcdd2; border: 2px solid #c62828; border-left: 8px solid #b71c1c; padding: 16px 20px; border-radius: 6px; font-size: 16px; color: #b71c1c; margin: 16px 0; font-weight: bold; }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; max-width: 320px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group select, .form-group input { padding: 11px 13px; border: 1px solid #cccccc; border-radius: 6px; font-size: 15px; color: #333333; }
+
+        .tabela-animais { width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 12px; }
+        .tabela-animais th { text-align: left; font-size: 11.5px; color: #666666; padding: 8px 6px; border-bottom: 2px solid #e0e0e0; text-transform: uppercase; letter-spacing: 0.3px; }
+        .tabela-animais th.col-qtd { text-align: right; }
+        .tabela-animais td { padding: 10px 6px; border-bottom: 1px solid #f0f0f0; font-size: 13.5px; vertical-align: middle; }
+        .tabela-animais td.col-qtd { text-align: right; font-weight: bold; }
+        .tabela-animais input[type="number"], .tabela-animais input[type="text"] {
+            padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13.5px; width: 100%; font-family: Arial, sans-serif;
+        }
+        .col-nascimento input[type="text"] { font-style: normal; color: #333333; }
+        .campo-meses { max-width: 60px !important; text-align: center; }
+        .col-brincos { color: #1a1a1a; font-weight: 600; font-size: 11.5px; font-family: 'Courier New', monospace; line-height: 1.5; }
+
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 4px; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-resumo .valor { font-size: 19px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.total { color: #D4370A; }
+
+        .aviso-nota { background: #fff3e0; border-left: 4px solid #e6a23c; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #7a5200; margin-top: 16px; }
+
+        .form-botoes { display: flex; align-items: center; gap: 16px; margin-top: 24px; justify-content: space-between; }
+        .confirmacao-revisao { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #7a1f04; background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 10px 16px; }
+        .confirmacao-revisao input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .botoes-direita { display: flex; gap: 12px; }
+        .nota-obrigatorio { font-size: 14.5px; color: #D4370A; font-weight: bold; margin-bottom: 12px; }
+        .campo-obrigatorio label { color: #D4370A; font-weight: bold; }
+        .campo-obrigatorio select, .campo-obrigatorio input { border: 2px solid #D4370A; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#127991;&#65039;</span> Brincagem Sequencial &#8212; GTA {{ cabecalho_documento.numero_gta_completo }}</h2>
+            </div>
+
+            <div class="form-container">
+
+                <!-- ===== Mesmo painel-documento de gta_consulta_detalhe.html ===== -->
+                <div class="painel-documento">
+                    <div>
+                        <div class="rotulo">Número Completo</div>
+                        <div class="valor destaque">{{ cabecalho_documento.numero_gta_completo }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Emissão</div>
+                        <div class="valor">{{ cabecalho_documento.data_emissao_br }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Validade</div>
+                        <div class="valor">{{ cabecalho_documento.data_validade_br }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Entrega</div>
+                        <div class="valor">{{ cabecalho_documento.data_entrega_br }}</div>
+                    </div>
+                </div>
+                <div class="painel-documento" style="margin-top: 8px;">
+                    <div>
+                        <div class="rotulo">Tipo de Movimento</div>
+                        <div class="valor">{{ cabecalho_documento.tipo_movimento }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Meio de Transporte</div>
+                        <div class="valor">{{ cabecalho_documento.meio_transporte }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Quantidade de Animais</div>
+                        <div class="valor destaque">{{ cabecalho_documento.qtde_animais }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Sentido</div>
+                        <div class="valor">{{ cabecalho_documento.sentido }}</div>
+                    </div>
+                </div>
+
+                <!-- ===== Mesmas duas-colunas Procedencia/Destino ===== -->
+                <div class="duas-colunas" style="margin-top: 24px;">
+                    <div class="divisor-vertical"></div>
+                    <div>
+                        <div class="form-secao">Procedência</div>
+                        <div class="bloco-conferencia">
+                            <div class="linha"><span class="rotulo">Nome</span><span class="valor">{{ procedencia.nome }}</span></div>
+                            <div class="linha"><span class="rotulo">CPF/CNPJ</span><span class="valor">{{ procedencia.cpf_cnpj }}</span></div>
+                            <div class="linha"><span class="rotulo">Estabelecimento</span><span class="valor">{{ procedencia.estabelecimento }}</span></div>
+                            <div class="linha"><span class="rotulo">Região</span><span class="valor">{{ procedencia.regiao }}</span></div>
+                            <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ procedencia.municipio_uf }}</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-secao">Destino</div>
+                        <div class="bloco-conferencia">
+                            <div class="linha"><span class="rotulo">Produtor</span><span class="valor">{{ destino.produtor_nome }}</span></div>
+                            <div class="linha"><span class="rotulo">Propriedade</span><span class="valor">{{ destino.propriedade_nome }}</span></div>
+                            <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ destino.municipio_uf }}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 1o Brinco Disponivel + Saldo Brincos ===== -->
+                <div class="caixa-topo">
+                    <div class="caixa-brinco-disponivel">
+                        <div class="rotulo">1º Brinco Disponível</div>
+                        <div class="valor">{{ primeiro_brinco or '—' }}</div>
+                    </div>
+                    <div class="caixa-saldo">
+                        <div class="rotulo">Saldo Brincos</div>
+                        <div class="valor {{ 'insuficiente' if not estoque_suficiente else '' }}">{{ saldo_disponivel }}</div>
+                    </div>
+                </div>
+
+                {% if not estoque_suficiente %}
+                <div class="aviso-estoque">
+                    &#10060; Estoque insuficiente: esta GTA precisa de {{ cabecalho_documento.qtde_animais }} brincos, mas só há {{ saldo_disponivel }} disponíveis. Providencie mais brincos antes de continuar.
+                </div>
+                {% endif %}
+
+                {% if sequencia %}
+                <div class="caixa-sequencia">
+                    <div>&#128290; Sequência desta GTA: <b>{{ sequencia.total }}</b> brinco{{ 's' if sequencia.total != 1 else '' }}, de <b class="mono">{{ sequencia.primeiro }}</b> a <b class="mono">{{ sequencia.ultimo }}</b></div>
+                    {% if sequencia.pulados %}
+                    <div class="pulou">&#9888;&#65039; Pulou {% for faixa in sequencia.pulados %}<span class="mono">{{ faixa.texto }}</span>{{ '; ' if not loop.last else '' }}{% endfor %} &#8212; já lidos no brete e ainda não vinculados a uma GTA.</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if aviso_sequencia %}
+                <div class="aviso-sequencia">&#128260; {{ aviso_sequencia }}</div>
+                {% endif %}
+
+                {% if erro %}
+                <div class="aviso-erro">
+                    &#10060; {{ erro }}
+                </div>
+                {% endif %}
+
+                <!-- ===== NOVO v1.7.0: form real, envolve Dados Gerais + Tabela + Botoes ===== -->
+                <form id="form_brincagem" method="POST" action="/produtor/brincagem-sequencial/salvar" autocomplete="off">
+                <input type="hidden" name="id_gta" value="{{ gta_id }}">
+
+                <!-- ===== Dados Gerais (Raça + Peso Balanção + Data Brincagem, uma vez para a GTA inteira) ===== -->
+                <div class="form-secao">Dados Gerais</div>
+                <div class="nota-obrigatorio">* campos aplicados a toda GTA</div>
+                <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                    <div class="form-group campo-obrigatorio">
+                        <label for="raca">Raça *</label>
+                        <select id="raca" name="raca" oninput="atualizarBotaoSalvar(); atualizarCamposMeses();" onchange="atualizarBotaoSalvar(); atualizarCamposMeses();" {{ 'disabled' if not estoque_suficiente else '' }}>
+                            <option value="" {{ 'selected' if not dados_repostos.get('raca') else '' }} disabled>Selecione...</option>
+                            {% for raca in racas %}
+                            <option value="{{ raca.codigo }}" {{ 'selected' if dados_repostos.get('raca') == raca.codigo else '' }}>{{ raca.codigo }} — {{ raca.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group campo-obrigatorio" style="max-width: 200px;">
+                        <label for="data_brincagem_geral">Data Brincagem *</label>
+                        <input type="text" id="data_brincagem_geral" name="data_brincagem_geral" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off"
+                               value="{{ dados_repostos.get('data_brincagem_geral', '') }}"
+                               oninput="formatarData(this); recalcularTodasAsLinhas(); atualizarBotaoSalvar(); atualizarCamposMeses();"
+                               {{ 'disabled' if not estoque_suficiente else '' }}>
+                    </div>
+                    <div class="form-group" style="max-width: 200px;">
+                        <label for="peso_balancao">Peso Balanção (kg)</label>
+                        <input type="text" id="peso_balancao" name="peso_balancao" placeholder="Ex: 14.410" maxlength="9" inputmode="numeric" autocomplete="off"
+                               value="{{ dados_repostos.get('peso_balancao', '') }}" oninput="formatarPeso(this)" {{ 'disabled' if not estoque_suficiente else '' }}>
+                    </div>
+                </div>
+
+                <div class="form-secao">Animais (por categoria)</div>
+
+                <table class="tabela-animais" data-total-categorias="{{ categorias|length }}">
+                    <thead>
+                        <tr>
+                            <th>Espécie</th>
+                            <th>Sexo</th>
+                            <th>Idade</th>
+                            <th class="col-qtd">Qtde</th>
+                            <th>Nro Meses</th>
+                            <th>Nascimento</th>
+                            <th>Lote</th>
+                            <th>Brincos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                        <tr>
+                            <td>{{ categoria.especie }}</td>
+                            <td>{{ categoria.sexo }}</td>
+                            <td>{{ categoria.idade_meses }}</td>
+                            <td class="col-qtd">{{ categoria.quantidade }}</td>
+                            <td>
+                                <input type="text" id="meses_{{ loop.index0 }}" name="nro_meses_{{ loop.index0 }}" class="campo-meses campo-so-digitos"
+                                       value="{{ dados_repostos.get('nro_meses_' ~ loop.index0, categoria.meses_estimado if categoria.meses_estimado is not none else '') }}"
+                                       maxlength="3" inputmode="numeric"
+                                       oninput="calcularNascimento({{ loop.index0 }})"
+                                       disabled>
+                            </td>
+                            <td class="col-nascimento">
+                                <input type="text" id="nascimento_{{ loop.index0 }}" name="nascimento_{{ loop.index0 }}"
+                                       placeholder="preencha Nro Meses" maxlength="10"
+                                       value="{{ dados_repostos.get('nascimento_' ~ loop.index0, '') }}" oninput="atualizarAvisoCth()" disabled>
+                            </td>
+                            <td><input type="text" id="lote_{{ loop.index0 }}" name="lote_{{ loop.index0 }}" placeholder="Ex: PIQUETE 3" style="text-transform: uppercase;" autocomplete="off" value="{{ dados_repostos.get('lote_' ~ loop.index0, '') }}" oninput="this.value = this.value.toUpperCase()" {{ 'disabled' if not estoque_suficiente else '' }}></td>
+                            <td class="col-brincos">
+                                {% for faixa in categoria.faixas_brincos %}
+                                {{ faixa.texto }}{% if not loop.last %}<br>{% endif %}
+                                {% else %}
+                                —
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- ===== Mesmo painel-resumo de gta_consulta_detalhe.html ===== -->
+                <div class="painel-resumo">
+                    <div>
+                        <div class="rotulo">Fêmea</div>
+                        <div class="valor">{{ total_femea }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Macho</div>
+                        <div class="valor">{{ total_macho }}</div>
+                    </div>
+                    <div>
+                        <div class="rotulo">Total</div>
+                        <div class="valor total">{{ total_geral }}</div>
+                    </div>
+                </div>
+
+                {% if aviso_prazo %}
+                <div class="aviso-nota">&#9888;&#65039; {{ aviso_prazo }}</div>
+                {% endif %}
+
+                <!-- v1.11.0 - aviso da Cota Hilton e do Nascimento depois da Brincagem (preenchido pelo JS) -->
+                <div class="aviso-nota" id="aviso_cth" style="display: none;"></div>
+
+                <div class="form-botoes">
+                    <label class="confirmacao-revisao">
+                        <input type="checkbox" id="checkbox_confirmacao" name="confirmo_brincagem" onchange="atualizarBotaoSalvar()" disabled>
+                        Revisei os dados e confirmo a Brincagem.
+                    </label>
+                    <div class="botoes-direita">
+                        <a href="{{ url_voltar }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" id="btn_salvar" class="btn-salvar" disabled>Confirmar Brincagem ({{ total_geral }} animais)</button>
+                    </div>
+                </div>
+
+                </form>
+                <!-- ===== FIM do form (NOVO v1.7.0) ===== -->
+
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // -------------------------------------------------------
+        // NOVO v1.1.0: mantem apenas digitos no campo Nro Meses
+        // (mesmo padrao ja usado nos campos de SISBOV do
+        // Cancelamento de Brincos) - substitui o input number com
+        // contador de setas, que so confundia.
+        // -------------------------------------------------------
+        document.querySelectorAll('.campo-so-digitos').forEach(function (campo) {
+            campo.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        });
+
+        // -------------------------------------------------------
+        // Mascara de data (dd/mm/aaaa), digitando so numeros.
+        // -------------------------------------------------------
+        function formatarData(input) {
+            var v = input.value.replace(/\D/g, '').slice(0, 8);
+            if (v.length >= 5) {
+                v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+            } else if (v.length >= 3) {
+                v = v.slice(0, 2) + '/' + v.slice(2);
+            }
+            input.value = v;
+        }
+
+        // -------------------------------------------------------
+        // Converte "dd/mm/aaaa" em Date, ou null se
+        // incompleta/invalida.
+        // -------------------------------------------------------
+        // -------------------------------------------------------
+        // v1.9.0: mascara do Peso Balancao - so numeros inteiros, com
+        // ponto de milhar (14410 vira 14.410). Sem virgula/decimais.
+        // -------------------------------------------------------
+        function formatarPeso(input) {
+            var v = input.value.replace(/\D/g, '').replace(/^0+/, '');
+            input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function parseDataBR(texto) {
+            var m = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) { return null; }
+            var data = new Date(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+            return isNaN(data.getTime()) ? null : data;
+        }
+
+        function formatarDataBR(data) {
+            var dd = String(data.getDate()).padStart(2, '0');
+            var mm = String(data.getMonth() + 1).padStart(2, '0');
+            var aaaa = data.getFullYear();
+            return dd + '/' + mm + '/' + aaaa;
+        }
+
+        // -------------------------------------------------------
+        // NOVO v1.2.0: calcula o Nascimento estimado de UMA linha
+        // (Data Brincagem GERAL - Nro Meses daquela linha x 30
+        // dias). O campo Nascimento SO fica habilitado se Nro
+        // Meses estiver preenchido (pedido de Benedito) - vazio o
+        // Nro Meses, o campo trava de novo e limpa. O valor
+        // calculado fica editavel - o Usuario pode ajustar depois;
+        // o calculo so preenche automaticamente, nunca briga com
+        // uma edicao manual ja feita (so recalcula quando Nro
+        // Meses ou a Data Brincagem geral mudam de novo).
+        // -------------------------------------------------------
+        function calcularNascimento(indice) {
+            var mesesInput      = document.getElementById('meses_' + indice);
+            var nascimentoInput = document.getElementById('nascimento_' + indice);
+            var dataGeralInput  = document.getElementById('data_brincagem_geral');
+
+            var meses = parseInt(mesesInput.value, 10);
+
+            if (isNaN(meses)) {
+                nascimentoInput.disabled = true;
+                nascimentoInput.value = '';
+                nascimentoInput.placeholder = 'preencha Nro Meses';
+                atualizarAvisoCth();
+                return;
+            }
+
+            nascimentoInput.disabled = false;
+            nascimentoInput.placeholder = 'dd/mm/aaaa';
+
+            var dataBrincagem = parseDataBR(dataGeralInput.value);
+            if (dataBrincagem) {
+                var dataNascimento = new Date(dataBrincagem);
+                dataNascimento.setDate(dataNascimento.getDate() - (meses * 30));
+                nascimentoInput.value = formatarDataBR(dataNascimento);
+            }
+            atualizarAvisoCth();
+        }
+
+        // -------------------------------------------------------
+        // NOVO v1.2.0: quando a Data Brincagem GERAL muda, recalcula
+        // o Nascimento de TODAS as linhas que ja tem Nro Meses
+        // preenchido (a Data Brincagem e unica para a GTA inteira -
+        // pedido de Benedito, "efetuada pelo escritorio, a mesma
+        // data para todos os animais").
+        // -------------------------------------------------------
+        function recalcularTodasAsLinhas() {
+            var tabela = document.querySelector('.tabela-animais');
+            var total  = parseInt(tabela.dataset.totalCategorias, 10) || 0;
+            for (var i = 0; i < total; i++) {
+                calcularNascimento(i);
+            }
+        }
+
+        // -------------------------------------------------------
+        // v1.11.0 - AVISO DA COTA HILTON (Compra): linha com idade acima
+        // do limite na brincagem NAO entra na CTH (so avisa; pode salvar).
+        // Nascimento depois da Data Brincagem tambem aparece aqui, mas o
+        // servidor e que bloqueia o Salvar (regras_sisbov.py).
+        // -------------------------------------------------------
+        var DIAS_MAX_COTA_HILTON = {{ dias_max_cota_hilton }};
+
+        function atualizarAvisoCth() {
+            var aviso = document.getElementById('aviso_cth');
+            if (!aviso) { return; }
+            var base   = parseDataBR(document.getElementById('data_brincagem_geral').value);
+            var tabela = document.querySelector('.tabela-animais');
+            var total  = tabela ? (parseInt(tabela.dataset.totalCategorias, 10) || 0) : 0;
+            var acima = [], incoerente = [];
+            if (base) {
+                for (var i = 0; i < total; i++) {
+                    var campoNasc = document.getElementById('nascimento_' + i);
+                    if (!campoNasc || campoNasc.disabled || campoNasc.value.length !== 10) { continue; }
+                    var nasc = parseDataBR(campoNasc.value);
+                    if (!nasc) { continue; }
+                    var dias = Math.round((base.getTime() - nasc.getTime()) / 86400000);
+                    if (dias < 0) { incoerente.push(i + 1); }
+                    else if (dias > DIAS_MAX_COTA_HILTON) { acima.push(i + 1); }
+                }
+            }
+            var partes = [];
+            if (incoerente.length) {
+                partes.push('&#9888;&#65039; Nascimento depois da Data Brincagem na(s) linha(s) ' + incoerente.join(', ') +
+                    ': corrija, o sistema não grava assim.');
+            }
+            if (acima.length) {
+                partes.push('&#9888;&#65039; Linha(s) ' + acima.join(', ') + ' com mais de ' + DIAS_MAX_COTA_HILTON +
+                    ' dias na brincagem: NÃO entram na Cota Hilton (pode salvar normalmente).');
+            }
+            if (!partes.length) { aviso.style.display = 'none'; return; }
+            aviso.innerHTML = partes.join('<br>');
+            aviso.style.display = 'block';
+        }
+        window.addEventListener('load', atualizarAvisoCth);
+
+        // -------------------------------------------------------
+        // NOVO v1.3.0: o botao Salvar so libera quando TODAS as
+        // condicoes estiverem OK: estoque suficiente (checado no
+        // servidor - se insuficiente, todos os campos ja chegam
+        // desabilitados, entao nem chega a entrar aqui de verdade)
+        // + Raça preenchida + Data Brincagem valida (dd/mm/aaaa
+        // completo) + checkbox de confirmacao marcado. Chamada a
+        // cada mudanca relevante (Raça, Data Brincagem, checkbox).
+        // -------------------------------------------------------
+        function atualizarBotaoSalvar() {
+            var racaInput      = document.getElementById('raca');
+            var dataInput      = document.getElementById('data_brincagem_geral');
+            var checkboxInput  = document.getElementById('checkbox_confirmacao');
+            var botaoSalvar    = document.getElementById('btn_salvar');
+
+            var racaPreenchida = !!racaInput.value;
+            var dataValida     = parseDataBR(dataInput.value) !== null;
+            var checkboxMarcado = checkboxInput.checked;
+
+            botaoSalvar.disabled = !(racaPreenchida && dataValida && checkboxMarcado);
+        }
+
+        // -------------------------------------------------------
+        // NOVO v1.5.0: campo Nro Meses de cada linha SO habilita
+        // depois que Raça E Data Brincagem (campos gerais)
+        // estiverem preenchidos - "fechando as portas para
+        // eventuais erros" (pedido de Benedito). Como o
+        // Nascimento so habilita depois de Nro Meses (v1.2.0), o
+        // efeito em cascata trava a tabela inteira ate Raça+Data
+        // serem preenchidos.
+        // -------------------------------------------------------
+        function atualizarCamposMeses() {
+            var racaInput  = document.getElementById('raca');
+            var dataInput  = document.getElementById('data_brincagem_geral');
+            var habilitado = !!racaInput.value && (parseDataBR(dataInput.value) !== null);
+
+            document.querySelectorAll('.campo-meses').forEach(function (campo) {
+                campo.disabled = !habilitado;
+            });
+
+            // NOVO v1.6.0: o checkbox de confirmacao segue a mesma
+            // trava - so pode ser marcado depois que Raça e Data
+            // Brincagem estiverem preenchidos. Se destravar Raça/
+            // Data depois de ja ter marcado, desmarca de novo (nao
+            // faz sentido manter "confirmado" com a base mudando).
+            var checkboxInput = document.getElementById('checkbox_confirmacao');
+            checkboxInput.disabled = !habilitado;
+            if (!habilitado) {
+                checkboxInput.checked = false;
+            }
+
+            if (!habilitado) {
+                recalcularTodasAsLinhas();
+            }
+
+            atualizarBotaoSalvar();
+        }
+
+        // NOVO v1.2.0: Nro Meses vem pre-preenchido do servidor -
+        // habilita o Nascimento correspondente ja no carregamento
+        // (fica so sem valor, ja que a Data Brincagem geral ainda
+        // esta vazia).
+        document.addEventListener('DOMContentLoaded', function () {
+            recalcularTodasAsLinhas();
+            atualizarCamposMeses();
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincagem_formulario.html
+     ========================================================= -->

@@ -1,0 +1,67 @@
+-- -*- coding: utf-8 -*-
+-- PROJETO: Orion SISBOV
+-- PASTA: database/migrations
+-- MODULO: Criacao da tabela tb_3007_brincos_entrada (Estoque de Entrada de Brincos por Nota Fiscal, ref. GERAS 3007)
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 13/07/2026 17:35 -03
+-- ATUALIZADO EM: 13/07/2026 17:35 -03
+-- VERSAO: 1.0
+--
+-- CHANGELOG:
+-- v1.0 - 13/07/2026 17:35 -03 - Criacao inicial. Estoque de entrada de brincos (lote por Nota Fiscal),
+--        par complementar da tb_3008_brincos_saida (ja levantada, ainda nao criada no banco).
+--        Codigo Inicial/Final migrados para 15 digitos (SISBOV com DV incorporado, sem coluna Dv separada).
+--        Campos obsoletos do GERAS (Data Saida, GTA, Status, Data Validade, Data Impressao, Controle)
+--        excluidos do desenho por decisao de negocio (exigencias do MAPA que caducaram).
+--        Campo Fornecedor (texto livre no GERAS) substituido por FK id_fabricante,
+--        apontando para tb_1021_fabricantes_brincos (cadastro proprio, evita duplicacao de nome/logo).
+--        Campo Cod Responsavel substituido por FK id_responsavel, apontando para usuarios(id)
+--        (perfil Responsavel, filtrado em tela/query, sem constraint de banco).
+
+CREATE TABLE tb_3007_brincos_entrada (
+    id                  SERIAL PRIMARY KEY,
+    id_produtor         INTEGER NOT NULL REFERENCES produtores(id),
+    id_propriedade      INTEGER NOT NULL REFERENCES propriedades(id),
+    id_fabricante       INTEGER NOT NULL REFERENCES tb_1021_fabricantes_brincos(id),
+    id_responsavel      INTEGER REFERENCES usuarios(id),
+    sequencia           INTEGER,
+    codigo_inicial      VARCHAR(15) NOT NULL,
+    codigo_final        VARCHAR(15) NOT NULL,
+    nota_fiscal         VARCHAR(6),
+    qtde_entrada        INTEGER NOT NULL,
+    data_entrada        DATE,
+    qtde_saida          INTEGER NOT NULL DEFAULT 0,
+    saldo               INTEGER NOT NULL DEFAULT 0,
+    solicitacao_nro     INTEGER,
+    solicitacao_data    DATE,
+    data_fabricacao     DATE,
+    total_caixas        INTEGER,
+    criado_em           TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em       TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Indices de apoio para as buscas mais comuns (por Produtor/Propriedade e por faixa de codigo)
+CREATE INDEX idx_tb_3007_brincos_entrada_produtor
+    ON tb_3007_brincos_entrada (id_produtor);
+
+CREATE INDEX idx_tb_3007_brincos_entrada_propriedade
+    ON tb_3007_brincos_entrada (id_propriedade);
+
+CREATE INDEX idx_tb_3007_brincos_entrada_codigo
+    ON tb_3007_brincos_entrada (codigo_inicial, codigo_final);
+
+-- Trigger dedicado para atualizado_em (padrao: trg_<tablename>_atualizado_em)
+CREATE OR REPLACE FUNCTION trg_tb_3007_brincos_entrada_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_3007_brincos_entrada_atualizado_em
+    BEFORE UPDATE ON tb_3007_brincos_entrada
+    FOR EACH ROW
+    EXECUTE FUNCTION trg_tb_3007_brincos_entrada_atualizado_em();
+
+-- FIM DE ARQUIVO

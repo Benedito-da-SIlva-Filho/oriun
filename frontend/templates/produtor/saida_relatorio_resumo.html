@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\saida_relatorio_resumo.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-17 15:00 -03
+     ATUALIZADO EM: 2026-11-13 18:20 -03
+     VERSAO: 1.5.0
+     v1.5.0: Sessao 123 (2026-11-13 18:20 -03) - AUDITORIA ETAPA 6 (Regra #15): aviso de download padrao nos botoes Pedido de GTA (PDF) e Baixar PDF. So tela. REVERSAO: .bak_antes_etapa6.
+     v1.4.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Relatorio de Embarque - tela 2: resumo Sexo x Faixa de Idade, aviso de
+         animais fora da Liberacao, lista de animais lidos e botao Baixar PDF
+         (backend/routers/saida_relatorio.py, rota resumo).
+
+     v1.0.0: Criacao (Sessao 099).
+     v1.1.0: Sessao 103 (22/10/2026, 12:45 -03) - Faixa vermelha de aviso e botao "Copiar pedido de GTA" ao lado do Baixar PDF.  REVERSAO: .bak_antes_pedido_gta_s103.
+     v1.2.0: Sessao 103 (22/10/2026, 15:50 -03) - Texto da faixa vermelha em duas linhas. So visual.  REVERSAO: .bak_antes_alterar_aviso_s103.
+     v1.3.0: Sessao 107 (28/10/2026) - Aceita Transferencia: titulo com o tipo, sem aviso de Liberacao, sem botao PDF, Peso so se houver.  REVERSAO: .bak_antes_s107x.
+     v1.3.1: Sessao 107 - Botao Baixar PDF volta na Transferencia (url_pdf leva o tipo).  REVERSAO: .bak_antes_s107y.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Relat&oacute;rio de Embarque</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-novo { padding: 9px 18px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-novo:hover { background: #C0392B; }
+        .aviso-liberacao { background: #fff8e1; border-left: 6px solid #f9a825; color: #6d4c00; padding: 10px 16px; border-radius: 6px; font-size: 13.5px; font-weight: bold; margin-bottom: 14px; }
+        .tabela-resumo td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-resumo td.total { background: #FBE9E4; color: #7a1f04; font-size: 16px; }
+        .tabela-resumo th { white-space: nowrap; }
+        .celula { padding: 8px 16px; font-size: 13px; border-bottom: 1px solid #f5f5f5; color: #333333; }
+        /* v-s103 - faixa de aviso vermelha do padrao (nada de amarelo) */
+        .faixa-vermelha { background: #D32F2F; color: #ffffff; border: 2px solid #8e0000; border-radius: 6px; padding: 10px 14px; margin: 0 0 14px; font-size: 14px; font-weight: bold; line-height: 1.35; display: flex; align-items: center; gap: 14px; }
+        .faixa-vermelha .faixa-icone { font-size: 38px; line-height: 1; flex-shrink: 0; }
+        .faixa-vermelha .faixa-texto { flex: 1; }
+        .faixa-vermelha a { color: #ffffff; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_datas %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128203;</span> Relat&oacute;rio de Embarque &#8212; {% if tipo == 'VENDA' %}Venda{% elif tipo == 'TRANSFER' %}Transfer&ecirc;ncia{% else %}Abate{% endif %} &#8212; {{ data_br }}</div>
+                <div class="botoes-topo">
+                    <a href="{{ url_pedido_pdf }}" class="btn-novo" style="margin-right: 8px;" data-aviso-descricao="Pedido de GTA">&#11015; Pedido de GTA (PDF)</a>
+                    {% if url_pdf %}<a href="{{ url_pdf }}" class="btn-novo" data-aviso-descricao="Relatório de Embarque">&#11015; Baixar PDF</a>{% endif %}
+                </div>
+            </div>
+            <div class="subtitulo-propriedade">Resumo para pedir a GTA: o total de cada caminh&atilde;o deve somar {{ rel.total }} animais.</div>
+            <div class="faixa-vermelha"><span class="faixa-icone">&#9888;&#65039;</span><span class="faixa-texto">Antes de pedir a GTA ao &oacute;rg&atilde;o do Estado, confira este resumo: a GTA precisa pedir as mesmas categorias (sexo e idade) dos animais lidos.<br>O bot&atilde;o &ldquo;Pedido de GTA (PDF)&rdquo; baixa um PDF pronto para enviar ao escrit&oacute;rio.</span></div>
+
+            {% if rel.fora_liberacao %}
+            <div class="aviso-liberacao">&#9888;&#65039; {{ rel.fora_liberacao }} animal(is) fora da Libera&ccedil;&atilde;o para Abate (marcados na lista).</div>
+            {% endif %}
+
+            <div class="tabela-container" style="margin-bottom: 18px;">
+                <table class="tabela-gtas tabela-resumo">
+                    <thead>
+                        <tr>
+                            <th>Sexo</th>
+                            {% for c in rel.colunas %}<th class="col-qtd">{{ c }}</th>{% endfor %}
+                            <th class="col-qtd">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>F&ecirc;meas</strong></td>
+                            {% for v in rel.resumo_femeas %}<td class="col-qtd">{{ v }}</td>{% endfor %}
+                            <td class="col-qtd total">{{ rel.total_femeas }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Machos</strong></td>
+                            {% for v in rel.resumo_machos %}<td class="col-qtd">{{ v }}</td>{% endfor %}
+                            <td class="col-qtd total">{{ rel.total_machos }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% if rel.sem_faixa_femeas or rel.sem_faixa_machos %}
+            <div class="aviso-liberacao">&#9888;&#65039; {{ rel.sem_faixa_femeas + rel.sem_faixa_machos }} animal(is) sem data de nascimento/faixa: contados no total, fora das colunas de idade.</div>
+            {% endif %}
+
+            <div class="tabela-container">
+                <div class="aviso-clicavel">Animais lidos ({{ rel.total }}).</div>
+                <table class="tabela-gtas">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>C&oacute;digo SISBOV</th>
+                            <th>Manejo</th>
+                            <th>Sexo</th>
+                            <th>Nascimento</th>
+                            <th>Idade Meses</th>
+                            {% if tipo not in ('TRANSFER', 'VENDA') or rel.tem_peso %}<th class="col-qtd">Peso (kg)</th>{% endif %}
+                            <th>Obs.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in rel.animais %}
+                        <tr>
+                            <td class="celula">{{ a.indice }}</td>
+                            <td class="celula numero-gta">{{ a.sisbov }}</td>
+                            <td class="celula">{{ a.manejo }}</td>
+                            <td class="celula">{{ 'Fêmea' if a.sexo == 'FEMEA' else ('Macho' if a.sexo == 'MACHO' else a.sexo) }}</td>
+                            <td class="celula">{{ a.nascimento }}</td>
+                            <td class="celula">{{ a.faixa }}</td>
+                            {% if tipo not in ('TRANSFER', 'VENDA') or rel.tem_peso %}<td class="celula col-qtd">{{ a.peso }}</td>{% endif %}
+                            <td class="celula">{% if a.obs %}<span class="selo-situacao pendente">{{ a.obs }}</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        // v-s103 - Copiar pedido de GTA: copia o texto do botao (data-texto) para a area de transferencia
+        function copiarAlternativo(texto, feito) {
+            var campo = document.createElement('textarea');
+            campo.value = texto; campo.style.position = 'fixed'; campo.style.opacity = '0';
+            document.body.appendChild(campo); campo.select();
+            try { document.execCommand('copy'); feito(); } catch (e) { window.prompt('Copie o texto (Ctrl+C):', texto); }
+            document.body.removeChild(campo);
+        }
+        function copiarPedidoGta(botao, evento) {
+            if (evento) { evento.stopPropagation(); }
+            var texto = botao.getAttribute('data-texto') || '';
+            var original = botao.innerHTML;
+            function feito() { botao.innerHTML = '&#10003; Copiado!'; setTimeout(function() { botao.innerHTML = original; }, 2000); }
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(texto).then(feito, function() { copiarAlternativo(texto, feito); });
+            } else { copiarAlternativo(texto, feito); }
+        }
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\saida_relatorio_resumo.html
+     ========================================================= -->

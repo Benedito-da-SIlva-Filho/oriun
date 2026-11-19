@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\consiste_confirmar_versao.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-10 17:30 -03
+     ATUALIZADO EM: 2026-09-10 17:30 -03
+     VERSAO: 1.0.0
+
+     DESCRICAO:
+         Tela de confirmacao exibida quando a Consiste tenta
+         restaurar um backup de versao de estrutura diferente da
+         atual (VersaoSchemaIncompativel, backup_helper.py v1.3.0).
+         Decisao de Benedito, Sessao 049: nunca bloquear a
+         operacao legitima de restaurar backup antigo, mas exigir
+         confirmacao explicita (checkbox) antes de seguir - evita
+         que a Consiste restaure sem perceber que ha scripts de
+         ALTER TABLE pendentes de reaplicar depois.
+
+         Reenvia o POST para a MESMA rota
+         (/consiste/backup-restore/executar), com os mesmos dados
+         do pedido original + confirmar_versao_incompativel=on -
+         desta vez o Restore acontece de verdade.
+
+         Variaveis esperadas do router (backup_restore.
+         consiste_executar):
+           id_produtor, id_pedido, nome_arquivo_backup - dados do
+                         pedido original, repassados como campos
+                         ocultos
+           versao_backup, versao_atual - numeros das versoes
+                         divergentes
+           schema_nome   - nome do schema do Produtor afetado
+
+     v1.0.0: Criacao do modulo (Sessao 049).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Confirmar Restore</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+        .caixa { background: #ffffff; border-radius: 10px; border: 2px solid #c62828; padding: 32px; max-width: 560px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .titulo { font-size: 19px; font-weight: bold; color: #c62828; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+        .corpo { font-size: 14px; color: #333333; line-height: 1.6; margin-bottom: 18px; }
+        .corpo strong { color: #c62828; }
+        .bloco-versoes { background: #ffebee; border-left: 4px solid #c62828; padding: 12px 16px; border-radius: 6px; font-size: 13.5px; margin-bottom: 20px; }
+        .bloco-versoes div { padding: 3px 0; }
+
+        .confirmacao { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; font-weight: bold; color: #7a1f04; background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
+        .confirmacao input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; }
+
+        .botoes { display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-cancelar { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-confirmar { padding: 10px 22px; background: #c62828; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-confirmar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="caixa">
+        <div class="titulo">&#9888;&#65039; Versão de estrutura divergente</div>
+
+        <div class="corpo">
+            O backup escolhido para <strong>{{ schema_nome }}</strong> foi gerado
+            numa versão anterior da estrutura do banco. Restaurar agora pode
+            causar erros se ainda houver scripts de atualização (ALTER TABLE)
+            pendentes de reaplicar depois do Restore.
+        </div>
+
+        <div class="bloco-versoes">
+            <div><strong>Versão do backup:</strong> {{ versao_backup }}</div>
+            <div><strong>Versão atual do sistema:</strong> {{ versao_atual }}</div>
+        </div>
+
+        <form method="POST" action="/consiste/backup-restore/executar">
+            <input type="hidden" name="id_produtor" value="{{ id_produtor }}">
+            <input type="hidden" name="id_pedido" value="{{ id_pedido }}">
+            <input type="hidden" name="nome_arquivo_backup" value="{{ nome_arquivo_backup }}">
+
+            <label class="confirmacao">
+                <input type="checkbox" id="checkbox_confirmacao" name="confirmar_versao_incompativel" onchange="document.getElementById('btn_confirmar').disabled = !this.checked">
+                Estou ciente da divergência de versão e confirmo que vou checar/reaplicar os scripts de atualização pendentes depois deste Restore.
+            </label>
+
+            <div class="botoes">
+                <a href="/consiste/backup-restore" class="btn-cancelar">Cancelar</a>
+                <button type="submit" id="btn_confirmar" class="btn-confirmar" disabled>Restaurar mesmo assim</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\consiste_confirmar_versao.html
+     ========================================================= -->

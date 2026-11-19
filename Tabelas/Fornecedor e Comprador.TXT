@@ -1,0 +1,41 @@
+-- ============================================================
+-- ALTER TABLE tb_parceiros
+-- Adequação para Cadastro Completo do Parceiro (Fornecedor/Comprador)
+-- Executar em CADA schema produtor_NNNNN que já tenha a tabela
+-- Sessão 034 cont. 3 -- 08/08/2026
+-- ============================================================
+
+-- 1. Tipo de Pessoa (Física/Jurídica)
+ALTER TABLE tb_parceiros
+    ADD COLUMN tipo_pessoa VARCHAR(9);
+
+ALTER TABLE tb_parceiros
+    ADD CONSTRAINT ck_parceiros_tipo_pessoa
+    CHECK (tipo_pessoa IN ('FISICA', 'JURIDICA'));
+
+-- 2. Dados do Estabelecimento (conforme campos do e-GTA)
+ALTER TABLE tb_parceiros ADD COLUMN estabelecimento     VARCHAR(150);
+ALTER TABLE tb_parceiros ADD COLUMN codigo_mapa         VARCHAR(20);
+ALTER TABLE tb_parceiros ADD COLUMN inscricao_estadual  VARCHAR(20);
+ALTER TABLE tb_parceiros ADD COLUMN uf                  CHAR(2);
+ALTER TABLE tb_parceiros ADD COLUMN regiao              VARCHAR(50);
+
+-- 3. Município -- FK para lista fechada (>>> CONFIRMAR NOME REAL DA TABELA <<<)
+ALTER TABLE tb_parceiros ADD COLUMN id_municipio INTEGER;
+-- ALTER TABLE tb_parceiros
+--     ADD CONSTRAINT fk_parceiros_municipio
+--     FOREIGN KEY (id_municipio) REFERENCES public.??????(id);
+
+-- 4. Troca id_produtor -> id_propriedade
+ALTER TABLE tb_parceiros ADD COLUMN id_propriedade INTEGER;
+ALTER TABLE tb_parceiros DROP COLUMN id_produtor;
+
+-- FK de id_propriedade (>>> CONFIRMAR NOME REAL DA TABELA <<<)
+-- ALTER TABLE tb_parceiros
+--     ADD CONSTRAINT fk_parceiros_propriedade
+--     FOREIGN KEY (id_propriedade) REFERENCES public.??????(id);
+
+-- 5. Chave de duplicidade: mesmo Parceiro pode existir em Propriedades diferentes
+ALTER TABLE tb_parceiros
+    ADD CONSTRAINT uq_parceiros_cpfcnpj_propriedade
+    UNIQUE (cpf_cnpj, id_propriedade);

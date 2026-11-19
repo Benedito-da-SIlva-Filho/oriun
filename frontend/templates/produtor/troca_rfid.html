@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\troca_rfid.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-09 16:10 -03
+     ATUALIZADO EM: 2026-11-04 15:20 -03
+     VERSAO: 1.5.0
+
+     DESCRICAO:
+         Tela "Troca de RFID" (backend/routers/troca_rfid.py): troca o RFID
+         de um animal que ja tem o brinco SISBOV. Passos: digita o SISBOV
+         completo, confere os dados do animal, le o RFID novo (15 digitos),
+         grava. Uma tela so, serve para quem usa Leitor ou Bastao.
+
+     v1.0.0: Criacao (Sessao 092, 09/10/2026, 16:10 -03).
+     v1.5.0: Sessao 114 (04/11/2026, 17:35 -03) - Mensagem de erro do RFID em uma linha, centralizada, na largura toda do quadro (antes ficava pequena na coluna do RFID). SISBOV e RFID atual da ficha com fonte maior. REVERSAO: .bak_antes_s114_erro.
+     v1.4.4: Sessao 114 (04/11/2026, 17:25 -03) - Mais espaco entre os numeros e o botao Sair no quadro de sucesso. REVERSAO: .bak_antes_s114_caixa.
+     v1.4.3: Sessao 114 (04/11/2026, 17:20 -03) - No quadro de sucesso o botao Sair fica ao lado dos numeros, com a mesma altura das duas linhas (SISBOV e RFID). REVERSAO: .bak_antes_s114_caixa.
+     v1.4.2: Sessao 114 (04/11/2026, 15:50 -03) - No quadro de sucesso o RFID fica alinhado com o SISBOV (duas linhas, numeros na mesma coluna). REVERSAO: .bak_antes_s114_alinha.
+     v1.4.1: Sessao 114 (04/11/2026, 15:35 -03) - Ordem dos campos: SISBOV, Manejo, Buscar, RFID novo. Quadro de sucesso agora carrega o auto_fechar_gravacao.js (contagem no Sair, 3 s). REVERSAO: .bak_antes_s114_ordem.
+     v1.4.0: Sessao 114 (04/11/2026, 15:20 -03) - Confirmacao igual a da Brincagem: quadro 'RFID Gravado com Sucesso' com o SISBOV e contagem no botao Sair (fecha sozinho em 3 s; Enter ou Sair fecha na hora). Quando o RFID e conferido ja grava (sem contagem no botao Gravar, que fica como opcao manual). Texto 'brinco substituto' virou 'RFID substituto'. REVERSAO: .bak_antes_s114_modal.
+     v1.3.0: Sessao 114 (04/11/2026, 15:00 -03) - Pode achar o animal pelo MANEJO (6 numeros) no lugar do SISBOV; o DV aparece so quando o Manejo e repetido com brinco 105. Um campo ou o outro. Backend: troca_rfid.py 1.3.0. REVERSAO: .bak_antes_s114_manejo.
+     v1.2.1: Sessao 114 (04/11/2026, 14:45 -03) - Contagem do Gravar de 3 para 5 segundos e mensagem de sucesso de 6 para 10 segundos (deu pouco tempo para ler). REVERSAO: .bak_antes_s114_tempo.
+     v1.2.0: Sessao 114 (04/11/2026, 14:35 -03) - Sem mensagem verde: so aparece mensagem quando o RFID esta em uso ou da outro erro. Depois do RFID conferido, o botao Gravar conta 3, 2, 1 e grava sozinho; clicar no Gravar pula a espera; mexer no RFID ou Limpar cancela a contagem. A pergunta de confirmacao antes de gravar saiu (a contagem e a chance de desistir). REVERSAO: .bak_antes_s114_contagem.
+     v1.1.0: Sessao 114 (04/11/2026, 14:40 -03) - Tela mais enxuta (pedido do Benedito): SISBOV e RFID novo lado a lado, ficha do animal em 5 colunas (o Gravar fica visivel sem rolar), busca sozinha ao completar os 15 digitos, e depois do Gravar a tela fica aberta (mensagem de sucesso, campos limpos, cursor no SISBOV). Os blocos 1/2/3 e o botao Trocar outro animal deixaram de existir. A confirmacao antes de gravar continua. REVERSAO: .bak_antes_s114_tela.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Troca de RFID</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .conteudo { flex: 1; padding: 20px 24px; overflow-y: auto; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+        .subtitulo { font-size: 13.5px; color: #888888; margin: 2px 0 10px; }
+
+        .bloco { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 20px; margin-bottom: 14px; max-width: 1000px; }
+        .bloco h3 { font-size: 15px; color: #D4370A; margin-bottom: 4px; }
+        .bloco .explica { font-size: 12.5px; color: #888888; margin-bottom: 12px; }
+
+        .linha-campo { display: flex; gap: 10px; align-items: center; }
+        .campo { flex: 1; font-size: 18px; letter-spacing: 1px; padding: 9px 12px; border: 1px solid #cccccc; border-radius: 6px; font-family: Consolas, monospace; }
+        .campo:focus { outline: none; border-color: #D4370A; }
+        .campo:disabled { background: #f3f3f3; color: #aaaaaa; }
+        .btn { background: #D4370A; color: #ffffff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn:hover { filter: brightness(0.92); }
+        .btn:disabled { background: #cccccc; cursor: not-allowed; filter: none; }
+        .btn-claro { background: #ffffff; color: #555555; border: 1px solid #cccccc; }
+        .btn-claro:hover { background: #f5f5f5; filter: none; }
+
+        .msg { margin-top: 10px; padding: 9px 12px; border-radius: 6px; font-size: 13.5px; display: none; }
+        .msg.erro { display: block; background: #FDECEA; color: #B71C1C; border: 1px solid #F5C6C2; }
+        .msg.ok { display: block; background: #E8F5E9; color: #1B5E20; border: 1px solid #B7DFB9; }
+
+        .ficha { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px 14px; margin-top: 4px; }   /* v1.1.0 - 5 colunas, 2 linhas */
+        .ficha .item .rotulo { font-size: 11px; color: #888888; }
+        .ficha .item .valor { font-size: 14px; color: #222222; font-weight: bold; }
+        .duas-colunas { display: grid; grid-template-columns: 1.5fr 1fr auto 1.2fr; gap: 18px; margin-bottom: 8px; }   /* v1.3.0 - SISBOV | Manejo | RFID novo */
+        .campo-dv { flex: 0 0 70px; width: 70px; text-align: center; }
+        #campo-manejo { min-width: 0; }   /* v1.1.0 */
+        #bloco-animal { border-top: 1px solid #eeeeee; margin-top: 10px; padding-top: 8px; }
+        .ficha .item.destaque .valor { font-family: Consolas, monospace; color: #D4370A; font-size: 17px; }   /* v1.5.0 - SISBOV e RFID atual maiores */
+        .sucesso-grande { font-size: 17px; font-weight: bold; }
+        .acoes { display: flex; gap: 10px; margin-top: 10px; }
+        .oculto { display: none; }
+        .msg-faixa { text-align: center; font-size: 17px; font-weight: bold; padding: 12px 16px; margin: 4px 0 10px; }   /* v1.5.0 - erro do RFID em uma linha, largura toda */
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa-ok { background: #ffffff; border-radius: 10px; padding: 32px; max-width: 380px; text-align: center; }
+        .modal-caixa-ok .icone-sucesso { font-size: 46px; margin-bottom: 12px; }
+        .modal-caixa-ok h3 { font-size: 18px; color: #2e7d32; margin-bottom: 8px; }
+        .modal-caixa-ok .sisbov-gravado { font-size: 15px; color: #333333; margin-bottom: 20px; }
+        .modal-caixa-ok .linha-sucesso { display: flex; align-items: stretch; justify-content: center; gap: 24px; }
+        .modal-caixa-ok .linha-sucesso .btn-modal-sair { padding: 10px 40px; display: flex; align-items: center; justify-content: center; }
+        .modal-caixa-ok .sisbov-gravado { margin-bottom: 0; display: inline-grid; grid-template-columns: auto auto; gap: 6px 14px; text-align: left; }
+        .modal-caixa-ok .sisbov-gravado b { font-weight: normal; font-family: Consolas, monospace; }
+        .btn-modal-sair { padding: 10px 32px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-modal-sair:hover { background: #C0392B; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            <div class="pagina-header"><h2><span class="icone-titulo">&#128260;</span> Troca de RFID</h2></div>
+            <div class="subtitulo"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }}</div>
+
+            <div class="bloco">
+                <div class="msg" id="msg-sucesso"></div>
+
+                <div class="duas-colunas">
+                    <div>
+                        <h3>1. Brinco SISBOV do animal</h3>
+                        <div class="linha-campo">
+                            <input type="text" id="campo-sisbov" class="campo" maxlength="15" inputmode="numeric" autocomplete="off" placeholder="15 dígitos do SISBOV">
+                        </div>
+                        <div class="msg" id="msg-sisbov"></div>
+                    </div>
+                    <div>
+                        <h3>ou Manejo</h3>
+                        <div class="linha-campo">
+                            <input type="text" id="campo-manejo" class="campo" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 números">
+                            <input type="text" id="campo-dv" class="campo campo-dv oculto" maxlength="1" inputmode="numeric" autocomplete="off" placeholder="DV" title="DV do brinco (modelo 105)">
+                        </div>
+                        <div class="msg" id="msg-manejo"></div>
+                    </div>
+                    <div>
+                        <h3>&nbsp;</h3>
+                        <div class="linha-campo"><button type="button" class="btn" id="btn-buscar">Buscar</button></div>
+                    </div>
+                    <div>
+                        <h3>2. RFID novo</h3>
+                        <div class="linha-campo">
+                            <input type="text" id="campo-rfid" class="campo" maxlength="15" inputmode="numeric" autocomplete="off" placeholder="Leia o RFID substituto" disabled>
+                        </div>
+                    </div>
+                </div>
+                <div class="msg msg-faixa" id="msg-rfid"></div>
+
+                <div class="oculto" id="bloco-animal">
+                    <div class="explica" id="situacao-animal"></div>
+                    <div class="ficha" id="ficha"></div>
+                </div>
+
+                <div class="acoes">
+                    <button type="button" class="btn" id="btn-gravar" disabled>Gravar troca</button>
+                    <button type="button" class="btn btn-claro" id="btn-cancelar">Limpar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <div class="modal-fundo" id="modal-sucesso">
+        <div class="modal-caixa-ok">
+            <div class="icone-sucesso">&#9989;</div>
+            <h3>RFID Gravado com Sucesso</h3>
+            <div class="linha-sucesso">
+                <div class="sisbov-gravado" id="modal-sisbov"></div>
+                <button type="button" class="btn-modal-sair" id="btn-modal-sair">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var ID_PROPRIEDADE = {{ id_propriedade|tojson }};
+        var URL_BUSCAR  = {{ url_for('troca_rfid.buscar')|tojson }};
+        var URL_CHECAR  = {{ url_for('troca_rfid.checar_rfid')|tojson }};
+        var URL_GRAVAR  = {{ url_for('troca_rfid.gravar')|tojson }};
+        var TAMANHO = 15;
+
+        var campoSisbov = document.getElementById('campo-sisbov');
+        var campoRfid   = document.getElementById('campo-rfid');
+        var campoManejo = document.getElementById('campo-manejo');
+        var campoDv     = document.getElementById('campo-dv');
+        var btnBuscar   = document.getElementById('btn-buscar');
+        var btnGravar   = document.getElementById('btn-gravar');
+        var animalAtual = null;
+        var rfidConferido = '';
+        var timerSucesso = null;
+
+        function el(id) { return document.getElementById(id); }
+        function mostrar(id) { el(id).classList.remove('oculto'); }
+        function esconder(id) { el(id).classList.add('oculto'); }
+        function msg(id, tipo, texto) {
+            var caixa = el(id);
+            caixa.className = 'msg' + (tipo ? ' ' + tipo : '');
+            caixa.textContent = texto || '';
+        }
+        function soDigitos(campo) { campo.value = campo.value.replace(/\D/g, ''); }
+
+        function postar(url, corpo) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            }).then(function(resp) {
+                return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; });
+            });
+        }
+
+        function item(rotulo, valor, destaque) {
+            var div = document.createElement('div');
+            div.className = 'item' + (destaque ? ' destaque' : '');
+            var r = document.createElement('div'); r.className = 'rotulo'; r.textContent = rotulo;
+            var v = document.createElement('div'); v.className = 'valor'; v.textContent = (valor === '' || valor === null || valor === undefined) ? '—' : valor;
+            div.appendChild(r); div.appendChild(v);
+            return div;
+        }
+
+        function montarFicha(a) {
+            var ficha = el('ficha');
+            ficha.innerHTML = '';
+            ficha.appendChild(item('SISBOV', a.sisbov, true));
+            ficha.appendChild(item('Manejo', a.manejo));
+            ficha.appendChild(item('Sexo', a.sexo));
+            ficha.appendChild(item('Raça', a.raca));
+            ficha.appendChild(item('Idade (meses)', a.idade_meses));
+            ficha.appendChild(item('Nascimento', a.nascimento));
+            ficha.appendChild(item('Liberação de abate', a.liberacao_abate));
+            var pesoTxt = (a.peso === null || a.peso === undefined) ? '' : a.peso.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg' + (a.data_peso ? ' (' + a.data_peso + ')' : '');
+            ficha.appendChild(item('Último peso', pesoTxt));
+            ficha.appendChild(item('Lote', a.lote));
+            ficha.appendChild(item('RFID atual', a.rfid_atual || 'sem RFID', true));
+            el('situacao-animal').textContent = a.situacao;
+        }
+
+        // ---------- contagem 3, 2, 1 para gravar sozinho (v1.2.0) ----------
+        var contagem = null;
+        function cancelarContagem() {
+            if (contagem) { clearInterval(contagem); contagem = null; }
+            btnGravar.textContent = 'Gravar troca';
+        }
+        function iniciarContagem() {
+            cancelarContagem();
+            var n = 5;   // v1.2.1 - 5 segundos (antes 3)
+            btnGravar.textContent = 'Gravar troca (' + n + ')';
+            contagem = setInterval(function() {
+                n -= 1;
+                if (n <= 0) { cancelarContagem(); gravar(); return; }
+                btnGravar.textContent = 'Gravar troca (' + n + ')';
+            }, 1000);
+        }
+
+        function reiniciar() {
+            cancelarContagem();
+            animalAtual = null; rfidConferido = '';
+            campoSisbov.value = ''; campoRfid.value = ''; campoManejo.value = ''; campoDv.value = '';
+            campoSisbov.disabled = false; campoManejo.disabled = false; campoDv.disabled = false; btnBuscar.disabled = false;
+            esconder('campo-dv');
+            btnGravar.disabled = true;
+            msg('msg-sisbov', '', ''); msg('msg-manejo', '', ''); msg('msg-rfid', '', '');
+            campoRfid.disabled = true;
+            esconder('bloco-animal');
+            campoSisbov.focus();
+        }
+
+        function buscar() {
+            msg('msg-sucesso', '', '');
+            soDigitos(campoSisbov); soDigitos(campoManejo); soDigitos(campoDv);
+            var sisbov = campoSisbov.value, manejo = campoManejo.value, dv = campoDv.value;
+            var corpo = { id_propriedade: ID_PROPRIEDADE };
+            if (sisbov) {
+                if (sisbov.length !== TAMANHO) { msg('msg-sisbov', 'erro', 'Digite o SISBOV completo: ' + TAMANHO + ' dígitos.'); return; }
+                corpo.sisbov = sisbov;
+            } else if (manejo) {
+                if (manejo.length !== 6) { msg('msg-manejo', 'erro', 'Digite os 6 números do Manejo.'); return; }
+                corpo.manejo = manejo;
+                if (dv) { corpo.dv = dv; }
+            } else {
+                msg('msg-sisbov', 'erro', 'Digite o SISBOV ou o Manejo do animal.'); return;
+            }
+            var caixa = sisbov ? 'msg-sisbov' : 'msg-manejo';
+            btnBuscar.disabled = true;
+            postar(URL_BUSCAR, corpo)
+            .then(function(r) {
+                btnBuscar.disabled = false;
+                if (r.status === 200 && r.dados.sucesso) {
+                    animalAtual = r.dados.animal;
+                    msg('msg-sisbov', '', ''); msg('msg-manejo', '', '');
+                    montarFicha(animalAtual);
+                    mostrar('bloco-animal');
+                    campoSisbov.value = animalAtual.sisbov;
+                    campoSisbov.disabled = true; campoManejo.disabled = true; campoDv.disabled = true; btnBuscar.disabled = true;
+                    campoRfid.disabled = false;
+                    campoRfid.value = ''; rfidConferido = ''; btnGravar.disabled = true;
+                    msg('msg-rfid', '', '');
+                    campoRfid.focus();
+                    return;
+                }
+                esconder('bloco-animal'); campoRfid.disabled = true;
+                msg(caixa, 'erro', r.dados.erro || 'Não foi possível buscar o animal.');
+                if (r.dados.pede_dv) { mostrar('campo-dv'); campoDv.focus(); }
+                else if (sisbov) { campoSisbov.select(); }
+                else { campoManejo.select(); }
+            })
+            .catch(function() {
+                btnBuscar.disabled = false;
+                msg(caixa, 'erro', 'Não foi possível buscar. Verifique sua conexão.');
+            });
+        }
+
+        function conferirRfid() {
+            soDigitos(campoRfid);
+            var rfid = campoRfid.value;
+            cancelarContagem();
+            rfidConferido = ''; btnGravar.disabled = true;
+            if (rfid.length === 0) { msg('msg-rfid', '', ''); return; }
+            if (rfid.length < TAMANHO) { msg('msg-rfid', '', ''); return; }
+            postar(URL_CHECAR, { id_propriedade: ID_PROPRIEDADE, sisbov: animalAtual.sisbov, rfid: rfid })
+            .then(function(r) {
+                if (campoRfid.value !== rfid) { return; }
+                if (r.status === 200 && r.dados.sucesso) {
+                    rfidConferido = rfid; btnGravar.disabled = false;
+                    msg('msg-rfid', '', '');      // v1.2.0 - so mostra mensagem quando o RFID esta em uso ou deu outro erro
+                    gravar();                     // v1.4.0 - RFID conferido: ja grava (a contagem agora fica no quadro de sucesso)
+                    return;
+                }
+                msg('msg-rfid', 'erro', r.dados.erro || 'RFID não aceito.');
+                campoRfid.select();
+            })
+            .catch(function() { msg('msg-rfid', 'erro', 'Não foi possível conferir. Verifique sua conexão.'); });
+        }
+
+        function gravar() {
+            cancelarContagem();
+            if (!animalAtual || !rfidConferido) { return; }
+            btnGravar.disabled = true;
+            postar(URL_GRAVAR, { id_propriedade: ID_PROPRIEDADE, sisbov: animalAtual.sisbov, rfid: rfidConferido })
+            .then(function(r) {
+                if (r.status === 200 && r.dados.sucesso) {
+                    // v1.1.0 - fica na mesma tela: mostra o sucesso, limpa e deixa o cursor no SISBOV para o proximo animal
+                    var sisbovGravado = animalAtual.sisbov;
+                    reiniciar();
+                    el('modal-sisbov').innerHTML = '<span>SISBOV</span><b>' + sisbovGravado + '</b><span>RFID</span><b>' + r.dados.rfid_novo + '</b>';   // v1.4.2 - RFID alinhado com o SISBOV
+                    el('modal-sucesso').classList.add('aberto');
+                    el('btn-modal-sair').focus();
+                    return;
+                }
+                msg('msg-rfid', 'erro', r.dados.erro || 'Não foi possível gravar.');
+                btnGravar.disabled = false;
+            })
+            .catch(function() {
+                msg('msg-rfid', 'erro', 'Não foi possível gravar. Verifique sua conexão.');
+                btnGravar.disabled = false;
+            });
+        }
+
+        btnBuscar.addEventListener('click', buscar);
+        campoSisbov.addEventListener('input', function() {
+            soDigitos(campoSisbov); msg('msg-sisbov', '', ''); msg('msg-manejo', '', '');
+            if (campoSisbov.value) { campoManejo.value = ''; campoDv.value = ''; esconder('campo-dv'); }   // v1.3.0 - um ou outro
+            if (campoSisbov.value.length === TAMANHO && !campoSisbov.disabled) { buscar(); }   // v1.1.0 - busca sozinho com 15 digitos
+        });
+        // v1.3.0 - Manejo: busca sozinho com 6 numeros; o DV so aparece quando o servidor pede (Manejo repetido com brinco 105)
+        campoManejo.addEventListener('input', function() {
+            soDigitos(campoManejo); msg('msg-sisbov', '', ''); msg('msg-manejo', '', '');
+            if (campoManejo.value) { campoSisbov.value = ''; }
+            campoDv.value = ''; esconder('campo-dv');
+            if (campoManejo.value.length === 6 && !campoManejo.disabled) { buscar(); }
+        });
+        campoManejo.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+        campoDv.addEventListener('input', function() { soDigitos(campoDv); if (campoDv.value.length === 1 && !campoDv.disabled) { buscar(); } });
+        campoDv.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+        campoSisbov.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+        campoRfid.addEventListener('input', conferirRfid);
+        campoRfid.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); conferirRfid(); } });
+        btnGravar.addEventListener('click', gravar);
+        el('btn-cancelar').addEventListener('click', reiniciar);
+
+        // v1.4.0 - Sair (ou Enter) fecha o quadro de sucesso e devolve o cursor ao SISBOV
+        function fecharSucesso() { el('modal-sucesso').classList.remove('aberto'); campoSisbov.focus(); }
+        el('btn-modal-sair').addEventListener('click', fecharSucesso);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && el('modal-sucesso').classList.contains('aberto')) { e.preventDefault(); fecharSucesso(); }
+        });
+
+        campoRfid.disabled = true;
+        campoSisbov.focus();
+    </script>
+
+    <!-- v1.4.1 - quadro de sucesso fecha sozinho em 3 segundos, com contagem no Sair (peca unica da Brincagem) -->
+    <script src="/static/js/auto_fechar_gravacao.js"></script>
+    <script>AutoFecharGravacao.iniciar({ modal: 'modal-sucesso', botao: 'btn-modal-sair', segundos: 3 });</script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\troca_rfid.html
+     ========================================================= -->

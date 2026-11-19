@@ -1,0 +1,68 @@
+-- =============================================================
+-- PROJETO:        Orion SISBOV
+-- PASTA:          database/migrations (executado manualmente no pgAdmin)
+-- MODULO:         Multi-Tenant - Limpeza pos-decisao (RLS -> Schema-por-Produtor)
+-- AUTOR:          Benedito Silva Filho
+-- CRIADO EM:      16/07/2026 17:05 -03
+-- ATUALIZADO EM:  16/07/2026 17:05 -03
+-- VERSAO:         1.0
+-- DESCRICAO:      Remove a coluna id_produtor de 5 tabelas que a
+--                  ganharam na Sessao 17, quando a decisao vigente
+--                  ainda era banco unico + RLS por produtor. Com o
+--                  RLS descartado e o Schema-por-Produtor confirmado
+--                  como modelo definitivo (Sessao 018), essa coluna
+--                  virou redundante: a tabela inteira ja mora dentro
+--                  do schema do Produtor dono, entao "de quem e a
+--                  linha" e garantido pelo proprio schema fisico,
+--                  sem precisar de coluna.
+--
+--                  ALTER TABLE ... DROP COLUMN remove automaticamente
+--                  a Foreign Key associada aquela coluna (nao precisa
+--                  de um DROP CONSTRAINT separado antes).
+--
+--                  NAO remove id_produtor de tb_parceiros (ali o
+--                  campo e dado de negocio real - identifica quando
+--                  um Parceiro corresponde a outro Produtor cadastrado
+--                  no Orion, caso de Transferencia) nem de
+--                  tb_frigorificos (nunca teve essa coluna).
+--
+--                  Tabelas afetadas (5):
+--                    - tb_parceiros_propriedades
+--                    - tb_4001_gta_animais
+--                    - tb_4001_gta        (mantem id_propriedade)
+--                    - tb_5001_brincagem  (mantem id_propriedade)
+--                    - tb_log_conferencia_parceiro
+--
+--                  CHANGELOG:
+--                  v1.0 - Criacao inicial (Sessao 018).
+-- =============================================================
+
+ALTER TABLE tb_parceiros_propriedades
+    DROP COLUMN id_produtor;
+
+ALTER TABLE tb_4001_gta_animais
+    DROP COLUMN id_produtor;
+
+ALTER TABLE tb_4001_gta
+    DROP COLUMN id_produtor;
+
+ALTER TABLE tb_5001_brincagem
+    DROP COLUMN id_produtor;
+
+ALTER TABLE tb_log_conferencia_parceiro
+    DROP COLUMN id_produtor;
+
+-- =============================================================
+-- VERIFICACAO (rodar depois dos ALTER acima)
+-- Confirma que a coluna id_produtor sumiu das 5 tabelas corrigidas
+-- e continua existindo em tb_parceiros (dado de negocio real)
+-- =============================================================
+SELECT table_name, column_name
+FROM information_schema.columns
+WHERE column_name = 'id_produtor'
+  AND table_schema = 'public'
+ORDER BY table_name;
+
+-- Resultado esperado: apenas 1 linha, com table_name = 'tb_parceiros'
+
+-- FIM DE ARQUIVO

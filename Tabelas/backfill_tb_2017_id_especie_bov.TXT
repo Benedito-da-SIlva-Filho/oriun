@@ -1,0 +1,28 @@
+-- =========================================================
+-- PROJETO: Orion
+-- SCRIPT: backfill_tb_2017_id_especie_bov.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-12 13:05 -03
+-- DESCRICAO: Backfill do bug id_especie=NULL em
+--     tb_2017_movimentacoes (Sessao 049/050) - assume BOV para
+--     todos os registros ja gravados (unica especie usada nos
+--     testes ate esta sessao). Roda em todos os schemas
+--     produtor_% de uma vez.
+-- =========================================================
+DO $$
+DECLARE
+    schema_rec RECORD;
+    id_especie_bov INTEGER;
+BEGIN
+    SELECT id INTO id_especie_bov FROM public.tb_4002_especie WHERE codigo = 'BOV';
+
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format(
+            'UPDATE %I.tb_2017_movimentacoes SET id_especie = %L WHERE id_especie IS NULL',
+            schema_rec.schema_name, id_especie_bov
+        );
+    END LOOP;
+END $$;

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\pia.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-25 15:20 -03
+     ATUALIZADO EM: 2026-09-30 14:35 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Tela UNICA da PIA - Anexo XXIII (backend/routers/
+         pia_impressao.py v1.1.0). Substitui pia_filtro.html e
+         pia_comunicado.html (v1.0.0 da mesma sessao, que podem ser
+         APAGADOS) - decisao de Benedito: os 3 modos do legado
+         viram 3 ABAS da mesma tela, em vez de 3 cards num sub-hub.
+
+         Estrutura:
+           - Propriedade/Produtor travados no topo (so exibicao).
+           - 3 abas (troca so no navegador, sem recarregar):
+             * Por Periodo    - Data Inicial / Final (mascara
+               dd/mm/aaaa, sem calendario - padrao do Orion).
+             * Por Manejo     - Manejo Inicial / Final (ate 6
+               digitos) com previa AO VIVO do SISBOV de cada ponta,
+               quantidade da faixa e AVISO de mais de uma serie
+               (rota manejo_previa - decisao de Benedito).
+             * Por Comunicado - Comunicados de Entrada em ordem
+               DECRESCENTE, botao "Imprimir PIA" por linha.
+           - Cada aba tem o seu proprio "Gerar PIA" (so acende com
+             os campos validos) e banner de download (regra
+             permanente de PDF).
+           - Erro do servidor (ERRO GRAVE / filtro vazio): a tela
+             volta NA ABA em que estava, com a mensagem vermelha e
+             os valores digitados.
+
+         Variaveis do router: aba, titulo, id_propriedade, dados,
+         erro, sisbovs_erro, qtde_extra_erro, valores, comunicados,
+         url_voltar.
+
+     v1.0.0: Criacao do modulo (Sessao 080, 25/09/2026, 15:20 -03).
+     v1.1.0: Sessao 080 (25/09/2026, 16:40 -03) - Pedidos de
+         Benedito no 1o teste real:
+           - Previa do SISBOV (aba Manejo) com letra BEM maior.
+           - AVISO DE CONCLUSAO: o PDF passa a ser buscado pela
+             propria tela (fetch) - enquanto gera, banner azul
+             "Gerando..." e botao travado; pronto, o arquivo e
+             baixado e aparece o aviso VERDE com o NOME do arquivo
+             e onde ele fica (pasta Downloads). Se o servidor
+             recusar (ERRO GRAVE, filtro vazio, sessao expirada),
+             a pagina que ele devolveu e mostrada no lugar, como
+             antes. Vale para as 3 abas (formularios e botoes
+             "Imprimir PIA").
+     v1.1.1: Sessao 080 (25/09/2026, 17:15 -03) - Trocar de aba
+         LIMPA as mensagens (aviso verde de sucesso e banner azul
+         de "gerando") - antes o aviso de uma aba continuava
+         aparecendo na outra (Benedito).
+     v1.2.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. O aviso de erro de conexao ao gerar a PIA passa(m) a usar a janela de aviso do Orion,
+         so com OK (mostrarAviso(), modal_confirmacao.html v2.1.0),
+         no lugar do alert() do navegador. Incluida a peca modal_confirmacao.html. Nenhuma outra mudanca.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; PIA</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 28px; line-height: 1; }
+
+        /* ---- Caixa central (espelha a janela do legado) ---- */
+        .painel { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 28px 32px; max-width: 820px; }
+        .painel h3 { font-size: 20px; color: #333333; text-align: center; line-height: 1.3; margin-bottom: 22px; }
+
+        .bloco-propriedade { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; }
+        .bloco-propriedade .rotulo { font-size: 12px; color: #888888; }
+        .bloco-propriedade .valor { font-size: 18px; font-weight: bold; color: #333333; margin-bottom: 6px; }
+        .bloco-propriedade .valor-menor { font-size: 14px; color: #555555; }
+
+        .botoes { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .btn-acao { width: 280px; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; text-align: center; text-decoration: none; cursor: pointer; }
+        .btn-principal { background: #D4370A; color: #ffffff; border: none; }
+        .btn-principal:hover { background: #C0392B; }
+        .btn-secundario { background: #ffffff; color: #888888; border: 1px solid #bbbbbb; }
+        .btn-secundario:hover { background: #f5f5f5; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 14px 18px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 16px; max-width: 640px; }
+        .lista-sisbovs { margin-top: 10px; font-size: 13px; font-weight: normal; color: #7a1f1f; column-count: 2; column-gap: 24px; }
+        .lista-sisbovs div { padding: 1px 0; }
+        .aviso { display: none; background: #fff8e1; border-left: 6px solid #f9a825; padding: 12px 16px; border-radius: 6px; font-size: 14px; color: #8a6d00; margin-top: 18px; }
+        .aviso.visivel { display: block; }
+        .banner-download { display: none; background: #E3F2FD; border-left: 6px solid #1565C0; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #1565C0; margin-top: 18px; }
+        .banner-download.visivel { display: block; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        /* ---- Abas ---- */
+        .abas { display: flex; gap: 4px; border-bottom: 2px solid #D4370A; margin-bottom: 22px; }
+        .aba { padding: 10px 20px; font-size: 14.5px; font-weight: bold; color: #888888; background: #f5f5f5; border: 1px solid #e0e0e0; border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; }
+        .aba:hover { background: #FBE9E4; color: #D4370A; }
+        .aba.ativa { background: #D4370A; color: #ffffff; border-color: #D4370A; }
+        .painel-aba { display: none; }
+        .painel-aba.ativo { display: block; }
+
+        /* ---- Campos (Periodo / Manejo) ---- */
+        .linha-campos { display: flex; gap: 24px; justify-content: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .campo { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 220px; }
+        .campo label { font-size: 13px; font-weight: bold; color: #333333; }
+        .campo input { width: 170px; padding: 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 17px; font-weight: bold; text-align: center; font-family: Arial, sans-serif; }
+        .campo input:focus { outline: none; border-color: #D4370A; }
+        .campo.campo-erro input { border: 2px solid #c62828; background: #fff6f6; }
+        .sisbov-previa { font-family: monospace, monospace; font-size: 19px; font-weight: bold; color: #1565C0; min-height: 24px; text-align: center; letter-spacing: 0.5px; }
+        .sisbov-previa.vazio { color: #999999; font-family: Arial, sans-serif; font-weight: normal; font-size: 12px; }
+        .resumo-faixa { text-align: center; font-size: 13px; color: #555555; margin: 10px 0 4px; min-height: 18px; }
+        .aviso-series { display: none; background: #fff8e1; border-left: 6px solid #f9a825; padding: 10px 14px; border-radius: 6px; font-size: 13.5px; font-weight: bold; color: #8a6d00; margin: 10px 0; }
+        .aviso-series.visivel { display: block; }
+        .btn-acao:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .dica { text-align: center; font-size: 12px; color: #888888; margin-top: 8px; }
+
+        /* ---- Lista de Comunicados ---- */
+        .tabela { width: 100%; border-collapse: collapse; }
+        .tabela th { background: #D4370A; color: #ffffff; font-size: 13px; padding: 10px; text-align: left; }
+        .tabela th.centro, .tabela td.centro { text-align: center; }
+        .tabela td { padding: 9px 10px; font-size: 13.5px; color: #333333; border-bottom: 1px solid #eeeeee; }
+        .tabela tr:nth-child(even) td { background: #FBE9E4; }
+        .btn-imprimir { background: #D4370A; color: #ffffff; padding: 6px 14px; border-radius: 5px; font-size: 13px; font-weight: bold; text-decoration: none; white-space: nowrap; }
+        .btn-imprimir:hover { background: #C0392B; }
+        .sem-dados { text-align: center; color: #888888; padding: 24px; font-size: 14px; }
+
+        /* ---- v1.1.0 - aviso de conclusao ---- */
+        .banner-sucesso { display: none; background: #e8f5e9; border-left: 6px solid #1b7a2b; padding: 12px 16px; border-radius: 6px; font-size: 14.5px; font-weight: bold; color: #1b5e20; margin-top: 18px; line-height: 1.5; }
+        .banner-sucesso.visivel { display: block; }
+        .banner-sucesso .arquivo { font-family: monospace, monospace; font-size: 13.5px; }
+        .banner-sucesso .onde { font-weight: normal; font-size: 13px; color: #2e7d32; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128203;</span> {{ titulo }}</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro" id="erro-servidor">
+                &#10060; {{ erro }}
+                {% if sisbovs_erro %}
+                <div class="lista-sisbovs">
+                    {% for sisbov in sisbovs_erro %}
+                    <div>{{ sisbov }}</div>
+                    {% endfor %}
+                </div>
+                {% if qtde_extra_erro %}
+                <div class="lista-sisbovs">... e mais {{ qtde_extra_erro }}.</div>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="painel">
+
+                <div class="bloco-propriedade">
+                    <div class="rotulo">Propriedade</div>
+                    <div class="valor">{{ dados.propriedade }}</div>
+                    <div class="valor-menor">{{ dados.cidade }}{% if dados.nome %} &#8212; Produtor: {{ dados.nome }}{% endif %}</div>
+                </div>
+
+                <div class="abas">
+                    <div class="aba{{ ' ativa' if aba == 'periodo' else '' }}" data-aba="periodo">Por Período</div>
+                    <div class="aba{{ ' ativa' if aba == 'manejo' else '' }}" data-aba="manejo">Por Manejo</div>
+                    <div class="aba{{ ' ativa' if aba == 'comunicado' else '' }}" data-aba="comunicado">Por Comunicado</div>
+                </div>
+
+                <!-- ---------- Aba 1: Por Periodo ---------- -->
+                <div class="painel-aba{{ ' ativo' if aba == 'periodo' else '' }}" id="painel-periodo">
+                    <form method="GET" action="{{ url_for('pia_impressao.periodo_pdf') }}" class="form-pdf" autocomplete="off">
+                        <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                        <div class="linha-campos">
+                            <div class="campo" id="grupo-data-inicial">
+                                <label for="data-inicial">Data Inicial</label>
+                                <input type="text" name="data_inicial" id="data-inicial" maxlength="10" inputmode="numeric" placeholder="dd/mm/aaaa" value="{{ valores.data_inicial or '' }}">
+                            </div>
+                            <div class="campo" id="grupo-data-final">
+                                <label for="data-final">Data Final</label>
+                                <input type="text" name="data_final" id="data-final" maxlength="10" inputmode="numeric" placeholder="dd/mm/aaaa" value="{{ valores.data_final or '' }}">
+                            </div>
+                        </div>
+                        <div class="dica">Período da Data de Identificação (Data de Brincagem).</div>
+                        <div class="botoes" style="margin-top: 20px;">
+                            <button type="submit" class="btn-acao btn-principal" id="btn-periodo" disabled>&#128424;&#65039; Gerar PIA</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ---------- Aba 2: Por Manejo ---------- -->
+                <div class="painel-aba{{ ' ativo' if aba == 'manejo' else '' }}" id="painel-manejo">
+                    <form method="GET" action="{{ url_for('pia_impressao.manejo_pdf') }}" class="form-pdf" autocomplete="off">
+                        <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                        <div class="linha-campos">
+                            <div class="campo" id="grupo-manejo-inicial">
+                                <label for="manejo-inicial">Manejo Inicial</label>
+                                <input type="text" name="manejo_inicial" id="manejo-inicial" maxlength="6" inputmode="numeric" value="{{ valores.manejo_inicial or '' }}">
+                                <div class="sisbov-previa vazio" id="previa-inicial">&nbsp;</div>
+                            </div>
+                            <div class="campo" id="grupo-manejo-final">
+                                <label for="manejo-final">Manejo Final</label>
+                                <input type="text" name="manejo_final" id="manejo-final" maxlength="6" inputmode="numeric" value="{{ valores.manejo_final or '' }}">
+                                <div class="sisbov-previa vazio" id="previa-final">&nbsp;</div>
+                            </div>
+                        </div>
+                        <div class="resumo-faixa" id="resumo-faixa"></div>
+                        <div class="aviso-series" id="aviso-series"></div>
+                        <div class="botoes" style="margin-top: 20px;">
+                            <button type="submit" class="btn-acao btn-principal" id="btn-manejo" disabled>&#128424;&#65039; Gerar PIA</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ---------- Aba 3: Por Comunicado ---------- -->
+                <div class="painel-aba{{ ' ativo' if aba == 'comunicado' else '' }}" id="painel-comunicado">
+                    {% if comunicados %}
+                    <table class="tabela">
+                        <thead>
+                            <tr>
+                                <th>Comunicado</th>
+                                <th class="centro">Entrada</th>
+                                <th class="centro">Qtde</th>
+                                <th class="centro">Tipo Entrada</th>
+                                <th>Produtor Origem</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in comunicados %}
+                            <tr>
+                                <td>{{ '%06d' % c.numero_comunicado }}</td>
+                                <td class="centro">{{ c.data_entrada }}</td>
+                                <td class="centro">{{ c.total_animais }}</td>
+                                <td class="centro">{{ c.tipo_entrada or '-' }}</td>
+                                <td>{{ c.produtor_origem }}</td>
+                                <td class="centro">
+                                    <a class="btn-imprimir link-pdf"
+                                       href="{{ url_for('pia_impressao.comunicado_pdf', numero_comunicado=c.numero_comunicado, id_propriedade=id_propriedade) }}">Imprimir PIA</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="sem-dados">Nenhum Comunicado de Entrada gerado para esta Propriedade.</div>
+                    {% endif %}
+                </div>
+
+                <div class="banner-download" id="banner-download">&#8987; Gerando a PIA &#8212; aguarde...</div>
+                <div class="banner-sucesso" id="banner-sucesso"></div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var idPropriedade = {{ id_propriedade | tojson }};
+
+        // ==========================================================
+        // BLOCO 1 - Abas (troca so no navegador, sem recarregar)
+        // ==========================================================
+        document.querySelectorAll('.aba').forEach(function(aba) {
+            aba.addEventListener('click', function() {
+                document.querySelectorAll('.aba').forEach(function(a) { a.classList.remove('ativa'); });
+                document.querySelectorAll('.painel-aba').forEach(function(p) { p.classList.remove('ativo'); });
+                aba.classList.add('ativa');
+                document.getElementById('painel-' + aba.dataset.aba).classList.add('ativo');
+                var erro = document.getElementById('erro-servidor');
+                if (erro) { erro.style.display = 'none'; }
+                // v1.1.1 - mensagens de uma aba nao passam para a outra.
+                document.getElementById('banner-sucesso').classList.remove('visivel');
+                document.getElementById('banner-download').classList.remove('visivel');
+            });
+        });
+
+        // ==========================================================
+        // BLOCO 2 - Aba Periodo: mascara e validacao das datas
+        // ==========================================================
+        var dataInicial = document.getElementById('data-inicial');
+        var dataFinal = document.getElementById('data-final');
+        var btnPeriodo = document.getElementById('btn-periodo');
+
+        function lerData(texto) {
+            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) { return null; }
+            var p = texto.split('/');
+            var dia = parseInt(p[0], 10), mes = parseInt(p[1], 10) - 1, ano = parseInt(p[2], 10);
+            var data = new Date(ano, mes, dia);
+            if (data.getFullYear() !== ano || data.getMonth() !== mes || data.getDate() !== dia) { return null; }
+            return data;
+        }
+
+        function validarPeriodo() {
+            var di = lerData(dataInicial.value), df = lerData(dataFinal.value);
+            document.getElementById('grupo-data-inicial').classList.toggle('campo-erro', dataInicial.value.length === 10 && !di);
+            document.getElementById('grupo-data-final').classList.toggle('campo-erro', dataFinal.value.length === 10 && (!df || (di && df < di)));
+            btnPeriodo.disabled = !(di && df && di <= df);
+        }
+
+        [dataInicial, dataFinal].forEach(function(campo) {
+            campo.addEventListener('input', function() {
+                var d = this.value.replace(/\D/g, '').slice(0, 8);
+                if (d.length > 4) { d = d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4); }
+                else if (d.length > 2) { d = d.slice(0, 2) + '/' + d.slice(2); }
+                this.value = d;
+                validarPeriodo();
+            });
+        });
+        validarPeriodo();
+
+        // ==========================================================
+        // BLOCO 3 - Aba Manejo: so digitos + previa ao vivo (SISBOV
+        // de cada ponta, quantidade e aviso de series)
+        // ==========================================================
+        var manejoInicial = document.getElementById('manejo-inicial');
+        var manejoFinal = document.getElementById('manejo-final');
+        var btnManejo = document.getElementById('btn-manejo');
+        var temporizador = null;
+
+        function mostrarPrevia(elemento, lista) {
+            if (!lista || lista.length === 0) {
+                elemento.textContent = 'manejo não encontrado na PIA';
+                elemento.classList.add('vazio');
+            } else {
+                elemento.textContent = lista.join('  |  ');
+                elemento.classList.remove('vazio');
+            }
+        }
+
+        function atualizarPreviaManejo() {
+            var ini = manejoInicial.value, fim = manejoFinal.value;
+            var previaIni = document.getElementById('previa-inicial');
+            var previaFim = document.getElementById('previa-final');
+            var resumo = document.getElementById('resumo-faixa');
+            var aviso = document.getElementById('aviso-series');
+
+            var numIni = ini ? parseInt(ini, 10) : null;
+            var numFim = fim ? parseInt(fim, 10) : null;
+            var faixaOk = numIni !== null && numFim !== null && numIni <= numFim;
+            document.getElementById('grupo-manejo-final').classList.toggle('campo-erro', numIni !== null && numFim !== null && numIni > numFim);
+            btnManejo.disabled = true;
+
+            if (!ini && !fim) {
+                previaIni.innerHTML = '&nbsp;'; previaFim.innerHTML = '&nbsp;';
+                resumo.textContent = ''; aviso.classList.remove('visivel');
+                return;
+            }
+
+            var url = '{{ url_for("pia_impressao.manejo_previa") }}?id_propriedade=' + encodeURIComponent(idPropriedade) +
+                      '&manejo_inicial=' + encodeURIComponent(ini) + '&manejo_final=' + encodeURIComponent(fim);
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(dados) {
+                    if (ini) { mostrarPrevia(previaIni, dados.sisbov_inicial); } else { previaIni.innerHTML = '&nbsp;'; }
+                    if (fim) { mostrarPrevia(previaFim, dados.sisbov_final); } else { previaFim.innerHTML = '&nbsp;'; }
+
+                    if (faixaOk) {
+                        resumo.textContent = dados.qtde + ' animal(is) na faixa.';
+                        if (dados.series > 1) {
+                            aviso.textContent = '\u26A0\uFE0F Atenção: esta faixa de manejo pega ' + dados.series +
+                                ' séries diferentes de SISBOV (o mesmo manejo pode existir em séries distintas). Confira antes de gerar.';
+                            aviso.classList.add('visivel');
+                        } else {
+                            aviso.classList.remove('visivel');
+                        }
+                        btnManejo.disabled = dados.qtde === 0;
+                    } else {
+                        resumo.textContent = '';
+                        aviso.classList.remove('visivel');
+                    }
+                })
+                .catch(function() { resumo.textContent = 'Não foi possível consultar a prévia.'; });
+        }
+
+        [manejoInicial, manejoFinal].forEach(function(campo) {
+            campo.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                clearTimeout(temporizador);
+                temporizador = setTimeout(atualizarPreviaManejo, 350);
+            });
+        });
+        if (manejoInicial.value || manejoFinal.value) { atualizarPreviaManejo(); }
+
+        // ==========================================================
+        // BLOCO 4 - Gerar PIA com aviso de conclusao (v1.1.0).
+        // A tela busca o PDF (fetch): gerando -> banner azul e botao
+        // travado; PDF pronto -> baixa o arquivo e mostra o aviso
+        // verde com o nome e o local; resposta que nao e PDF (erro
+        // do servidor, sessao expirada) -> mostra a pagina que o
+        // servidor devolveu, como antes.
+        // ==========================================================
+        var bannerGerando = document.getElementById('banner-download');
+        var bannerSucesso = document.getElementById('banner-sucesso');
+
+        function nomeDoArquivo(resposta) {
+            var disp = resposta.headers.get('Content-Disposition') || '';
+            var utf8 = disp.match(/filename\*=UTF-8''([^;]+)/i);
+            if (utf8) { return decodeURIComponent(utf8[1]); }
+            var simples = disp.match(/filename="?([^";]+)"?/i);
+            return simples ? simples[1] : 'PIA.pdf';
+        }
+
+        function gerarPia(url, elementoAcao) {
+            bannerSucesso.classList.remove('visivel');
+            bannerGerando.classList.add('visivel');
+            if (elementoAcao) { elementoAcao.classList.add('gerando'); elementoAcao.disabled = true; }
+
+            fetch(url, { credentials: 'same-origin' })
+                .then(function(resposta) {
+                    var tipo = resposta.headers.get('Content-Type') || '';
+                    if (tipo.indexOf('application/pdf') === -1) {
+                        return resposta.text().then(function(html) {
+                            document.open(); document.write(html); document.close();
+                        });
+                    }
+                    var nome = nomeDoArquivo(resposta);
+                    return resposta.blob().then(function(arquivo) {
+                        var endereco = URL.createObjectURL(arquivo);
+                        var link = document.createElement('a');
+                        link.href = endereco;
+                        link.download = nome;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        setTimeout(function() { URL.revokeObjectURL(endereco); }, 10000);
+
+                        bannerGerando.classList.remove('visivel');
+                        bannerSucesso.innerHTML =
+                            '&#9989; PIA gerada com sucesso!<br>' +
+                            'Arquivo: <span class="arquivo"></span><br>' +
+                            '<span class="onde">Salvo na pasta <b>Downloads</b> do computador ' +
+                            '(ou na pasta que o seu navegador usa para downloads).</span>';
+                        bannerSucesso.querySelector('.arquivo').textContent = nome;
+                        bannerSucesso.classList.add('visivel');
+                    });
+                })
+                .catch(function() {
+                    bannerGerando.classList.remove('visivel');
+                    bannerSucesso.classList.remove('visivel');
+                    mostrarAviso('Não foi possível gerar a PIA (erro de conexão). Tente novamente.');   // v1.2.0
+                })
+                .then(function() {
+                    if (elementoAcao) { elementoAcao.classList.remove('gerando'); elementoAcao.disabled = false; }
+                    validarPeriodo();
+                });
+        }
+
+        document.querySelectorAll('.form-pdf').forEach(function(form) {
+            form.addEventListener('submit', function(evento) {
+                evento.preventDefault();
+                var parametros = new URLSearchParams(new FormData(form)).toString();
+                gerarPia(form.action + '?' + parametros, form.querySelector('button[type="submit"]'));
+            });
+        });
+        document.querySelectorAll('.link-pdf').forEach(function(link) {
+            link.addEventListener('click', function(evento) {
+                evento.preventDefault();
+                gerarPia(link.href, null);
+            });
+        });
+
+        var erroServidor = document.getElementById('erro-servidor');
+        if (erroServidor) { erroServidor.scrollIntoView({ block: 'start' }); }
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\pia.html
+     ========================================================= -->

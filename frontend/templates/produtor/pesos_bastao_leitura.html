@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\pesos_bastao_leitura.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-11-04 14:40 -03
+     ATUALIZADO EM: 2026-11-04 14:40 -03
+     VERSAO: 1.0.0
+     v1.0.0: Sessao 114 (04/11/2026) - Leitura do Leitor de Peso com Bastao. Mesma tela do Leitor de Peso (pesos_leitor_leitura.html 1.0.4):
+         a linha Identificacao comeca pelo RFID (cursor aqui); o bastao le o RFID e, se o animal ja tem esse RFID cadastrado, o Orion
+         acha o animal sozinho. RFID que nao existe: mensagem vermelha, e o brete segue pelo SISBOV ou pelo Manejo. Gravar e excluir
+         pesagem usam as MESMAS rotas do Leitor de Peso (pesos_leitor.gravar / excluir_pesagem). Router: backend/routers/pesos_bastao.py.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Leitor de Peso com Bast&#227;o</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 16px 24px; overflow-y: auto; display: flex; gap: 20px; }
+        .coluna-form { flex: 1; min-width: 0; }
+        .coluna-lidos { width: 340px; flex-shrink: 0; }
+
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .info-contexto { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 5px 16px; margin-bottom: 8px; font-size: 15px; color: #7a1f04; font-weight: bold; display: flex; flex-wrap: wrap; gap: 6px 22px; }
+        /* v1.12.0 - tarja grande do Tipo de Entrada */
+        .tarja-tipo { border-radius: 8px; padding: 5px 16px; margin-bottom: 8px; font-size: 19px; font-weight: bold; letter-spacing: 1px; text-align: center; border: 2px solid; }
+        .tarja-tipo.compra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .tarja-tipo.nascimento { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+        /* v1.11.0 - Numero de Controle (Nascimento) */
+        .controle-reservar { font-weight: normal; font-style: italic; }
+        /* v1.13.0 - painel do que o escritorio lancou */
+        .painel-lancado { background: #fff8e1; border: 2px solid #f9a825; border-radius: 8px; padding: 6px 14px; margin-bottom: 8px; }
+        .painel-lancado .titulo-lancado { font-size: 14px; font-weight: bold; color: #8a6d00; margin-bottom: 4px; }
+        .painel-lancado .linha-lancado { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 16px; color: #333333; padding: 2px 0; }
+        .painel-lancado .linha-lancado .num { font-weight: bold; color: #7a1f04; }
+        .painel-lancado .linha-lancado.completo { color: #1b5e20; }
+        /* v1.11.0 - aviso da Cota Hilton (so Nascimento) */
+        .aviso-cth { display: none; margin-top: 8px; padding: 5px 14px; border-radius: 6px; font-size: 14px; border-left: 5px solid; }
+        .aviso-cth.elegivel { display: block; background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+        .aviso-cth.acima { display: block; background: #fff8e1; border-color: #f9a825; color: #8a6d00; font-weight: bold; }
+        .aviso-cth.incoerente { display: block; background: #ffebee; border-color: #c62828; color: #c62828; font-weight: bold; }
+
+        .contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 3px 16px; text-align: center; background: #ffffff; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 20px; font-weight: bold; color: #D4370A; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px 20px; }
+        .form-secao { font-size: 16px; font-weight: bold; color: #D4370A; margin: 12px 0 8px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 6px 12px; border: 2px solid #cccccc; border-radius: 6px; font-size: 19px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .form-group input:disabled, .form-group select:disabled { background-color: #f0f0f0; color: #aaaaaa; cursor: not-allowed; }
+
+        .campo-sisbov { position: relative; }
+        .campo-sisbov input { font-size: 32px; font-weight: bold; padding: 9px 16px; letter-spacing: 1px; }
+        .campo-sisbov input.sisbov-ok { border-color: #1565C0; color: #1565C0; background: #E3F2FD; }
+        .badge-ok-sisbov { display: none; position: absolute; right: 18px; top: 50%; transform: translateY(-2px); font-size: 24px; font-weight: bold; color: #1565C0; pointer-events: none; }
+        .badge-ok-sisbov.visivel { display: block; }
+
+        .alerta-duplicado { background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 10px; display: none; align-items: center; justify-content: space-between; gap: 14px; }
+        .btn-fechar-alerta { padding: 7px 16px; background: #c62828; color: #ffffff; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+        .btn-fechar-alerta:hover { background: #a41f1f; }
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #c62828; margin-bottom: 10px; display: none; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: #ffffff; padding: 6px 0 2px; }   /* v1.15.0 - grudado no fim da area visivel */
+        .btn-gravar { padding: 10px 28px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gravar:hover { background: #C0392B; }
+        .btn-gravar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        /* v1.10.0 - Gravar com foco: contorno azul (pronto para Enter) */
+        .btn-gravar:focus { outline: 3px solid #1565C0; outline-offset: 3px; }
+        .btn-limpar { padding: 12px 20px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-limpar:hover { background: #888888; color: #ffffff; }
+
+        .painel-lidos { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 18px; height: 100%; display: flex; flex-direction: column; }
+        .painel-lidos h3 { font-size: 15px; color: #333333; margin-bottom: 12px; }
+        .lista-lidos { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .item-lido { border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .item-lido .sisbov { font-weight: bold; color: #333333; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-lido .detalhe { color: #888888; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+        /* v1.14.0 - brincos do lancamento do escritorio */
+        .painel-lidos h3.sub { margin: 12px 0 8px; }
+        .lista-lancados { flex: 2; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+        .item-lancado { border: 1px solid #dddddd; background: #f7f7f7; border-radius: 6px; padding: 7px 10px; display: flex; align-items: baseline; gap: 8px; color: #777777; }
+        .item-lancado .marca { width: 18px; font-weight: bold; flex-shrink: 0; text-align: center; }
+        .item-lancado .sisbov { font-weight: bold; font-size: 15px; white-space: nowrap; }
+        .item-lancado .detalhe { font-size: 12px; margin-left: auto; white-space: nowrap; }
+        .item-lancado.atual { background: #fff8e1; border: 2px solid #f9a825; color: #5d4600; }
+        .item-lancado.conferido { background: #e8f5e9; border-color: #66bb6a; color: #1b5e20; }
+        .lista-lidos.compacta { flex: 1; min-height: 60px; }
+        /* v1.15.0 - barra de Lidos (sessao) no rodape + modo compacto */
+        .barra-lidos { flex-shrink: 0; background: #ffffff; border-top: 1px solid #e0e0e0; padding: 4px 24px; display: flex; align-items: center; gap: 14px; }
+        .barra-lidos .titulo { font-size: 13px; font-weight: bold; color: #333333; white-space: nowrap; }
+        .barra-lidos .lista-lidos { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 8px; align-items: center; }
+        .barra-lidos .item-lido { flex-shrink: 0; padding: 3px 10px; }
+        .barra-lidos .lista-vazia { padding: 0; text-align: left; font-size: 12px; }
+        .lista-lancados { overflow-x: hidden; }
+        .item-lancado .sisbov { font-size: 14px; }
+        .item-lancado .detalhe { font-size: 11px; }
+        .compacto { padding: 10px 24px; }
+        .compacto .coluna-lidos { width: 350px; }
+        .compacto .painel-lidos { padding: 16px; }
+        .compacto .lista-lancados { flex: 1; gap: 6px; }
+        .compacto .item-lancado { padding: 8px 10px; }
+        .compacto .pagina-header { margin-bottom: 5px; }
+        .compacto .pagina-header h2 { font-size: 19px; gap: 10px; }
+        .compacto .icone-titulo { font-size: 28px; }
+        .compacto .tarja-tipo { font-size: 18px; padding: 3px 16px; margin-bottom: 7px; }
+        .compacto .info-contexto { padding: 3px 16px; margin-bottom: 7px; font-size: 15px; }
+        .compacto .painel-lancado { padding: 5px 14px; margin-bottom: 7px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 20px; }
+        .compacto .painel-lancado .titulo-lancado { font-size: 14px; margin: 0; }
+        .compacto .painel-lancado .linha-lancado { font-size: 17px; padding: 0; }
+        .compacto .contadores { gap: 12px; margin-bottom: 9px; }
+        .compacto .contador-caixa { padding: 2px 16px; }
+        .compacto .contador-caixa .valor { font-size: 20px; }
+        .compacto .form-container { padding: 11px 20px; }
+        .compacto .form-secao { margin: 12px 0 9px; }
+        .compacto .form-grid { gap: 9px; }
+        .compacto .form-group { gap: 4px; }
+        .compacto .form-group input, .compacto .form-group select { font-size: 19px; padding: 6px 12px; }
+        .compacto .campo-sisbov input { font-size: 31px; padding: 8px 16px; }
+        .compacto .aviso-cth { margin-top: 7px; padding: 4px 14px; }
+        .compacto .form-botoes { margin-top: 8px; bottom: 14px; }
+        .compacto .btn-gravar { font-size: 17px; padding: 11px 32px; }
+        .compacto .btn-limpar { padding: 11px 20px; }
+        /* v1.15.5 - conferencia: dados do animal bem legiveis */
+        .compacto .em-conferencia .form-group input:disabled,
+        .compacto .em-conferencia .form-group select:disabled { color: #111111; font-weight: bold; background-color: #fffdf0; border-color: #f9a825; -webkit-text-fill-color: #111111; opacity: 1; }
+        /* v1.16.0 - brincos lidos fora do lancamento do escritorio */
+        .sub-extras { font-size: 12px; font-weight: bold; color: #1565C0; margin: 8px 0 2px; }
+        #lista-extras { display: flex; flex-direction: column; gap: 6px; }
+        .item-lancado.extra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .lista-vazia { color: #aaaaaa; font-size: 13px; text-align: center; padding: 20px 0; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #ffffff; border-radius: 10px; padding: 32px; max-width: 380px; text-align: center; }
+        .modal-caixa .icone-sucesso { font-size: 46px; margin-bottom: 12px; }
+        .modal-caixa h3 { font-size: 18px; color: #2e7d32; margin-bottom: 8px; }
+        .modal-caixa .sisbov-gravado { font-size: 15px; color: #333333; margin-bottom: 20px; }
+        .btn-modal-sair { padding: 10px 32px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-modal-sair:hover { background: #C0392B; }
+        /* ---- Leitor de Peso (Sessao 098) ---- */
+        .col-2 { grid-column: span 2; }
+        .col-5 { grid-column: span 5; }
+        .col-8 { grid-column: span 8; }
+        .tarja-tipo.saida { background: #FBE9E4; border-color: #D4370A; color: #7a1f04; }
+        .form-group input.dado { background-color: #fffdf0; border-color: #f9a825; color: #111111; font-weight: bold; }
+        .form-group input.dado:read-only { cursor: default; }
+        .campo-sisbov input.sisbov-manejo { border-color: #6a1b9a; color: #4a148c; background: #f3e5f5; }
+        .linha-peso { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .caixa-peso { border: 2px solid #333333; border-radius: 6px; background: #ffffff; text-align: center; padding: 3px 8px; }
+        .caixa-peso .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .caixa-peso .valor { font-size: 20px; font-weight: bold; color: #1565C0; min-height: 26px; }
+        .btn-manejo { padding: 10px 22px; background: #ffffff; border: 2px solid #1a237e; color: #1a237e; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-right: auto; }
+        .btn-manejo:hover { background: #1a237e; color: #ffffff; }
+        .total-geral { margin-top: 10px; background: #8e7cf0; color: #ffffff; text-align: center; font-size: 22px; font-weight: bold; border-radius: 4px; padding: 4px; }
+        .item-lido .detalhe { white-space: nowrap; }
+        .item-lido .btn-x { margin-left: 8px; flex-shrink: 0; border: 1px solid #d4370a; background: #ffffff; color: #d4370a; border-radius: 4px; width: 22px; height: 22px; line-height: 18px; font-size: 14px; font-weight: bold; cursor: pointer; padding: 0; }
+        .item-lido .btn-x:hover { background: #d4370a; color: #ffffff; }
+        /* v-s108: brinco inteiro (sem cortar): linha 1 = brinco + X, linha 2 = detalhe */
+        .item-lido { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; row-gap: 0; align-items: center; }
+        .item-lido .sisbov { grid-column: 1; grid-row: 1; overflow: visible; text-overflow: clip; }
+        .item-lido .detalhe { grid-column: 1; grid-row: 2; }
+        .item-lido .btn-x { grid-column: 2; grid-row: 1 / 3; margin-left: 0; }
+        .barra-lidos .item-lido { display: flex; }
+        .modal-caixa.larga { max-width: 460px; width: 92%; }
+        .modal-caixa .campo-modal { display: flex; gap: 10px; justify-content: center; align-items: flex-end; margin: 14px 0; }
+        .modal-caixa .campo-modal label { display: block; font-size: 12px; font-weight: bold; color: #333333; text-align: left; margin-bottom: 4px; }
+        .modal-caixa .campo-modal input { padding: 8px 10px; border: 2px solid #cccccc; border-radius: 6px; font-size: 24px; font-weight: bold; text-align: center; font-family: Arial, sans-serif; }
+        .modal-caixa .campo-modal input:focus { outline: none; border-color: #1a237e; }
+        .modal-caixa .campo-modal #manejo-numero { width: 170px; }
+        .modal-caixa .campo-modal #manejo-dv { width: 64px; }
+        .modal-caixa .msg-manejo { color: #c62828; font-weight: bold; font-size: 14px; min-height: 20px; margin-bottom: 10px; }
+        .modal-caixa .botoes-modal { display: flex; gap: 10px; justify-content: center; }
+        .btn-modal-sec { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #555555; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-modal-sec:hover { background: #888888; color: #ffffff; }
+        .btn-modal-sair:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        /* aviso vermelho: fora da Liberacao / ERAS 0 a 12 */
+        .modal-aviso-caixa { background: #ffffff; border: 4px solid #c62828; border-radius: 10px; padding: 24px 28px; max-width: 560px; width: 94%; text-align: left; }
+        .modal-aviso-caixa h3 { color: #c62828; font-size: 20px; margin-bottom: 4px; text-align: center; }
+        .modal-aviso-caixa .animal-aviso { text-align: center; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 12px; }
+        .modal-aviso-caixa .item-aviso { border: 2px solid #c62828; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; color: #c62828; font-weight: bold; font-size: 16px; }
+        .modal-aviso-caixa .item-aviso label { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 15px; color: #222222; cursor: pointer; }
+        .modal-aviso-caixa .item-aviso input[type=checkbox] { width: 20px; height: 20px; }
+        .modal-aviso-caixa .botoes-modal { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
+        /* ---- v1.1.0 (Sessao 099): tela compacta, tudo visivel sem rolagem ---- */
+        .compacto { padding: 8px 20px; gap: 14px; }
+        .compacto .coluna-lidos { width: 300px; }
+        .compacto .painel-lidos { padding: 12px; }
+        .faixa-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+        .faixa-topo h2 { font-size: 17px; color: #333333; display: flex; align-items: center; gap: 8px; }
+        .faixa-topo .icone-titulo { font-size: 24px; }
+        .faixa-info { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+        .faixa-info span { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 3px 12px; font-size: 14px; font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .faixa-contadores { display: flex; gap: 8px; margin-left: auto; }
+        .faixa-contadores .contador-caixa { display: flex; align-items: baseline; gap: 8px; padding: 2px 12px; }
+        .faixa-contadores .contador-caixa .rotulo { font-size: 11px; }
+        .faixa-contadores .contador-caixa .valor { font-size: 18px; }
+        .compacto .form-container { padding: 8px 16px 10px; }
+        .compacto .form-secao { font-size: 13px; margin: 8px 0 6px; padding-bottom: 3px; border-bottom-width: 1px; }
+        .compacto .form-secao:first-child { margin-top: 0; }
+        .compacto .form-group { gap: 2px; }
+        .compacto .form-group label { font-size: 12px; }
+        .compacto .form-group input, .compacto .form-group select { font-size: 17px; padding: 4px 10px; }
+        .compacto .campo-sisbov input { font-size: 28px; padding: 5px 14px; }
+        .compacto .badge-ok-sisbov { top: auto; bottom: 10px; transform: none; font-size: 20px; }
+        .grade-id { display: grid; grid-template-columns: 2.9fr 1fr 1.7fr; gap: 8px; }
+        .grade-animal { display: grid; grid-template-columns: 1.1fr 0.8fr 1.4fr 1.8fr 1.4fr 0.8fr; gap: 8px; }
+        .grade-saida { display: grid; grid-template-columns: 1fr 3fr 1.5fr; gap: 8px; }
+        .compacto .linha-peso { margin-top: 8px; gap: 8px; }
+        .compacto .caixa-peso { padding: 1px 8px; }
+        .compacto .caixa-peso .valor { font-size: 18px; min-height: 22px; }
+        .compacto .form-botoes { margin-top: 8px; padding: 4px 0 0; bottom: 0; }
+        .compacto .btn-gravar { padding: 9px 30px; }
+        .compacto .btn-limpar { padding: 9px 18px; }
+        /* v1.1.0 - botao Manejo em destaque: rosa, borda laranja, icone */
+        .compacto .btn-manejo { display: flex; align-items: center; gap: 8px; padding: 8px 24px; background: #FBE9E4; border: 3px solid #D4370A; color: #7a1f04; border-radius: 8px; font-size: 17px; font-weight: bold; cursor: pointer; margin-right: auto; }
+        .compacto .btn-manejo:hover { background: #D4370A; color: #ffffff; }
+        .compacto .btn-manejo:focus { outline: 3px solid #1565C0; outline-offset: 2px; }
+        /* v1.1.0 - aviso de brinco ja lido (leitura em aberto) */
+        .modal-aviso-caixa.repetido { border-color: #f9a825; }
+        .modal-aviso-caixa.repetido h3, .modal-aviso-caixa.repetido .animal-aviso { color: #8a6d00; }
+        .modal-aviso-caixa.repetido .item-aviso { border-color: #f9a825; color: #5d4600; background: #fff8e1; }
+        .modal-aviso-caixa.repetido .botoes-modal { flex-wrap: wrap; }
+        /* v1.1.1 - linha Identificacao: SISBOV, Manejo e RFID com a mesma altura */
+        .compacto .grade-id input { height: 50px; }
+        .compacto .grade-id #manejo { font-size: 28px; padding: 5px 14px; letter-spacing: 1px; }
+        .compacto .badge-ok-sisbov { bottom: 13px; }
+        /* v1.1.4 / v1.0.1 (Sessao 099) - faixas de bloqueio e de erro em vermelho vivo, texto branco */
+        .alerta-duplicado { background: #D32F2F; border-left: 8px solid #7f0000; color: #ffffff; font-size: 17px; padding: 12px 18px; box-shadow: 0 2px 8px rgba(211,47,47,0.45); }
+        .alerta-duplicado .btn-fechar-alerta, .btn-fechar-alerta { background: #ffffff; color: #B71C1C; }
+        #alerta-duplicado-texto { display: flex; align-items: center; gap: 14px; }
+        #alerta-duplicado-texto .alerta-icone { font-size: 34px; line-height: 1; flex-shrink: 0; }
+        #alerta-duplicado-texto .alerta-msg { white-space: pre-line; }   /* v1.1.5 - frases em linhas separadas */
+        .btn-fechar-alerta:hover { background: #ffe5e5; }
+        .erro { background: #D32F2F; border-left: 8px solid #7f0000; color: #ffffff; font-size: 16px; padding: 12px 18px; box-shadow: 0 2px 8px rgba(211,47,47,0.45); }
+        /* ---- Leitor de Peso (Sessao 114) ---- */
+        .compacto .grade-animal { grid-template-columns: 0.9fr 0.6fr 1.2fr 1.5fr 1.2fr 0.8fr 1.1fr; }   /* v1.0.2 - 7 campos */
+        .compacto .linha-peso { grid-template-columns: 1fr 1.2fr 0.7fr 1fr 1.3fr; }   /* v1.0.3 - 5 caixas */
+        /* v1.0.0 (Bastao) - linha Identificacao: RFID (cursor), SISBOV e Manejo */
+        .grade-id { grid-template-columns: 2.4fr 2.4fr 1.1fr; }
+        .campo-sisbov input#rfid.sisbov-ok { border-color: #1565C0; color: #1565C0; background: #E3F2FD; }
+        .grade-pesagem { display: grid; grid-template-columns: 1fr 1.4fr 3fr; gap: 8px; }
+        .aviso-peso { display: none; margin-top: 8px; background: #fff8e1; border-left: 8px solid #f9a825; color: #7a5b00; font-weight: bold; font-size: 20px; padding: 6px 16px; border-radius: 6px; }
+        .compacto .grade-pesagem input, .compacto .grade-pesagem select { height: 46px; }
+        .compacto #peso { font-size: 26px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo compacto">
+
+            <div class="coluna-form">
+                <div class="faixa-topo">
+                    <h2><span class="icone-titulo">&#9878;</span> Leitor de Peso com Bast&#227;o &#8212; Leitura</h2>
+                    <div class="faixa-info">
+                        <span>&#128197; Data da Pesagem: {{ data_pesagem }}</span>
+                    </div>
+                    <div class="faixa-contadores">
+                        <div class="contador-caixa">
+                            <div class="rotulo">LIDOS (sessão)</div>
+                            <div class="valor" id="contador-lidos">0</div>
+                        </div>
+                        <div class="contador-caixa">
+                            <div class="rotulo">GRAVADOS (nesta data)</div>
+                            <div class="valor" id="contador-gravados">{{ total_gravados }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alerta-duplicado" id="alerta-duplicado">
+                    <span id="alerta-duplicado-texto"></span>
+                    <button type="button" class="btn-fechar-alerta" id="btn-fechar-alerta">Fechar e Limpar</button>
+                </div>
+
+                <div class="form-container">
+
+                    <div class="form-secao">Identificação</div>
+                    <div class="grade-id">
+                        <div class="form-group campo-sisbov">
+                            <label>RFID (Bastão) *</label>
+                            <input type="text" id="rfid" autocomplete="off" autofocus maxlength="15" inputmode="numeric" placeholder="Passe o bastão...">
+                            <span class="badge-ok-sisbov" id="badge-ok-rfid">&#10003; OK</span>
+                        </div>
+                        <div class="form-group campo-sisbov">
+                            <label>Código de Barras (SISBOV)</label>
+                            <input type="text" id="sisbov" autocomplete="off" maxlength="15" placeholder="Leia o brinco...">
+                            <span class="badge-ok-sisbov" id="badge-ok-sisbov">&#10003; OK</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Manejo</label>
+                            <input type="text" id="manejo" class="dado" readonly tabindex="-1">
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Dados do Animal</div>
+                    <div class="grade-animal">
+                        <div class="form-group">
+                            <label>Sexo</label>
+                            <input type="text" id="f-sexo" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Raça</label>
+                            <input type="text" id="f-raca" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Nascimento</label>
+                            <input type="text" id="f-nascimento" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Idade em Meses</label>
+                            <input type="text" id="f-idade" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Liberação Abate</label>
+                            <input type="text" id="f-liberacao" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Lote</label>
+                            <input type="text" id="f-lote" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Dias na Propriedade</label>
+                            <input type="text" id="f-dias-prop" class="dado" readonly tabindex="-1">
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Pesagem</div>
+                    <div class="grade-pesagem">
+                        <div class="form-group">
+                            <label>Peso (kg) *</label>
+                            <input type="text" id="peso" maxlength="7" autocomplete="off" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Perdeu Elemento</label>
+                            <select id="elemento" disabled>
+                                <option value=""></option>
+                                {% for codigo, texto in elementos %}
+                                <option value="{{ codigo }}">{{ texto }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <input type="text" id="observacao" maxlength="300" autocomplete="off" disabled>
+                        </div>
+                    </div>
+                    <div class="aviso-peso" id="aviso-peso">&#9888;&#65039; Atenção: Verifique o Peso</div>
+                    <div class="erro" id="erro-gravar" style="margin: 8px 0 0;"></div>
+
+                    <div class="linha-peso">
+                        <div class="caixa-peso"><div class="rotulo">PESO ANTERIOR (kg)</div><div class="valor" id="peso-anterior"></div></div>
+                        <div class="caixa-peso"><div class="rotulo">DATA</div><div class="valor" id="peso-data-anterior"></div></div>
+                        <div class="caixa-peso"><div class="rotulo">DIAS</div><div class="valor" id="peso-dias"></div></div>
+                        <div class="caixa-peso"><div class="rotulo">GANHO (kg)</div><div class="valor" id="peso-ganho"></div></div>
+                        <div class="caixa-peso"><div class="rotulo">GANHO POR DIA (kg)</div><div class="valor" id="peso-gmd"></div></div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <button type="button" class="btn-manejo" id="btn-manejo"><span aria-hidden="true">&#9000;</span> Manejo</button>
+                        <button type="button" class="btn-limpar" id="btn-limpar">Limpar Tela</button>
+                        <button type="button" class="btn-gravar" id="btn-gravar" disabled>Gravar</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="coluna-lidos">
+                <div class="painel-lidos">
+                    <h3>Geral &#8212; pesados nesta data</h3>
+                    <div class="lista-lidos" id="lista-lidos">
+                        {% for l in lidos %}
+                        <div class="item-lido" data-sisbov="{{ l.sisbov }}">
+                            <div class="sisbov">{{ l.sisbov }}</div>
+                            <div class="detalhe">{{ 'M' if l.sexo == 'MACHO' else 'F' }} &#183; {{ l.peso }} kg{% if l.ganho %} &#183; ganho {{ l.ganho }}{% endif %}{% if l.hora %} &#183; {{ l.hora }}{% endif %}</div>
+                            {% if l.pode_excluir %}<button type="button" class="btn-x" title="Excluir esta pesagem">&#10005;</button>{% endif %}
+                        </div>
+                        {% endfor %}
+                        <div class="lista-vazia" id="lista-vazia"{% if lidos %} style="display:none"{% endif %}>Nenhuma pesagem ainda.</div>
+                    </div>
+                    <div class="total-geral" id="total-geral">{{ total_gravados }}</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <!-- Modal de sucesso apos Gravar -->
+    <div class="modal-fundo" id="modal-sucesso">
+        <div class="modal-caixa">
+            <div class="icone-sucesso">&#9989;</div>
+            <h3>Gravação Efetuada com Sucesso</h3>
+            <div class="sisbov-gravado" id="modal-sisbov"></div>
+            <button type="button" class="btn-modal-sair" id="btn-modal-sair">Sair</button>
+        </div>
+    </div>
+
+    <!-- Modal do Manejo -->
+    <div class="modal-fundo" id="modal-manejo">
+        <div class="modal-caixa larga">
+            <h3 style="color:#1a237e;">Identificar pelo Manejo</h3>
+            <div class="campo-modal">
+                <div>
+                    <label for="manejo-numero">Digite o Manejo (6 números)</label>
+                    <input type="text" id="manejo-numero" maxlength="6" inputmode="numeric" autocomplete="off">
+                </div>
+                <div id="manejo-dv-box" style="display:none">
+                    <label for="manejo-dv">DV (brinco 105)</label>
+                    <input type="text" id="manejo-dv" maxlength="1" inputmode="numeric" autocomplete="off">
+                </div>
+            </div>
+            <div class="msg-manejo" id="msg-manejo"></div>
+            <div class="botoes-modal">
+                <button type="button" class="btn-modal-sec" id="btn-manejo-cancelar">Cancelar</button>
+                <button type="button" class="btn-modal-sair" id="btn-manejo-buscar">Buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var idPropriedade = '{{ id_propriedade }}';
+        var dataPesagem   = '{{ data_pesagem }}';     // dd/mm/aaaa, vinda da Selecao
+        var GMD_AVISO     = {{ gmd_aviso }};          // kg/dia: acima disso so avisa
+        var QUEDA_AVISO   = {{ queda_pct }};          // queda (%) a partir da qual so avisa
+        var PESO_MINIMO   = 100;                      // o peso precisa ser MAIOR que isto (regra do brete da Entrada)
+        var PESO_MAXIMO   = 1000;
+        var URL_CHECAR  = '{{ url_for("pesos_bastao.checar") }}';
+        var URL_GRAVAR  = '{{ url_for("pesos_leitor.gravar") }}';
+        var URL_EXCLUIR = '{{ url_for("pesos_leitor.excluir_pesagem") }}';
+
+        function numero(texto) { return parseFloat(String(texto || '').replace(',', '.')); }
+
+        var campoSisbov  = document.getElementById('sisbov');
+        var badgeOk      = document.getElementById('badge-ok-sisbov');
+        var campoRfid    = document.getElementById('rfid');
+        var badgeOkRfid  = document.getElementById('badge-ok-rfid');
+        var campoElemento = document.getElementById('elemento');
+        var campoObs     = document.getElementById('observacao');
+        var campoPeso    = document.getElementById('peso');
+        var avisoPeso    = document.getElementById('aviso-peso');
+        var btnGravar    = document.getElementById('btn-gravar');
+        var alerta       = document.getElementById('alerta-duplicado');
+        var alertaTexto  = document.getElementById('alerta-duplicado-texto');
+        var erroGravar   = document.getElementById('erro-gravar');
+        var contadorLidos    = document.getElementById('contador-lidos');
+        var contadorGravados = document.getElementById('contador-gravados');
+        var totalGeral   = document.getElementById('total-geral');
+        var listaLidos   = document.getElementById('lista-lidos');
+        var listaVazia   = document.getElementById('lista-vazia');
+        var modalSucesso = document.getElementById('modal-sucesso');
+        var modalManejo  = document.getElementById('modal-manejo');
+
+        var CAMPOS_FICHA = {
+            manejo: 'manejo', rfid: 'rfid', sexo: 'f-sexo', raca: 'f-raca', nascimento: 'f-nascimento',
+            idade_meses: 'f-idade', liberacao_abate: 'f-liberacao', lote: 'f-lote', dias_propriedade: 'f-dias-prop'
+        };
+
+        var totalLidos = 0;
+        var gravando = false;
+        var estado = { liberado: false, animal: null };
+        var ultimoSisbovChecado = null;
+        var ultimoRfidChecado = null;
+        var TEMPO_TRAVA_ENTER_MS = 500;      // o leitor USB manda um Enter logo apos o numero
+        var bloqueioEnterAte = 0;
+
+        // ---------- mensagens ----------
+        function quebrarFrases(texto) {
+            return String(texto).replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ(])/g, '$1\n');
+        }
+        function mostrarAlerta(mensagem) {
+            alertaTexto.textContent = '';
+            var icone = document.createElement('span'); icone.className = 'alerta-icone'; icone.textContent = '⚠️';
+            var msg = document.createElement('span'); msg.className = 'alerta-msg'; msg.textContent = quebrarFrases(mensagem);
+            alertaTexto.appendChild(icone); alertaTexto.appendChild(msg);
+            alerta.style.display = 'flex';
+        }
+        function esconderMensagens() {
+            alerta.style.display = 'none';
+            erroGravar.style.display = 'none';
+        }
+        function mostrarErro(mensagem) {
+            erroGravar.textContent = mensagem;
+            erroGravar.style.display = 'block';
+            avisoPeso.style.display = 'none';   // v1.0.4 - o erro ocupa o lugar do aviso amarelo
+        }
+
+        // ---------- ficha do animal ----------
+        function formatarKg(valor) {
+            var texto = (Math.round(valor * 100) / 100).toFixed(2).replace(/\.?0+$/, '');
+            return texto.replace('.', ',');
+        }
+        function limparFicha() {
+            Object.keys(CAMPOS_FICHA).forEach(function(chave) { document.getElementById(CAMPOS_FICHA[chave]).value = ''; });
+            document.getElementById('peso-anterior').textContent = '';
+            document.getElementById('peso-data-anterior').textContent = '';
+            document.getElementById('peso-dias').textContent = '';
+            document.getElementById('peso-ganho').textContent = '';
+            document.getElementById('peso-gmd').textContent = '';
+            avisoPeso.style.display = 'none';
+            campoPeso.value = '';
+            campoObs.value = '';
+            campoElemento.value = '';
+        }
+        function travarDigitacao(travar) {
+            campoElemento.disabled = travar;
+            campoObs.disabled = travar;
+            campoPeso.disabled = travar;
+            btnGravar.disabled = travar;
+        }
+        function reiniciarEstado() {
+            estado = { liberado: false, animal: null };
+            ultimoSisbovChecado = null;
+            ultimoRfidChecado = null;
+            campoSisbov.classList.remove('sisbov-ok', 'sisbov-manejo');
+            badgeOk.classList.remove('visivel');
+            campoRfid.classList.remove('sisbov-ok');
+            badgeOkRfid.classList.remove('visivel');
+            limparFicha();
+            travarDigitacao(true);
+        }
+        function preencherFicha(animal) {
+            Object.keys(CAMPOS_FICHA).forEach(function(chave) {
+                var valor = animal[chave];
+                document.getElementById(CAMPOS_FICHA[chave]).value = (valor === null || valor === undefined) ? '' : valor;
+            });
+            var ant = document.getElementById('peso-anterior');
+            ant.textContent = (animal.peso_anterior === null || animal.peso_anterior === undefined) ? ''
+                : formatarKg(animal.peso_anterior);
+            document.getElementById('peso-data-anterior').textContent = animal.data_anterior || '';
+            document.getElementById('peso-dias').textContent = (animal.dias === null || animal.dias === undefined) ? '' : animal.dias;
+        }
+
+        // ---------- ganho, ganho por dia e aviso (na hora em que o brete digita o peso) ----------
+        function atualizarGanho() {
+            var ganho = document.getElementById('peso-ganho');
+            var gmd = document.getElementById('peso-gmd');
+            ganho.textContent = ''; gmd.textContent = '';
+            avisoPeso.style.display = 'none';
+            if (!estado.animal) return;
+            var anterior = estado.animal.peso_anterior;
+            var atual = numero(campoPeso.value);
+            if (anterior === null || anterior === undefined || isNaN(atual)) return;
+            var diferenca = atual - anterior;
+            ganho.textContent = formatarKg(diferenca);
+            var dias = parseInt(estado.animal.dias, 10);
+            var porDia = null;
+            if (dias > 0) { porDia = diferenca / dias; gmd.textContent = porDia.toFixed(3).replace('.', ','); }
+            // So AVISA (a responsabilidade e do usuario): ganho acima de GMD_AVISO kg/dia ou queda de QUEDA_AVISO% ou mais
+            var ganhoAlto = (porDia !== null && porDia > GMD_AVISO);
+            var queda = (atual <= anterior * (1 - QUEDA_AVISO / 100));
+            if (atual > PESO_MINIMO && (ganhoAlto || queda)) avisoPeso.style.display = 'block';
+        }
+        campoPeso.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9.,]/g, '');
+            atualizarGanho();
+        });
+
+        // ---------- depois que o servidor aceitou o animal ----------
+        function liberarDigitacao() {
+            estado.liberado = true;
+            travarDigitacao(false);
+            bloqueioEnterAte = Date.now() + TEMPO_TRAVA_ENTER_MS;
+            campoPeso.focus();
+        }
+        function aplicarAnimal(dados, via) {
+            estado.animal = dados.animal;
+            preencherFicha(dados.animal);
+            campoSisbov.value = dados.animal.sisbov;
+            if (via === 'BASTAO') {
+                campoRfid.classList.add('sisbov-ok');
+                badgeOkRfid.classList.add('visivel');
+                ultimoRfidChecado = campoRfid.value;
+            } else {
+                campoSisbov.classList.add('sisbov-ok');
+                if (via === 'MANEJO') campoSisbov.classList.add('sisbov-manejo');
+                badgeOk.classList.add('visivel');
+            }
+            ultimoSisbovChecado = dados.animal.sisbov;
+            liberarDigitacao();
+        }
+
+        // ---------- checagem do RFID (Bastao) ----------
+        function verificarRfid() {
+            var rfid = campoRfid.value.trim();
+            if (rfid.length !== 15 || rfid === ultimoRfidChecado) return;
+            ultimoRfidChecado = rfid;
+            esconderMensagens();
+            fetch(URL_CHECAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rfid: rfid, id_propriedade: idPropriedade, data_pesagem: dataPesagem })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.bloqueio) {
+                    mostrarAlerta(dados.mensagem);
+                    estado.liberado = false;
+                    travarDigitacao(true);
+                } else if (dados.ok) {
+                    aplicarAnimal(dados, 'BASTAO');
+                } else {
+                    mostrarErro(dados.erro || 'Não foi possível checar o RFID.');
+                }
+            })
+            .catch(function() { mostrarErro('Não foi possível checar o RFID. Verifique sua conexão.'); });
+        }
+        campoRfid.addEventListener('input', function() {
+            var texto = this.value.replace(/\D/g, '').slice(0, 15);
+            campoSisbov.value = '';          // RFID novo: a identificacao anterior sai
+            reiniciarEstado();
+            this.value = texto;
+            alerta.style.display = 'none';
+            if (texto.length === 15) verificarRfid();
+        });
+        campoRfid.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter') return;
+            evento.preventDefault();
+            verificarRfid();
+        });
+        campoRfid.addEventListener('blur', verificarRfid);
+
+        // ---------- checagem do SISBOV (digitado, quando o chip nao serve) ----------
+        function verificarSisbov() {
+            var sisbov = campoSisbov.value.trim();
+            if (!sisbov || sisbov === ultimoSisbovChecado) return;
+            ultimoSisbovChecado = sisbov;
+            esconderMensagens();
+            fetch(URL_CHECAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sisbov: sisbov, id_propriedade: idPropriedade, data_pesagem: dataPesagem })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.bloqueio) {
+                    mostrarAlerta(dados.mensagem);
+                    estado.liberado = false;
+                    travarDigitacao(true);
+                } else if (dados.ok) {
+                    aplicarAnimal(dados, 'LEITOR');
+                } else {
+                    mostrarErro(dados.erro || 'Não foi possível checar o animal.');
+                }
+            })
+            .catch(function() { mostrarErro('Não foi possível checar o SISBOV. Verifique sua conexão.'); });
+        }
+        campoSisbov.addEventListener('input', function() {
+            if (this.value.length > 15) this.value = this.value.slice(0, 15);
+            // qualquer edicao exige checar de novo
+            var texto = this.value;
+            reiniciarEstado();
+            this.value = texto;
+            alerta.style.display = 'none';
+            if (texto.length === 15) verificarSisbov();
+        });
+        campoSisbov.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter' && evento.key !== 'Tab') return;
+            evento.preventDefault();
+            verificarSisbov();
+        });
+        campoSisbov.addEventListener('blur', verificarSisbov);
+
+        // ---------- botao Fechar e Limpar do alerta ----------
+        document.getElementById('btn-fechar-alerta').addEventListener('click', function() { limparTudo(); });
+
+        // ---------- Manejo ----------
+        var campoManejo = document.getElementById('manejo-numero');
+        var campoDv = document.getElementById('manejo-dv');
+        var boxDv = document.getElementById('manejo-dv-box');
+        var msgManejo = document.getElementById('msg-manejo');
+        // DV so aparece quando o servidor pede (Manejo repetido com brinco 105)
+        function mostrarDv(mostrar) {
+            boxDv.style.display = mostrar ? '' : 'none';
+            if (!mostrar) campoDv.value = '';
+        }
+        function abrirManejo() {
+            campoManejo.value = ''; mostrarDv(false); msgManejo.textContent = '';
+            modalManejo.classList.add('aberto');
+            campoManejo.focus();
+        }
+        function fecharManejo() { modalManejo.classList.remove('aberto'); campoRfid.focus(); }
+        function buscarManejo() {
+            var manejo = campoManejo.value.trim();
+            var dv = campoDv.value.trim();
+            msgManejo.textContent = '';
+            if (manejo.length !== 6) { msgManejo.textContent = 'Digite os 6 números do Manejo.'; campoManejo.focus(); return; }
+            fetch(URL_CHECAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ manejo: manejo, dv: dv, id_propriedade: idPropriedade, data_pesagem: dataPesagem })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.bloqueio) {
+                    msgManejo.textContent = dados.mensagem;
+                    if (dados.pede_dv) { mostrarDv(true); campoDv.focus(); }
+                    return;
+                }
+                if (!dados.ok) { msgManejo.textContent = dados.erro || 'Não foi possível buscar o animal.'; return; }
+                modalManejo.classList.remove('aberto');
+                esconderMensagens();
+                aplicarAnimal(dados, 'MANEJO');
+            })
+            .catch(function() { msgManejo.textContent = 'Não foi possível buscar. Verifique sua conexão.'; });
+        }
+        document.getElementById('btn-manejo').addEventListener('click', abrirManejo);
+        document.getElementById('btn-manejo-cancelar').addEventListener('click', fecharManejo);
+        document.getElementById('btn-manejo-buscar').addEventListener('click', buscarManejo);
+        [campoManejo, campoDv].forEach(function(campo) {
+            campo.addEventListener('input', function() { this.value = this.value.replace(/\D/g, ''); });
+            campo.addEventListener('keydown', function(evento) {
+                if (evento.key === 'Enter') { evento.preventDefault(); buscarManejo(); }
+                if (evento.key === 'Escape') { evento.preventDefault(); fecharManejo(); }
+            });
+        });
+        campoManejo.addEventListener('input', function() {
+            mostrarDv(false);          // numero mudou: e uma busca nova, o DV some de novo
+            if (this.value.length === 6) document.getElementById('btn-manejo-buscar').focus();
+        });
+
+        // ---------- Gravar ----------
+        function pesoValido() {
+            var valor = numero(campoPeso.value);
+            return !isNaN(valor) && valor > 0;
+        }
+        btnGravar.addEventListener('click', function() {
+            if (gravando || !estado.liberado || !estado.animal) return;
+            erroGravar.style.display = 'none';
+            if (!pesoValido()) { mostrarErro('Digite o Peso do animal.'); campoPeso.focus(); return; }
+            var pesoNum = numero(campoPeso.value);
+            if (pesoNum <= PESO_MINIMO || pesoNum > PESO_MAXIMO) {
+                mostrarErro('Peso incorreto, verifique.');
+                campoPeso.focus();
+                return;
+            }
+            gravando = true;
+            btnGravar.disabled = true;
+            var corpo = {
+                id_propriedade: idPropriedade,
+                data_pesagem: dataPesagem,
+                sisbov: estado.animal.sisbov,
+                peso: campoPeso.value,
+                elemento_perdido: campoElemento.value,
+                observacao: campoObs.value
+            };
+            fetch(URL_GRAVAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                gravando = false;
+                var dados = resultado.dados;
+                if (resultado.status !== 200) {
+                    if (dados.bloqueio) {
+                        mostrarAlerta(dados.mensagem || dados.erro);
+                        estado.liberado = false;
+                        travarDigitacao(true);
+                    } else {
+                        mostrarErro(dados.erro || 'Não foi possível gravar.');
+                        btnGravar.disabled = false;
+                    }
+                    return;
+                }
+                totalLidos += 1;
+                contadorLidos.textContent = totalLidos;
+                contadorGravados.textContent = dados.total_gravados;
+                totalGeral.textContent = dados.total_gravados;
+                adicionarNaLista(dados);
+                document.getElementById('modal-sisbov').textContent = 'SISBOV: ' + dados.sisbov + ' — ' + dados.peso + ' kg';
+                modalSucesso.classList.add('aberto');
+                campoSisbov.value = '';
+                campoRfid.value = '';
+                reiniciarEstado();
+            })
+            .catch(function() {
+                gravando = false;
+                btnGravar.disabled = false;
+                mostrarErro('Não foi possível gravar. Verifique sua conexão.');
+            });
+        });
+        function enterPodeGravar() {
+            return estado.liberado && !gravando && !btnGravar.disabled && Date.now() >= bloqueioEnterAte;
+        }
+        [campoPeso, campoObs].forEach(function(campo) {
+            campo.addEventListener('keydown', function(evento) {
+                if (evento.key !== 'Enter') return;
+                evento.preventDefault();
+                if (!pesoValido()) { campoPeso.focus(); return; }
+                if (enterPodeGravar()) btnGravar.click();
+            });
+        });
+        btnGravar.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter') return;
+            evento.preventDefault();
+            if (enterPodeGravar()) btnGravar.click();
+        });
+
+        // ---------- lista "Geral" ----------
+        function adicionarNaLista(dados) {
+            if (listaVazia) listaVazia.style.display = 'none';
+            var item = document.createElement('div');
+            item.className = 'item-lido';
+            item.setAttribute('data-sisbov', dados.sisbov);
+            var s = document.createElement('div');
+            s.className = 'sisbov';
+            s.textContent = dados.sisbov;
+            var d = document.createElement('div');
+            d.className = 'detalhe';
+            d.textContent = (dados.sexo === 'MACHO' ? 'M' : 'F') + ' · ' + dados.peso + ' kg' +
+                (dados.ganho ? ' · ganho ' + dados.ganho : '') + ' · ' + dados.hora;
+            item.appendChild(s);
+            item.appendChild(d);
+            if (dados.pode_excluir) {
+                var bx = document.createElement('button');
+                bx.type = 'button'; bx.className = 'btn-x'; bx.title = 'Excluir esta pesagem'; bx.innerHTML = '&#10005;';
+                item.appendChild(bx);
+            }
+            listaLidos.insertBefore(item, listaLidos.firstChild);
+        }
+
+        // ---------- sucesso ----------
+        function fecharSucesso() {
+            modalSucesso.classList.remove('aberto');
+            campoRfid.focus();
+        }
+        document.getElementById('btn-modal-sair').addEventListener('click', fecharSucesso);
+        document.addEventListener('keydown', function(evento) {
+            if (evento.key === 'Enter' && modalSucesso.classList.contains('aberto')) {
+                evento.preventDefault();
+                fecharSucesso();
+            }
+        });
+
+        // ---------- Limpar Tela (so os campos desta tela, nunca a lista) ----------
+        function limparTudo() {
+            campoSisbov.value = '';
+            campoRfid.value = '';
+            reiniciarEstado();
+            esconderMensagens();
+            campoRfid.focus();
+        }
+        document.getElementById('btn-limpar').addEventListener('click', limparTudo);
+
+        // ---------- EXCLUIR PESAGEM (X da lista Geral): corrige no brete, le o animal de novo ----------
+        listaLidos.addEventListener('click', function(ev) {
+            var b = ev.target.closest ? ev.target.closest('.btn-x') : null;
+            if (!b) return;
+            var item = b.closest('.item-lido');
+            var sisbovExcluir = item.getAttribute('data-sisbov');
+            confirmarAcaoAssincrona(function() { excluirPesagem(b, item, sisbovExcluir); },
+                'Excluir a pesagem do brinco ' + sisbovExcluir + '? O animal fica livre para ser pesado de novo.', 'Excluir');
+        });
+        function excluirPesagem(b, item, sisbovExcluir) {
+            b.disabled = true;
+            fetch(URL_EXCLUIR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: idPropriedade, data_pesagem: dataPesagem, sisbov: sisbovExcluir })
+            }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+            .then(function(x) {
+                if (!x.ok) { b.disabled = false; mostrarErro(x.d.erro || 'Não foi possível excluir a pesagem.'); return; }
+                item.parentNode.removeChild(item);
+                if (listaVazia && !listaLidos.querySelector('.item-lido')) listaVazia.style.display = '';
+                totalGeral.textContent = x.d.total_gravados;
+                contadorGravados.textContent = x.d.total_gravados;
+                campoRfid.focus();
+            }).catch(function() { b.disabled = false; mostrarErro('Falha de comunicação. Tente de novo.'); });
+        }
+
+        reiniciarEstado();
+        campoRfid.focus();
+    </script>
+
+    <!-- Mensagem de gravacao fecha sozinha em 3 segundos (peca unica: static/js/auto_fechar_gravacao.js) -->
+    <script src="/static/js/auto_fechar_gravacao.js"></script>
+    <script>AutoFecharGravacao.iniciar({ modal: 'modal-sucesso', botao: 'btn-modal-sair', segundos: 3 });</script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\pesos_bastao_leitura.html
+     ========================================================= -->

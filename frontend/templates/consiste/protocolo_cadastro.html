@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\protocolo_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-07-03 16:40 -03
+     ATUALIZADO EM: 2026-07-03 17:36 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Formulario de cadastro e edicao de Protocolo de
+         Certificacao (ABPO, PEFB, CSCB, Cota Hilton, e
+         futuros). Campos: Codigo (sigla), Nome, Resumo
+         (1-2 linhas, exibido nos cards da tela de Propriedade),
+         Descricao (texto completo) e Tipo de Vinculo
+         (Propriedade ou Planta Industrial).
+         Todos os campos de texto em UPPERCASE (JS + backend) -
+         decisao explicita da Sessao 011: a descricao e
+         editavel, entao segue a mesma regra dos demais campos
+         do projeto, nao ha excecao por ser texto longo.
+         v1.0.0: Criacao do modulo (Sessao 011).
+         v1.1.0: Sessao 011 - Correcao de acentuacao no texto
+             visivel ao usuario.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'Editar' if protocolo else 'Novo' }} Protocolo</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar — CSS necessario para o include consiste_menu.html ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+
+        /* ---- Formulario ---- */
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 700px; }
+        .form-secao { font-size: 13px; font-weight: bold; color: #D4370A; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .col-12 { grid-column: span 12; }
+        .col-8  { grid-column: span 8; }
+        .col-4  { grid-column: span 4; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #D4370A; }
+        .form-ajuda { font-size: 12px; color: #999999; }
+        .upper { text-transform: uppercase; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+
+        /* ---- Botoes ---- */
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <button onclick="history.back()" class="btn-voltar-topo">&#8592; Voltar</button>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- MENU LATERAL — plataforma Consiste -->
+        {% include 'consiste/consiste_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128220; {{ 'Editar' if protocolo else 'Novo' }} Protocolo</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('protocolos.salvar') }}" autocomplete="off">
+                    <input type="hidden" name="id" value="{{ protocolo.id if protocolo else '' }}">
+
+                    <div class="form-secao">Dados do Protocolo</div>
+                    <div class="form-grid">
+
+                        <div class="form-group col-4">
+                            <label>Código (Sigla) *</label>
+                            <input type="text" name="codigo" required maxlength="20" class="upper" autocomplete="off"
+                                value="{{ protocolo.codigo if protocolo else '' }}"
+                                placeholder="Ex: PEFB">
+                        </div>
+
+                        <div class="form-group col-8">
+                            <label>Nome *</label>
+                            <input type="text" name="nome" required maxlength="150" class="upper" autocomplete="off"
+                                value="{{ protocolo.nome if protocolo else '' }}"
+                                placeholder="Nome completo do Protocolo">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Resumo *</label>
+                            <input type="text" name="resumo" required maxlength="200" class="upper" autocomplete="off"
+                                value="{{ protocolo.resumo if protocolo else '' }}"
+                                placeholder="1-2 linhas, exibido nos cards da tela de Propriedade">
+                            <span class="form-ajuda">Texto curto - aparece na listagem e no card de Protocolos dentro da Propriedade.</span>
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label>Descricao</label>
+                            <textarea name="descricao" class="upper" autocomplete="off"
+                                placeholder="Explicação completa do protocolo, exibida ao detalhar">{{ protocolo.descricao if protocolo else '' }}</textarea>
+                        </div>
+
+                        <div class="form-group col-6">
+                            <label>Tipo de Vínculo *</label>
+                            <select name="tipo_vinculo" required autocomplete="off">
+                                <option value="">Selecione...</option>
+                                {% for valor, rotulo in tipos_vinculo %}
+                                <option value="{{ valor }}" {{ 'selected' if protocolo and protocolo.tipo_vinculo == valor else '' }}>
+                                    {{ rotulo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="form-ajuda">Onde o Protocolo se ancora: na Propriedade (ex: PEFB) ou na Planta Industrial (ex: CSCB/curtume).</span>
+                        </div>
+
+                    </div>
+
+                    <!-- Botoes -->
+                    <div class="form-botoes">
+                        <a href="{{ url_for('protocolos.lista') }}" class="btn-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar">
+                            {{ 'Salvar Alterações' if protocolo else 'Cadastrar' }}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+
+        // Uppercase automatico em todos os campos marcados
+        // com a classe "upper" - codigo, nome, resumo e
+        // descricao (regra padrao do projeto, sem excecao).
+        document.querySelectorAll('.upper').forEach(function(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\protocolo_cadastro.html
+     ========================================================= -->

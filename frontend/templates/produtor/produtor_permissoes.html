@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_permissoes.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-15 11:50 -03
+     ATUALIZADO EM: 2026-10-15 12:15 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Tela "Permissoes por Cargo" (Etapa 2), dentro da Equipe da
+         Propriedade. Tabela: modulos nas linhas, cargos nas colunas, e em
+         cada cruzamento o nivel (Sem acesso / Consulta / Lanca / Tudo).
+         So Titular e Administrador chegam aqui (produtor_permissoes.py).
+         Celula travada = texto cinza (o papel de quem esta na tela nao pode
+         mudar). Celula com borda laranja = ajuste que foge do padrao.
+         v1.0.0: Sessao 097 (15/10/2026, 11:50 -03) - Criacao.
+         v1.1.0: Sessao 097 (15/10/2026, 12:15 -03) - "Restaurar padrao" agora usa a janela
+             padrao do Orion (modal_confirmacao.html, confirmarAcao) no lugar do aviso do
+             navegador "localhost diz". Novo link para o Relatorio de Colaboradores.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Permiss&otilde;es por Cargo</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; }
+        .pagina-header-direita { display: flex; align-items: center; gap: 16px; }
+        .link-filtro { font-size: 13px; color: #D4370A; text-decoration: none; font-weight: bold; }
+        .link-filtro:hover { text-decoration: underline; }
+        .subtitulo-filtro { font-size: 13px; color: #666666; margin-bottom: 14px; line-height: 1.6; }
+        .aviso-ok { background: #e8f5e9; border-left: 4px solid #2e7d32; color: #1b5e20; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; }
+        .aviso-erro { background: #ffebee; border-left: 4px solid #c62828; color: #b71c1c; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; }
+        .legenda { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: #555555; line-height: 1.8; }
+        .legenda strong { color: #333333; }
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead { background: #D4370A; color: #ffffff; }
+        thead th { padding: 12px 10px; text-align: center; font-weight: bold; }
+        thead th:first-child { text-align: left; padding-left: 16px; }
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+        tbody td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; color: #333333; text-align: center; }
+        tbody td.col-modulo { text-align: left; padding-left: 16px; min-width: 230px; }
+        tbody td.col-modulo small { display: block; margin-top: 2px; color: #888888; font-size: 11px; font-weight: normal; }
+        td select { padding: 6px 8px; border: 1px solid #cccccc; border-radius: 4px; font-size: 13px; background: #ffffff; color: #333333; max-width: 118px; }
+        td.ajustado select { border: 2px solid #D4370A; background: #FBE9E4; }
+        .fixo { color: #999999; font-size: 13px; }
+        td.ajustado .fixo { color: #D4370A; font-weight: bold; }
+        .barra-botoes { display: flex; gap: 12px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+        .btn-novo { padding: 10px 22px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .btn-novo:hover { background: #C0392B; }
+        .btn-restaurar { padding: 9px 18px; background: #ffffff; border: 1px solid #888888; color: #666666; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .btn-restaurar:hover { background: #888888; color: #ffffff; }
+        .ultima { font-size: 12px; color: #888888; margin-top: 12px; }
+        .obs { font-size: 12px; color: #888888; margin-top: 6px; line-height: 1.6; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        @media (max-width: 700px) {
+            .conteudo { padding: 12px; }
+            .pagina-header { flex-wrap: wrap; gap: 8px; }
+            .tabela-container { overflow-x: auto; }
+            table { min-width: 860px; }
+            .btn-novo, .btn-restaurar { width: 100%; text-align: center; padding: 14px; font-size: 16px; }
+            td select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/usuarios' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2>&#128273; Permiss&otilde;es por Cargo{% if nome_propriedade %} &#8212; {{ nome_propriedade }}{% endif %}</h2>
+                <div class="pagina-header-direita">
+                    <a href="{{ url_for('produtor_permissoes.relatorio') }}" class="link-filtro">&#128203; Relat&oacute;rio de Colaboradores</a>
+                    <a href="{{ url_for('produtor_usuarios.lista') }}" class="link-filtro">&larr; Voltar para a Equipe</a>
+                </div>
+            </div>
+
+            <div class="subtitulo-filtro">
+                Define o que cada cargo pode fazer <strong>nesta fazenda</strong>. O Titular sempre tem acesso a tudo e n&atilde;o aparece na tabela.
+            </div>
+
+            {% if ok is not none and ok != '' %}
+            <div class="aviso-ok">&#9989; Pronto! {{ ok }} {{ 'altera&ccedil;&atilde;o salva' | safe if ok == '1' else 'altera&ccedil;&otilde;es salvas' | safe }}. Vale na pr&oacute;xima tela que a pessoa abrir.</div>
+            {% endif %}
+            {% if erro == 'tabela' %}
+            <div class="aviso-erro">&#9888;&#65039; A tabela de permiss&otilde;es ainda n&atilde;o existe no banco (public.permissao_cargo). Nada foi salvo.</div>
+            {% elif erro == 'gravar' %}
+            <div class="aviso-erro">&#9888;&#65039; N&atilde;o foi poss&iacute;vel salvar agora. Tente de novo; se repetir, avise a Consiste.</div>
+            {% endif %}
+            {% if not tabela_ok and not erro %}
+            <div class="aviso-erro">&#9888;&#65039; A tabela de permiss&otilde;es ainda n&atilde;o existe no banco. Valem os padr&otilde;es de cada cargo.</div>
+            {% endif %}
+
+            <div class="legenda">
+                <strong>Sem acesso</strong>: n&atilde;o v&ecirc; o m&oacute;dulo. &nbsp;
+                <strong>Consulta</strong>: s&oacute; olha (listas, relat&oacute;rios, consultas). &nbsp;
+                <strong>Lan&ccedil;a</strong>: tamb&eacute;m abre as telas de lan&ccedil;amento e grava. &nbsp;
+                <strong>Tudo</strong>: inclui excluir, desfazer e backup (s&oacute; em Brincagem e Utilit&aacute;rios).
+                Borda laranja = ajuste diferente do padr&atilde;o.
+            </div>
+
+            <form method="post" action="{{ url_for('produtor_permissoes.salvar') }}">
+                <div class="tabela-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>M&oacute;dulo</th>
+                                {% for codigo, nome in cargos %}
+                                <th>{{ nome }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linha in linhas %}
+                            <tr>
+                                <td class="col-modulo">
+                                    <strong>{{ linha.nome }}</strong>
+                                    <small>{{ linha.descricao }}</small>
+                                </td>
+                                {% for cel in linha.celulas %}
+                                <td class="{{ 'ajustado' if cel.ajustado else '' }}">
+                                    {% if cel.editavel %}
+                                    <select name="{{ cel.campo }}">
+                                        {% for codigo, rotulo in cel.opcoes %}
+                                        <option value="{{ codigo }}" {{ 'selected' if codigo == cel.codigo else '' }}>{{ rotulo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% else %}
+                                    <span class="fixo">{{ cel.nome }}</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="barra-botoes">
+                    <button type="submit" class="btn-novo" {{ '' if tabela_ok else 'disabled' }}>Salvar permiss&otilde;es</button>
+                </div>
+            </form>
+
+            {% if ha_ajustes and tabela_ok %}
+            <form method="post" action="{{ url_for('produtor_permissoes.restaurar') }}"
+                  onsubmit="return confirmarAcao(this, 'Voltar todas as permissões ao padrão?', 'Restaurar padrão');" style="margin-top: 10px;">
+                <button type="submit" class="btn-restaurar">Restaurar padr&atilde;o</button>
+            </form>
+            {% endif %}
+
+            {% if ultima %}
+            <div class="ultima">&Uacute;ltima altera&ccedil;&atilde;o: {{ ultima.nome or 'n&atilde;o informado' }}{% if ultima.quando %} em {{ ultima.quando.strftime('%d/%m/%Y %H:%M') }}{% endif %}.</div>
+            {% endif %}
+
+            <div class="obs">
+                {% if papel == 'ADMINISTRADOR' %}
+                Como Administrador, voc&ecirc; ajusta os outros cargos, mas n&atilde;o a coluna Administrador nem o m&oacute;dulo Equipe (s&oacute; o Titular decide).
+                {% else %}
+                O m&oacute;dulo Equipe s&oacute; vale para o Administrador: os demais cargos nunca gerem a equipe. Se tirar o acesso de Equipe do Administrador, ele n&atilde;o abre mais esta tela.
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+    {% include 'produtor/modal_confirmacao.html' %}
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('recolhido');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 700) {
+                var s = document.getElementById('sidebar');
+                if (s) { s.classList.add('recolhido'); }
+            }
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_permissoes.html
+     ========================================================= -->

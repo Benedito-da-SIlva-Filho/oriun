@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincagem_bastao_leitura.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-22 13:55 -03
+     ATUALIZADO EM: 2026-11-04 10:41 -03
+     VERSAO: 1.16.4
+
+     DESCRICAO:
+         Tela de Leitura do modulo Brincagem com Bastao (Tela 3,
+         Sessao 077). Copia da estrutura de
+         brincagem_leitor_leitura.html, com UMA diferenca real:
+         uma etapa nova de leitura do RFID, feita ANTES do
+         SISBOV. Decisao fechada com Benedito: "utilizaremos a
+         estrutura do Brincagem com Leitor e incluiremos a
+         Leitura com o Bastao, o restante e igual."
+
+         LAYOUT (v1.2.0): RFID e SISBOV ficam LADO A LADO na
+         mesma linha (metade da largura cada), com letra grande
+         mantida.
+
+         Cadeia de avanco automatico de foco:
+           RFID (15 digitos, ou Enter/Tab/blur) -> checagem
+           (rota brincagem_bastao.checar_rfid) -> livre, libera e
+           foca o SISBOV -> SISBOV (15 digitos, ou Enter/Tab/blur)
+           -> checagem (rota brincagem_bastao.checar_sisbov) ->
+           livre, libera e foca o GRAVAR se Especie/Raca/Sexo/
+           Nascimento ja estiverem preenchidos (v1.5.0), senao
+           Especie -> Raca -> Sexo -> Nro Meses -> Nascimento ->
+           Lote -> Peso (3 digitos, foca o Gravar).
+
+         RITMO DE LOTE (v1.5.0): com os dados do animal ja
+         preenchidos: le o RFID -> le o SISBOV -> Enter (grava) ->
+         Enter (fecha a mensagem) -> cursor volta no RFID.
+
+         Duplicidade:
+           - RFID: SO 2 tabelas (tb_2001_entradas.rfid,
+             tb_5001_brincagem.rfid com sts=False) - tb_7002_pia
+             NAO tem coluna rfid.
+           - SISBOV: as MESMAS 3 tabelas do Leitor.
+
+         Gravar (AJAX, rota brincagem_bastao.gravar) grava RFID e
+         SISBOV no mesmo registro. Apos o sucesso, os DOIS campos
+         (RFID e SISBOV) limpam sozinhos; os demais mantem o valor
+         anterior (lotes homogeneos).
+
+         Contador GRAVADOS (v1.2.0): so desta Propriedade NESTA
+         Data de Brincagem - ver brincagem_bastao.py v1.1.0.
+
+     v1.0.0: Criacao do modulo (Sessao 077, 22/09/2026, 13:55
+         -03).
+     v1.1.0: Sessao 077 (22/09/2026, 16:10 -03) - CORRECAO DE BUG
+         REAL, mesmo bug corrigido no modulo irmao
+         (brincagem_leitor_leitura.html v1.6.0): a trava
+         "nascimentoEditadoManualmente" ficava permanente apos o
+         usuario corrigir o Nascimento na mao - editar o Nro
+         Meses de novo nao recalculava mais nada. Corrigido: toda
+         edicao no campo Nro Meses reseta essa trava e recalcula
+         o Nascimento sem condicao.
+     v1.2.0: Sessao 078 (23/09/2026, 17:15 -03) - 2 ajustes de
+         teste real, apontados por Benedito:
+           - LAYOUT: RFID e SISBOV passam a ficar LADO A LADO
+             (classe col-6 cada, na mesma form-grid), letra dos
+             dois em 28px - a tela ganha a altura de um campo
+             inteiro e o Gravar volta a aparecer sem rolar. Ordem
+             do foco automatico NAO mudou.
+           - Rotulo do contador trocado de "GRAVADOS (total)" para
+             "GRAVADOS (nesta data)" - acompanha a correcao do BUG
+             REAL em brincagem_bastao.py v1.1.0.
+         Nenhuma mudanca no JavaScript.
+     v1.3.0: Sessao 078 (23/09/2026, 17:44 -03) - ENTER GRAVA,
+         mesma mudanca de brincagem_leitor_leitura.html v1.8.0:
+         Enter com o foco no Gravar grava, Enter no Peso tambem
+         grava (se liberado), e NOVA trava 'gravando' contra
+         gravar 2 vezes. Mudancas so no JavaScript.
+     v1.4.0: Sessao 078 (23/09/2026, 18:40 -03) - Os 2 alertas
+         (RFID e SISBOV) passam a mostrar o texto vindo do
+         servidor (chave 'mensagem' - brincagem_bastao.py v1.2.0).
+         A checagem do SISBOV passa a enviar tambem o RFID lido.
+         Spans dos alertas ganharam id proprio.
+     v1.5.0: Sessao 079 (24/09/2026, 09:30 -03) - GRAVAR DIRETO
+         COM ENTER - clone da mudanca validada por Benedito em
+         brincagem_leitor_leitura.html v1.10.0 (Checklist: gemeo
+         so depois do primeiro validado). Mudancas so no
+         JavaScript/CSS:
+           - NOVAS funcoes primeiroCampoVazio() /
+             camposObrigatoriosOk() (Especie, Raca, Sexo e
+             Nascimento completo), focarAposSisbov() (Gravar se
+             tudo preenchido, senao Especie) e enterPodeGravar().
+           - TRAVA DO ENTER DO APARELHO (bloqueioEnterAte): o
+             bastao/leitor manda um Enter automatico logo apos o
+             numero; por 500 ms depois do RFID ou do SISBOV
+             liberado, Enter nao grava - so o Enter da pessoa.
+           - Enter nos campos de texto (Nro Meses, Nascimento,
+             Lote, Peso) grava se tudo estiver preenchido; se
+             faltar algo, leva ao primeiro campo vazio. Nos
+             dropdowns o Enter NAO grava.
+           - O antigo "Enter no Peso grava" (v1.3.0) foi absorvido
+             pela regra geral acima.
+           - CSS: Gravar com foco ganha contorno azul.
+     v1.6.0: Sessao 083 (30/09/2026, 16:49 -03) - PACOTE 3B: o
+         Bastao recebe o que o Leitor ganhou no 3A e na Sessao 083
+         (brincagem_leitor_leitura.html v1.11.0 + v1.12.0, validadas
+         por Benedito), copiado literalmente e mantendo o RFID:
+           - TARJA GRANDE do Tipo logo abaixo do titulo ("ENTRADA POR
+             COMPRA" azul / "ENTRADA POR NASCIMENTO / DESMAME" verde).
+           - Faixa de contexto: no Nascimento mostra o NUMERO DE
+             CONTROLE (NAS) - "sera reservado no 1o animal" ate o 1o
+             Gravar; atualiza sozinho com a chave 'controle' da
+             resposta (brincagem_bastao.py v1.5.0).
+           - Contador "GRAVADOS (nesta data e tipo)".
+           - SO no Nascimento: aviso da COTA HILTON (idade em dias na
+             Data de Brincagem; ate o limite = elegivel, acima = so
+             avisa, nao bloqueia). Recalcula ao mexer em Nro Meses ou
+             Nascimento; Limpar Tela esconde.
+           - Gravar envia tipo_entrada.
+     v1.6.1: Sessao 083 (30/09/2026, 16:49 -03) - pedido de Benedito
+     v1.16.2: Sessao 113 (03/11/2026, 15:55 -03) - Mensagem de peso da Entrada simplificada: "Peso incorreto: Verifique".  REVERSAO: .bak_antes_s113_peso_entrada.
+         (print do Bastao no brete): o botao Gravar ficava colado no
+         fim da tela. Tela COMPACTADA, so espacos e alturas (as
+         letras dos campos continuam do mesmo tamanho, para leitura
+         no brete): titulo, tarja do Tipo (fonte 22 -> 19),
+         faixa de contexto, contadores, campos de leitura
+         (RFID e SISBOV: altura interna 12 -> 8), demais campos (altura interna 9 -> 6),
+         aviso da Cota Hilton e botoes - ganho aproximado de 60px.
+         Nenhuma mudanca de HTML ou JS.
+     =========================================================      v1.7.0: Sessao 084 (01/10/2026, 23:10 -03) - O BRETE ENXERGA O
+         NASCIMENTO LANCADO PELO ESCRITORIO (mesmo desenho do Leitor
+         v1.15.6, mantendo o RFID):
+           - Painel "Lancado pelo escritorio" (NAS, Lancados /
+             Conferidos / Faltam) e quadro lateral com os brincos do
+             lancamento: pendente (cinza), em conferencia (amarelo) e
+             conferido (verde, check e hora).
+           - Le o RFID de um animal lancado -> a tela preenche os
+             dados do lancamento (travados, em preto/negrito) e pede
+             o SISBOV; SISBOV certo -> botao "Confirmar brinco".
+             SISBOV de outro animal -> avisa qual era o esperado.
+           - Aviso da Cota Hilton escondido na conferencia.
+           - Tela compacta no modo lancamento; botoes grudados no fim
+             da area visivel.
+           - RFID e SISBOV enviam tipo_entrada e data_brincagem.
+          v1.7.1: Sessao 084 (01/10/2026, 23:59 -03) - BUG: brinco lido que NAO
+         estava no lancamento do escritorio gravava, mas nao aparecia no
+         quadro lateral. Agora entra no quadro, em azul, no grupo "Lidos
+         fora do lancamento" (e volta a aparecer ao recarregar a tela).
+          v1.8.0: Sessao 084 (02/10/2026, 12:00 -03) - brinco lido que NAO estava no
+         lancamento do escritorio, na MESMA Data de Brincagem e com a
+         Notificacao ainda NAO impressa, agora e INTEGRADO a ela direto no
+         brete (sem retrabalho do escritorio e sem NAS novo): entra no
+         quadro lateral ja conferido (verde, marcado "novo") e o painel do
+         escritorio soma Lancados/Conferidos. Resposta do servidor com a
+         chave 'integrado' (brincagem_*.py). Demais fluxos sem mudanca.
+          v1.9.0: Sessao 084 (02/10/2026, 22:00 -03) - PESO NA CONFERENCIA: o campo Peso
+         fica LIBERADO na conferencia do brinco lancado pelo escritorio (os
+         demais dados continuam travados) e o foco vai para ele; o peso e
+         enviado ao Confirmar brinco e vira a pesagem de sequencia 1 do
+         animal (tb_4003_pesos). Peso opcional, maximo 1000 kg. Nenhuma
+         outra mudanca.
+         v1.10.0: Sessao 087 (05/10/2026, 13:10 -03) - AUTOCOMPLETE (pedido
+         de Benedito): os campos Nro Meses, Nascimento, Lote e Peso
+         ganham autocomplete desligado - o navegador sugeria valores
+         digitados em testes antigos (porta para erro). Nenhuma outra
+         mudanca de HTML, CSS ou JavaScript.
+         v1.11.0: Sessao 087 (05/10/2026, 16:00 -03) - CONFERENCIA DA GTA DE
+         COMPRA LANCADA PELO ESCRITORIO + PESO OBRIGATORIO (pedidos de
+         Benedito, testes do Pacote 087; mesmo desenho do Leitor v1.20.0).
+           - Com id_gta (Compra, escolhida na Tela 02) a tela usa o painel
+             "Lancado pelo escritorio" so com os brincos DESSA GTA: cada brinco
+             conferido ganha o check e a hora; o contador vira CONFERIDOS (esta
+             GTA); RFID/SISBOV de outra GTA e barrado. Ao confirmar o ULTIMO
+             brinco a GTA encerra sozinha: aparece "GTA ... ENCERRADA" e o Sair
+             volta para a Tela 02. Servidor: brincagem_bastao.py v1.10.0.
+           - PESO OBRIGATORIO em toda gravacao e conferencia (o brete tem
+             balanca): asterisco no campo, o Gravar/Confirmar brinco pede o
+             peso e o foco vai para ele quando falta. O peso limpa depois de
+             cada animal (antes ficava o do animal anterior).
+         Nenhuma outra mudanca.
+         v1.11.1: Sessao 087 (05/10/2026, 17:29 -03) - LOTE LIBERADO NA CONFERENCIA DA
+         GTA DE COMPRA (pedido de Benedito, teste do Pacote 087): a Sequencial nao
+         grava lote (so o brete sabe onde vai colocar os animais) e o campo ficava
+         travado. Na conferencia por GTA o Lote fica LIBERADO (o brete informa ou
+         troca o que ja existe), vai para o servidor ao confirmar o brinco e o ultimo
+         lote digitado ja vem preenchido no proximo brinco da GTA (o brete costuma
+         lotear por grupo). Conferencia do Nascimento (NAS) NAO mudou.
+         Nenhuma outra mudanca.
+         v1.11.2: Sessao 087 (05/10/2026, 17:46 -03) - DUAS REGRAS DE BENEDITO (teste do
+         Pacote 087): (1) PESO tem de ser SUPERIOR a 100 kg (a tela avisa e nao deixa
+         gravar/confirmar); (2) na conferencia da GTA de Compra o LOTE e OBRIGATORIO:
+         asterisco no campo, o Confirmar brinco pede o lote e o foco vai para ele
+         quando falta. Ao trocar de GTA o lote vem da GTA (do proprio animal, mesmo
+         em branco) - o ultimo lote digitado so vale dentro da MESMA GTA; a tela
+         recarrega se o navegador a restaurar do cache ao voltar. Servidor: o mesmo
+         conferido por brincagem_bastao.py e conferencia_compra.py. Nenhuma outra
+         mudanca.
+         v1.11.3: Sessao 087 (2026-10-05 17:58 -03) - LOTE OBRIGATORIO EM TODO O BRETE (pedido de
+         Benedito, mesmo desenho do peso): asterisco no campo; gravar (leitura livre,
+         Compra e Nascimento) e confirmar brinco (conferencia da GTA de Compra E do
+         Nascimento) so liberam com o lote preenchido, e o foco vai para o lote quando
+         falta. Na conferencia do Nascimento o lote deixa de ser travado: o brete
+         informa ou troca (o ultimo digitado vem no proximo brinco). Servidor:
+         brincagem_bastao.py e conferencia_compra.py. Nenhuma outra mudanca.
+         v1.13.0: Sessao 096 (14/10/2026, 10:05 -03) - AVISO DA COTA HILTON TAMBEM NA COMPRA: o quadro
+             de idade na brincagem (elegivel, acima do limite ou nascimento depois da brincagem)
+             deixa de ser so do Nascimento e aparece nos dois tipos. O aviso nao trava o Gravar;
+             quem bloqueia nascimento depois da brincagem e o servidor (brincagem_bastao.py). Nenhuma
+             outra mudanca. REVERSAO: devolver .bak_antes_nasc_cth_s096.
+         v1.14.0: Sessao 099 (17/10/2026, 12:55 -03) - A mensagem Gravacao Efetuada com Sucesso fecha sozinha em 3 segundos, com contagem no botao Sair; Sair e Enter continuam fechando na hora. Peca unica static/js/auto_fechar_gravacao.js. Nenhuma outra mudanca. REVERSAO: devolver .bak_antes_auto_fechar_s099.
+         v1.15.0: Sessao 106 (26/10/2026, 15:30 -03) - CASO 1 (mesmo molde do Leitor v1.25.0): com uma GTA de Compra PENDENTE escolhida na Selecao (gta_reserva) a tela usa o
+             modo COMPACTO, mostra o quadro "GTA de Compra a brincar" (lancados / lidos / faltam), o contador vira LIDOS (esta GTA) e o Gravar manda id_gta_reserva;
+             no ultimo brinco o servidor fecha a GTA e a tela avisa que aguarda o Comunicado (Sair volta a Selecao). REVERSAO: devolver .bak_antes_s106n.
+         v1.16.0: Sessao 106 (26/10/2026, 16:20 -03) - AVISO NA HORA (caso 1): com a GTA PENDENTE escolhida, assim que Sexo / Especie / Nascimento estao preenchidos a tela
+             consulta o servidor (checar-categoria) e mostra o erro em vermelho se o animal nao bate com a GTA; o Gravar fica travado ate corrigir. REVERSAO: devolver .bak_antes_s106q.
+     -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Brincagem com Bastão</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 16px 24px; overflow-y: auto; display: flex; gap: 20px; }
+        .coluna-form { flex: 1; min-width: 0; }
+        .coluna-lidos { width: 340px; flex-shrink: 0; }
+
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .info-contexto { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 5px 16px; margin-bottom: 8px; font-size: 15px; color: #7a1f04; font-weight: bold; display: flex; flex-wrap: wrap; gap: 6px 22px; }
+        /* v1.6.0 - tarja grande do Tipo de Entrada */
+        .tarja-tipo { border-radius: 8px; padding: 5px 16px; margin-bottom: 8px; font-size: 19px; font-weight: bold; letter-spacing: 1px; text-align: center; border: 2px solid; }
+        .tarja-tipo.compra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .tarja-tipo.nascimento { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+        /* v1.6.0 - Numero de Controle (Nascimento) */
+        .controle-reservar { font-weight: normal; font-style: italic; }
+        /* v1.6.0 - aviso da Cota Hilton (so Nascimento) */
+        .aviso-cth { display: none; margin-top: 8px; padding: 5px 14px; border-radius: 6px; font-size: 14px; border-left: 5px solid; }
+        .aviso-cth.elegivel { display: block; background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+        .aviso-cth.acima { display: block; background: #fff8e1; border-color: #f9a825; color: #8a6d00; font-weight: bold; }
+        .aviso-cth.incoerente { display: block; background: #ffebee; border-color: #c62828; color: #c62828; font-weight: bold; }
+
+        .contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 3px 16px; text-align: center; background: #ffffff; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 20px; font-weight: bold; color: #D4370A; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px 20px; }
+        .form-secao { font-size: 16px; font-weight: bold; color: #D4370A; margin: 12px 0 8px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+        .form-grid + .form-grid { margin-top: 10px; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 6px 12px; border: 2px solid #cccccc; border-radius: 6px; font-size: 19px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .form-group input:disabled, .form-group select:disabled { background-color: #f0f0f0; color: #aaaaaa; cursor: not-allowed; }
+
+        /* v1.2.0 - RFID e SISBOV lado a lado: mesma letra (28px)
+           nos dois, espaco a direita reservado para o selo "OK". */
+        .campo-rfid { position: relative; }
+        .campo-rfid input { font-size: 28px; font-weight: bold; padding: 8px 70px 8px 14px; letter-spacing: 1px; border-color: #6a4fa3; }
+        .campo-rfid input.rfid-ok { border-color: #6a1fb0; color: #6a1fb0; background: #F3E8FD; }
+        .badge-ok-rfid { display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-2px); font-size: 20px; font-weight: bold; color: #6a1fb0; pointer-events: none; }
+        .badge-ok-rfid.visivel { display: block; }
+
+        .campo-sisbov { position: relative; }
+        .campo-sisbov input { font-size: 28px; font-weight: bold; padding: 8px 70px 8px 14px; letter-spacing: 1px; }
+        .campo-sisbov input.sisbov-ok { border-color: #1565C0; color: #1565C0; background: #E3F2FD; }
+        .badge-ok-sisbov { display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-2px); font-size: 20px; font-weight: bold; color: #1565C0; pointer-events: none; }
+        .badge-ok-sisbov.visivel { display: block; }
+
+        .alerta-duplicado { background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 10px; display: none; align-items: center; justify-content: space-between; gap: 14px; }
+        .btn-fechar-alerta { padding: 7px 16px; background: #c62828; color: #ffffff; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+        .btn-fechar-alerta:hover { background: #a41f1f; }
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #c62828; margin-bottom: 10px; display: none; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: #ffffff; padding: 6px 0 2px; }   /* v1.7.0 */
+        .btn-gravar { padding: 10px 28px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gravar:hover { background: #C0392B; }
+        .btn-gravar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        /* v1.5.0 - Gravar com foco: contorno azul (pronto para Enter) */
+        .btn-gravar:focus { outline: 3px solid #1565C0; outline-offset: 3px; }
+        .btn-limpar { padding: 12px 20px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-limpar:hover { background: #888888; color: #ffffff; }
+
+        .painel-lidos { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 18px; height: 100%; display: flex; flex-direction: column; }
+        .painel-lidos h3 { font-size: 15px; color: #333333; margin-bottom: 12px; }
+        .lista-lidos { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .item-lido { border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; }
+        .item-lido .linha-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .item-lido .sisbov { font-weight: bold; color: #333333; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-lido .rfid { color: #6a1fb0; font-size: 11.5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-lido .detalhe { color: #888888; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+        /* v1.7.0 - painel do escritorio, brincos do lancamento e modo compacto */
+        .controle-reservar { font-weight: normal; font-style: italic; }
+        .painel-lancado { background: #fff8e1; border: 2px solid #f9a825; border-radius: 8px; padding: 6px 14px; margin-bottom: 8px; }
+        .painel-lancado .titulo-lancado { font-size: 14px; font-weight: bold; color: #8a6d00; }
+        .painel-lancado .linha-lancado { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 16px; color: #333333; padding: 2px 0; }
+        .painel-lancado .linha-lancado .num { font-weight: bold; color: #7a1f04; }
+        .painel-lancado .linha-lancado.completo { color: #1b5e20; }
+        .lista-lancados { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 6px; }
+        .item-lancado { border: 1px solid #dddddd; background: #f7f7f7; border-radius: 6px; padding: 8px 10px; display: flex; align-items: baseline; gap: 8px; color: #777777; }
+        .item-lancado .marca { width: 18px; font-weight: bold; flex-shrink: 0; text-align: center; }
+        .item-lancado .sisbov { font-weight: bold; font-size: 14px; white-space: nowrap; }
+        .item-lancado .detalhe { font-size: 11px; margin-left: auto; white-space: nowrap; }
+        .item-lancado.atual { background: #fff8e1; border: 2px solid #f9a825; color: #5d4600; }
+        .item-lancado.conferido { background: #e8f5e9; border-color: #66bb6a; color: #1b5e20; }
+        .compacto { padding: 10px 24px; }
+        .compacto .coluna-lidos { width: 350px; }
+        .compacto .painel-lidos { padding: 16px; }
+        .compacto .pagina-header { margin-bottom: 5px; }
+        .compacto .pagina-header h2 { font-size: 19px; gap: 10px; }
+        .compacto .icone-titulo { font-size: 28px; }
+        .compacto .tarja-tipo { font-size: 18px; padding: 3px 16px; margin-bottom: 7px; }
+        .compacto .info-contexto { padding: 3px 16px; margin-bottom: 7px; font-size: 15px; }
+        .compacto .painel-lancado { padding: 5px 14px; margin-bottom: 7px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 20px; }
+        .compacto .painel-lancado .titulo-lancado { margin: 0; }
+        .compacto .painel-lancado .linha-lancado { font-size: 17px; padding: 0; }
+        .compacto .contadores { gap: 12px; margin-bottom: 9px; }
+        .compacto .contador-caixa { padding: 2px 16px; }
+        .compacto .contador-caixa .valor { font-size: 20px; }
+        .compacto .form-container { padding: 11px 20px; }
+        .compacto .form-secao { margin: 12px 0 9px; }
+        .compacto .form-grid { gap: 9px; }
+        .compacto .form-group { gap: 4px; }
+        .compacto .form-group input, .compacto .form-group select { font-size: 19px; padding: 6px 12px; }
+        .compacto .campo-rfid input, .compacto .campo-sisbov input { font-size: 28px; padding: 7px 70px 7px 14px; }
+        .compacto .aviso-cth { margin-top: 7px; padding: 4px 14px; }
+        .compacto .form-botoes { margin-top: 8px; bottom: 14px; }
+        .compacto .btn-gravar { font-size: 17px; padding: 11px 32px; }
+        .compacto .btn-limpar { padding: 11px 20px; }
+        .compacto .em-conferencia .form-group input:disabled,
+        .compacto .em-conferencia .form-group select:disabled { color: #111111; font-weight: bold; background-color: #fffdf0; border-color: #f9a825; -webkit-text-fill-color: #111111; opacity: 1; }
+        /* v1.7.1 - brincos lidos fora do lancamento do escritorio */
+        .sub-extras { font-size: 12px; font-weight: bold; color: #1565C0; margin: 8px 0 2px; }
+        #lista-extras { display: flex; flex-direction: column; gap: 6px; }
+        .item-lancado.extra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .lista-vazia { color: #aaaaaa; font-size: 13px; text-align: center; padding: 20px 0; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #ffffff; border-radius: 10px; padding: 32px; max-width: 380px; text-align: center; }
+        .modal-caixa .icone-sucesso { font-size: 46px; margin-bottom: 12px; }
+        .modal-caixa h3 { font-size: 18px; color: #2e7d32; margin-bottom: 8px; }
+        .modal-caixa .sisbov-gravado { font-size: 15px; color: #333333; margin-bottom: 4px; }
+        .modal-caixa .rfid-gravado { font-size: 13px; color: #6a1fb0; margin-bottom: 20px; }
+        .btn-modal-sair { padding: 10px 32px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-modal-sair:hover { background: #C0392B; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_for('brincagem_bastao.selecao', id_propriedade=id_propriedade) %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo{{ ' compacto' if (lancamentos or gta_reserva) else '' }}">
+
+            <div class="coluna-form">
+                <div class="pagina-header">
+                    <h2><span class="icone-titulo">&#128257;</span> Brincagem com Bastão &#8212; Leitura</h2>
+                </div>
+
+                <div class="tarja-tipo {{ 'nascimento' if tipo_entrada == 'NASCIMENTO' else 'compra' }}">
+                    &#128204; ENTRADA POR {{ tipo_entrada_descricao|upper }}
+                </div>
+
+                <div class="info-contexto">
+                    <span>&#128197; Data Brincagem: {{ data_brincagem }}</span>
+                    {% if tipo_entrada == 'NASCIMENTO' %}
+                    <span>&#128278; Controle:
+                        <span id="controle-numero">{% if controle_numero %}{{ controle_numero }}{% else %}<span class="controle-reservar">será reservado no 1º animal gravado</span>{% endif %}</span>
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if gta_reserva %}
+                <div class="painel-lancado" id="painel-reserva">
+                    <div class="titulo-lancado">&#128203; GTA DE COMPRA A BRINCAR</div>
+                    <div class="linha-lancado">
+                        <span class="num">{{ gta_reserva.numero }}</span>
+                        <span>Lançados: <b>{{ gta_reserva.total }}</b></span>
+                        <span>Lidos: <b id="reserva-lidos">{{ gta_reserva.lidos }}</b></span>
+                        <span>Faltam: <b id="reserva-faltam">{{ gta_reserva.faltam }}</b></span>
+                    </div>
+                    <div class="linha-lancado"><span>{{ gta_reserva.categorias }}</span></div>
+                </div>
+                {% endif %}
+
+                {% if lancamentos %}
+                <div class="painel-lancado" id="painel-lancado">
+                    <div class="titulo-lancado">&#128203; LANÇADO PELO ESCRITÓRIO</div>
+                    {% for l in lancamentos %}
+                    <div class="linha-lancado{{ ' completo' if l.conferidos >= l.total else '' }}" data-numero="{{ l.numero }}">
+                        <span class="num">{{ l.numero }}</span>
+                        <span>Lançados: <b class="lanc-total">{{ l.total }}</b></span>
+                        <span>Conferidos: <b class="lanc-conf">{{ l.conferidos }}</b></span>
+                        <span>Faltam: <b class="lanc-falt">{{ l.total - l.conferidos }}</b></span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="contadores">
+                    <div class="contador-caixa">
+                        <div class="rotulo">LIDOS (sessão)</div>
+                        <div class="valor" id="contador-lidos">0</div>
+                    </div>
+                    <div class="contador-caixa">
+                        <div class="rotulo">{{ 'CONFERIDOS (esta GTA)' if id_gta else ('LIDOS (esta GTA)' if gta_reserva else 'GRAVADOS (nesta data e tipo)') }}</div>
+                        <div class="valor" id="contador-gravados">{{ total_gravados }}</div>
+                    </div>
+                </div>
+
+                <div class="alerta-duplicado" id="alerta-duplicado-rfid">
+                    <span id="alerta-rfid-texto">&#10060; RFID do Animal já Inserido</span>
+                    <button type="button" class="btn-fechar-alerta" id="btn-fechar-alerta-rfid">Fechar e Limpar</button>
+                </div>
+                <div class="alerta-duplicado" id="alerta-duplicado-sisbov">
+                    <span id="alerta-sisbov-texto">&#10060; Sisbov do Animal já Inserido</span>
+                    <button type="button" class="btn-fechar-alerta" id="btn-fechar-alerta-sisbov">Fechar e Limpar</button>
+                </div>
+                <div class="erro" id="erro-gravar"></div>
+
+                <div class="form-container">
+
+                    <div class="form-secao">Identificação</div>
+                    <!-- v1.2.0: RFID e SISBOV LADO A LADO (col-6 cada) -->
+                    <div class="form-grid">
+                        <div class="form-group col-6 campo-rfid">
+                            <label>RFID *</label>
+                            <input type="text" id="rfid" autocomplete="off" autofocus maxlength="15" placeholder="Leia o RFID...">
+                            <span class="badge-ok-rfid" id="badge-ok-rfid">&#10003; OK</span>
+                        </div>
+                        <div class="form-group col-6 campo-sisbov">
+                            <label>SISBOV *</label>
+                            <input type="text" id="sisbov" autocomplete="off" maxlength="15" placeholder="Leia o brinco..." disabled>
+                            <span class="badge-ok-sisbov" id="badge-ok-sisbov">&#10003; OK</span>
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Dados do Animal</div>
+                    <div class="form-grid">
+                        <div class="form-group col-4">
+                            <label>Espécie *</label>
+                            <select id="id_especie" disabled>
+                                <option value="">--</option>
+                                {% for esp in especies %}
+                                <option value="{{ esp.id }}">{{ esp.descricao }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-4">
+                            <label>Raça *</label>
+                            <select id="id_raca" disabled>
+                                <option value="">--</option>
+                                {% for raca in racas %}
+                                <option value="{{ raca.id }}">{{ raca.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-4">
+                            <label>Sexo *</label>
+                            <select id="sexo" disabled>
+                                <option value="">--</option>
+                                <option value="MACHO">Macho</option>
+                                <option value="FEMEA">Fêmea</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label>Nro Meses</label>
+                            <input type="number" id="nro_meses" min="0" autocomplete="off" disabled>
+                        </div>
+                        <div class="form-group col-3">
+                            <label>Nascimento *</label>
+                            <input type="text" id="nascimento" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" disabled>
+                        </div>
+                        <div class="form-group col-3">
+                            <label>Lote *</label>
+                            <input type="text" id="lote" class="upper" autocomplete="off" disabled>
+                        </div>
+                        <div class="form-group col-3">
+                            <label>Peso (kg) * &#8212; máx. 1000</label>
+                            <input type="text" id="peso" autocomplete="off" disabled>
+                        </div>
+                    </div>
+
+                    <!-- v1.13.0 - aviso da Cota Hilton (Compra e Nascimento) -->
+                    <div class="aviso-cth" id="aviso-cth"></div>
+
+                    <div class="form-botoes">
+                        <button type="button" class="btn-limpar" id="btn-limpar">Limpar Tela</button>
+                        <button type="button" class="btn-gravar" id="btn-gravar" disabled>Gravar</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="coluna-lidos">
+                <div class="painel-lidos">
+                    {% if lancamentos %}
+                    <h3>{{ ('Brincos da GTA ' ~ lancamentos[0].numero) if id_gta else 'Brincos do lançamento &#8212; escritório'|safe }}</h3>
+                    <div class="lista-lancados" id="lista-lancados">
+                        {% for l in lancamentos %}
+                        {% for b in l.brincos %}
+                        <div class="item-lancado{{ ' conferido' if b.conferido else '' }}" data-sisbov="{{ b.sisbov }}">
+                            <span class="marca">{{ '&#10003;'|safe if b.conferido else '&#9675;'|safe }}</span>
+                            <span class="sisbov">{{ b.sisbov }}</span>
+                            <span class="detalhe">{{ 'M' if b.sexo == 'MACHO' else 'F' }}{% if b.meses is not none %} &#183; {{ b.meses }}m{% endif %}{% if b.lote %} &#183; {{ b.lote }}{% endif %}{% if b.hora %} &#183; {{ b.hora }}{% endif %}</span>
+                        </div>
+                        {% endfor %}
+                        {% endfor %}
+                        <div class="sub-extras" id="sub-extras"{% if not extras %} style="display:none"{% endif %}>Lidos fora do lançamento</div>
+                        <div id="lista-extras">
+                            {% for x in extras %}
+                            <div class="item-lancado extra" data-sisbov="{{ x.sisbov }}">
+                                <span class="marca">+</span>
+                                <span class="sisbov">{{ x.sisbov }}</span>
+                                <span class="detalhe">{{ 'M' if x.sexo == 'MACHO' else 'F' }}{% if x.lote %} &#183; {{ x.lote }}{% endif %}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <h3>Brincos Lidos (sessão)</h3>
+                    <div class="lista-lidos" id="lista-lidos">
+                        <div class="lista-vazia" id="lista-vazia">Nenhuma leitura ainda.</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <!-- Modal de sucesso apos Gravar -->
+    <div class="modal-fundo" id="modal-sucesso">
+        <div class="modal-caixa">
+            <div class="icone-sucesso">&#9989;</div>
+            <h3 id="modal-titulo">Gravação Efetuada com Sucesso</h3>
+            <div class="sisbov-gravado" id="modal-sisbov"></div>
+            <div class="rfid-gravado" id="modal-rfid"></div>
+            <button type="button" class="btn-modal-sair" id="btn-modal-sair">Sair</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var idPropriedade  = '{{ id_propriedade }}';
+        var dataBrincagem  = '{{ data_brincagem }}';   // dd/mm/aaaa, vinda da Tela 02
+        var saidaBrincos   = '{{ saida_brincos }}';
+        var tipoEntrada    = '{{ tipo_entrada }}';          // v1.6.0 - COMPRA / NASCIMENTO
+        var idGtaReserva   = '{{ gta_reserva.id_gta if gta_reserva else '' }}';   // v1.15.0 - caso 1: GTA PENDENTE escolhida ('' = nao e reserva)
+        var idGta          = '{{ id_gta }}';                // v1.11.0 - Compra: GTA lancada escolhida na Tela 02 ('' = leitura livre)
+        var PESO_MINIMO_KG = 100;                           // v1.11.2 - peso do brete: SUPERIOR a este valor
+        window.addEventListener('pageshow', function(evento) {   // v1.11.2 - voltar do navegador nao reaproveita o estado da GTA anterior
+            if (evento.persisted && idGta) { window.location.reload(); }
+        });
+        var ultimoLoteGta  = '';                            // v1.11.1 - ultimo lote digitado na conferencia da GTA
+        var gtaEncerrada   = false;                         // v1.11.0 - ultimo brinco conferido: Sair volta para a Tela 02
+        var urlSelecao     = '{{ url_for("brincagem_bastao.selecao", id_propriedade=id_propriedade) }}';
+        var diasMaxCotaHilton = {{ dias_max_cota_hilton }}; // v1.6.0 - regras_sisbov.py
+
+        var campoRfid       = document.getElementById('rfid');
+        var campoSisbov     = document.getElementById('sisbov');
+        var campoEspecie    = document.getElementById('id_especie');
+        var campoRaca       = document.getElementById('id_raca');
+        var campoSexo       = document.getElementById('sexo');
+        var campoNascimento = document.getElementById('nascimento');
+        var camposRestantes = ['id_especie', 'id_raca', 'sexo', 'nro_meses', 'nascimento', 'lote', 'peso'].map(function(id) {
+            return document.getElementById(id);
+        });
+        var btnGravar         = document.getElementById('btn-gravar');
+        var alertaDupRfid     = document.getElementById('alerta-duplicado-rfid');
+        var alertaDupSisbov   = document.getElementById('alerta-duplicado-sisbov');
+        var btnFecharAlertaRfid   = document.getElementById('btn-fechar-alerta-rfid');
+        var btnFecharAlertaSisbov = document.getElementById('btn-fechar-alerta-sisbov');
+        var erroGravar        = document.getElementById('erro-gravar');
+        var contadorLidos      = document.getElementById('contador-lidos');
+        var contadorGravados    = document.getElementById('contador-gravados');
+        var listaLidos            = document.getElementById('lista-lidos');
+        var listaVazia             = document.getElementById('lista-vazia');
+        var modalSucesso            = document.getElementById('modal-sucesso');
+        var modalSisbov               = document.getElementById('modal-sisbov');
+        var modalTitulo               = document.getElementById('modal-titulo');   // v1.11.0
+        var modalRfid                  = document.getElementById('modal-rfid');
+        var btnModalSair                 = document.getElementById('btn-modal-sair');
+        var badgeOkRfid = document.getElementById('badge-ok-rfid');
+        var badgeOkSisbov = document.getElementById('badge-ok-sisbov');
+        var alertaRfidTexto = document.getElementById('alerta-rfid-texto');
+        var alertaSisbovTexto = document.getElementById('alerta-sisbov-texto');
+
+        // v1.4.0 - texto dos alertas vem do servidor.
+        function mostrarAlertaRfid(mensagem) {
+            alertaRfidTexto.textContent = '\u274C ' + (mensagem || 'RFID do Animal já Inserido');
+            alertaDupRfid.style.display = 'flex';
+        }
+        function mostrarAlertaSisbov(mensagem) {
+            alertaSisbovTexto.textContent = '\u274C ' + (mensagem || 'Sisbov do Animal já Inserido');
+            alertaDupSisbov.style.display = 'flex';
+        }
+
+        var totalLidos = 0;
+        var modoConferencia = false;   // v1.7.0 - animal lancado pelo escritorio
+        var formContainer = document.querySelector('.form-container');
+        var gravando = false;         // v1.3.0 - trava contra gravar 2 vezes
+        var rfidLiberado = false;     // true depois que a checagem do RFID passar
+        var sisbovLiberado = false;   // true depois que a checagem do SISBOV passar
+        var nascimentoEditadoManualmente = false;
+        var ultimoRfidChecado = null;
+        var ultimoSisbovChecado = null;
+
+        // v1.5.0 - TRAVA DO ENTER DO APARELHO: bastao/leitor mandam
+        // um Enter automatico logo apos o numero. Ate este instante
+        // (em milissegundos), Enter NAO grava.
+        var TEMPO_TRAVA_ENTER_MS = 500;
+        var bloqueioEnterAte = 0;
+
+        // ---- helpers de data (dd/mm/aaaa <-> Date) ----
+        function parseDataBR(str) {
+            var partes = (str || '').split('/');
+            if (partes.length !== 3) return null;
+            var d = parseInt(partes[0], 10), m = parseInt(partes[1], 10) - 1, y = parseInt(partes[2], 10);
+            var data = new Date(y, m, d);
+            return isNaN(data.getTime()) ? null : data;
+        }
+        function formatarDataBR(data) {
+            var dd = String(data.getDate()).padStart(2, '0');
+            var mm = String(data.getMonth() + 1).padStart(2, '0');
+            var yyyy = data.getFullYear();
+            return dd + '/' + mm + '/' + yyyy;
+        }
+
+        // ==========================================================
+        // v1.5.0 - campos obrigatorios preenchidos? (Especie, Raca,
+        // Sexo e Nascimento completo). Devolve o PRIMEIRO campo
+        // vazio, ou null se estiver tudo certo.
+        // ==========================================================
+        function primeiroCampoVazio() {
+            if (!campoEspecie.value) return campoEspecie;
+            if (!campoRaca.value) return campoRaca;
+            if (!campoSexo.value) return campoSexo;
+            if (campoNascimento.value.length !== 10 || !parseDataBR(campoNascimento.value)) return campoNascimento;
+            if (!document.getElementById('lote').value.trim()) return document.getElementById('lote');   // v1.11.3 - lote obrigatorio no brete
+            if (!pesoValido()) return campoPeso;   // v1.11.0 - peso obrigatorio no brete
+            return null;
+        }
+        // v1.11.0 - peso preenchido e maior que zero (maximo de 1000 ja travado na digitacao)
+        function pesoValido() {
+            var valor = parseFloat((campoPeso.value || '').replace(',', '.'));
+            return !isNaN(valor) && valor > PESO_MINIMO_KG;   // v1.11.2
+        }
+        function camposObrigatoriosOk() {
+            return primeiroCampoVazio() === null;
+        }
+
+        // v1.5.0 - para onde vai o foco com o SISBOV liberado:
+        // tudo preenchido -> Gravar (basta Enter); senao -> Especie.
+        function focarAposSisbov() {
+            if (camposObrigatoriosOk() && !btnGravar.disabled) {
+                btnGravar.focus();
+            } else {
+                (primeiroCampoVazio() || campoEspecie).focus();   // v1.11.0 - primeiro campo que falta (Peso, p.ex.)
+            }
+        }
+
+        // v1.5.0 - Enter pode gravar agora? (RFID e SISBOV
+        // liberados, sem gravacao em andamento, fora da trava)
+        function enterPodeGravar() {
+            return rfidLiberado && sisbovLiberado && !gravando && !btnGravar.disabled
+                && Date.now() >= bloqueioEnterAte;
+        }
+
+        // ==========================================================
+        // v1.7.0 - CONFERENCIA de animal lancado pelo escritorio
+        // ==========================================================
+        function preencherConferencia(animal) {
+            if (animal.id_raca && !campoRaca.querySelector('option[value="' + animal.id_raca + '"]')) {
+                var opt = document.createElement('option');
+                opt.value = animal.id_raca;
+                opt.textContent = animal.raca_nome || ('Raça ' + animal.id_raca);
+                campoRaca.appendChild(opt);
+            }
+            campoEspecie.value = animal.id_especie || '';
+            campoRaca.value = animal.id_raca || '';
+            campoSexo.value = animal.sexo || '';
+            document.getElementById('nro_meses').value = (animal.nro_meses === null || animal.nro_meses === undefined) ? '' : animal.nro_meses;
+            campoNascimento.value = animal.nascimento || '';
+            document.getElementById('lote').value = animal.lote || ultimoLoteGta;   // v1.11.3 - lote do animal ou o ultimo digitado nesta tela
+            nascimentoEditadoManualmente = true;
+            atualizarAvisoCth();
+        }
+
+        function acharItemLancado(sisbov) {
+            var achado = null;
+            document.querySelectorAll('.item-lancado').forEach(function(item) {
+                if (item.getAttribute('data-sisbov') === sisbov) achado = item;
+            });
+            return achado;
+        }
+        function limparDestaqueLancado() {
+            document.querySelectorAll('.item-lancado.atual').forEach(function(item) {
+                item.classList.remove('atual');
+            });
+        }
+        function destacarLancado(sisbov) {
+            limparDestaqueLancado();
+            var item = acharItemLancado(sisbov);
+            if (item) {
+                item.classList.add('atual');
+                item.scrollIntoView({ block: 'nearest' });
+            }
+        }
+        function marcarLancadoConferido(sisbov) {
+            var item = acharItemLancado(sisbov);
+            if (!item) return;
+            var agora = new Date();
+            var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+            item.classList.remove('atual');
+            item.classList.add('conferido');
+            item.querySelector('.marca').textContent = '\u2713';
+            var detalhe = item.querySelector('.detalhe');
+            if (detalhe.textContent.indexOf(hora) === -1) detalhe.textContent += ' \u00B7 ' + hora;
+        }
+        function atualizarPainelLancado(numero, total, conferidos, faltam) {
+            document.querySelectorAll('.linha-lancado').forEach(function(linha) {
+                if (linha.getAttribute('data-numero') !== numero) return;
+                linha.querySelector('.lanc-total').textContent = total;
+                linha.querySelector('.lanc-conf').textContent = conferidos;
+                linha.querySelector('.lanc-falt').textContent = faltam;
+                if (faltam <= 0) linha.classList.add('completo');
+            });
+        }
+        function entrarModoConferencia(animal) {
+            modoConferencia = true;
+            formContainer.classList.add('em-conferencia');
+            btnGravar.textContent = 'Confirmar brinco';
+            preencherConferencia(animal);
+            destacarLancado(animal.sisbov);
+        }
+        function sairModoConferencia() {
+            limparDestaqueLancado();
+            formContainer.classList.remove('em-conferencia');
+            modoConferencia = false;
+            btnGravar.textContent = 'Gravar';
+        }
+
+        // ==========================================================
+        // ETAPA 1 - RFID via Bastao. Enter/Tab/blur OU automatico
+        // ao completar os 15 digitos - todos em paralelo.
+        // ==========================================================
+        function bloquearSisbov(bloquear) {
+            campoSisbov.disabled = bloquear;
+        }
+
+        function verificarRfid(moverFoco) {
+            var rfid = campoRfid.value.trim();
+            if (!rfid) return;
+
+            if (rfid === ultimoRfidChecado) {
+                if (rfidLiberado && moverFoco) campoSisbov.focus();
+                return;
+            }
+            ultimoRfidChecado = rfid;
+
+            alertaDupRfid.style.display = 'none';
+            erroGravar.style.display = 'none';
+            campoRfid.classList.remove('rfid-ok');
+            badgeOkRfid.classList.remove('visivel');
+
+            fetch('{{ url_for("brincagem_bastao.checar_rfid") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rfid: rfid, id_propriedade: idPropriedade, tipo_entrada: tipoEntrada, data_brincagem: dataBrincagem, id_gta: idGta })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.duplicado) {
+                    mostrarAlertaRfid(dados.mensagem);
+                    rfidLiberado = false;
+                    sairModoConferencia();
+                    bloquearSisbov(true);
+                    bloquearCamposRestantes(true);
+                } else if (dados.conferencia) {
+                    // v1.7.0 - RFID de animal lancado pelo escritorio: confere.
+                    rfidLiberado = true;
+                    campoRfid.classList.add('rfid-ok');
+                    badgeOkRfid.classList.add('visivel');
+                    bloquearCamposRestantes(true);
+                    entrarModoConferencia(dados.animal);
+                    bloquearSisbov(false);
+                    bloqueioEnterAte = Date.now() + TEMPO_TRAVA_ENTER_MS;
+                    if (moverFoco) campoSisbov.focus();
+                } else {
+                    sairModoConferencia();
+                    rfidLiberado = true;
+                    campoRfid.classList.add('rfid-ok');
+                    badgeOkRfid.classList.add('visivel');
+                    bloquearSisbov(false);
+                    bloqueioEnterAte = Date.now() + TEMPO_TRAVA_ENTER_MS;   // v1.5.0
+                    if (moverFoco) campoSisbov.focus();
+                }
+            })
+            .catch(function() {
+                erroGravar.textContent = 'Não foi possível checar o RFID. Verifique sua conexão.';
+                erroGravar.style.display = 'block';
+            });
+        }
+
+        campoRfid.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter' && evento.key !== 'Tab') return;
+            evento.preventDefault();
+            verificarRfid(true);
+        });
+        campoRfid.addEventListener('blur', function() {
+            verificarRfid(false);
+        });
+        campoRfid.addEventListener('input', function() {
+            if (this.value.length > 15) {
+                this.value = this.value.slice(0, 15);
+            }
+            rfidLiberado = false;
+            sairModoConferencia();   // v1.7.0
+            ultimoRfidChecado = null;
+            alertaDupRfid.style.display = 'none';
+            campoRfid.classList.remove('rfid-ok');
+            badgeOkRfid.classList.remove('visivel');
+            bloquearSisbov(true);
+            bloquearCamposRestantes(true);
+
+            // 15 digitos completos dispara a checagem na hora.
+            if (this.value.length === 15) {
+                verificarRfid(true);
+            }
+        });
+
+        btnFecharAlertaRfid.addEventListener('click', function() {
+            alertaDupRfid.style.display = 'none';
+            campoRfid.value = '';
+            rfidLiberado = false;
+            ultimoRfidChecado = null;
+            campoRfid.classList.remove('rfid-ok');
+            badgeOkRfid.classList.remove('visivel');
+            bloquearSisbov(true);
+            bloquearCamposRestantes(true);
+            campoRfid.focus();
+        });
+
+        // ==========================================================
+        // ETAPA 2 - SISBOV via Leitor de Codigo de Barras.
+        // ==========================================================
+        function verificarSisbov(moverFoco) {
+            if (!rfidLiberado) return;
+
+            var sisbov = campoSisbov.value.trim();
+            if (!sisbov) return;
+
+            if (sisbov === ultimoSisbovChecado) {
+                if (sisbovLiberado && moverFoco) focarAposSisbov();   // v1.5.0
+                return;
+            }
+            ultimoSisbovChecado = sisbov;
+
+            alertaDupSisbov.style.display = 'none';
+            erroGravar.style.display = 'none';
+            campoSisbov.classList.remove('sisbov-ok');
+            badgeOkSisbov.classList.remove('visivel');
+
+            fetch('{{ url_for("brincagem_bastao.checar_sisbov") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sisbov: sisbov, rfid: campoRfid.value.trim(), id_propriedade: idPropriedade, tipo_entrada: tipoEntrada, data_brincagem: dataBrincagem, id_gta: idGta })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.duplicado) {
+                    mostrarAlertaSisbov(dados.mensagem);
+                    sisbovLiberado = false;
+                    bloquearCamposRestantes(true);
+                } else if (dados.conferencia) {
+                    // v1.7.0 - brinco lancado pelo escritorio: confirma.
+                    sisbovLiberado = true;
+                    campoSisbov.classList.add('sisbov-ok');
+                    badgeOkSisbov.classList.add('visivel');
+                    bloquearCamposRestantes(true);
+                    entrarModoConferencia(dados.animal);
+                    btnGravar.disabled = false;
+                    campoPeso.disabled = false;   // v1.9.0 - peso liberado na conferencia
+                    document.getElementById('lote').disabled = false;   // v1.11.3 - lote liberado em toda conferencia (Compra e Nascimento)
+                    campoPeso.value = '';
+                    bloqueioEnterAte = Date.now() + TEMPO_TRAVA_ENTER_MS;
+                    if (moverFoco) {   // v1.11.3 - lote obrigatorio primeiro, se estiver vazio
+                        var campoLoteConf = document.getElementById('lote');
+                        (!campoLoteConf.value.trim() ? campoLoteConf : campoPeso).focus();
+                    }
+                } else {
+                    sairModoConferencia();
+                    sisbovLiberado = true;
+                    campoSisbov.classList.add('sisbov-ok');
+                    badgeOkSisbov.classList.add('visivel');
+                    bloquearCamposRestantes(false);
+                    // v1.5.0 - liga a trava do Enter do aparelho e
+                    // decide o foco (Gravar ou Especie).
+                    bloqueioEnterAte = Date.now() + TEMPO_TRAVA_ENTER_MS;
+                    if (moverFoco) focarAposSisbov();
+                }
+            })
+            .catch(function() {
+                erroGravar.textContent = 'Não foi possível checar o SISBOV. Verifique sua conexão.';
+                erroGravar.style.display = 'block';
+            });
+        }
+
+        campoSisbov.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter' && evento.key !== 'Tab') return;
+            evento.preventDefault();
+            verificarSisbov(true);
+        });
+        campoSisbov.addEventListener('blur', function() {
+            verificarSisbov(false);
+        });
+        campoSisbov.addEventListener('input', function() {
+            if (this.value.length > 15) {
+                this.value = this.value.slice(0, 15);
+            }
+            sisbovLiberado = false;
+            ultimoSisbovChecado = null;
+            alertaDupSisbov.style.display = 'none';
+            campoSisbov.classList.remove('sisbov-ok');
+            badgeOkSisbov.classList.remove('visivel');
+            bloquearCamposRestantes(true);
+
+            if (this.value.length === 15) {
+                verificarSisbov(true);
+            }
+        });
+
+        btnFecharAlertaSisbov.addEventListener('click', function() {
+            alertaDupSisbov.style.display = 'none';
+            campoSisbov.value = '';
+            sisbovLiberado = false;
+            ultimoSisbovChecado = null;
+            campoSisbov.classList.remove('sisbov-ok');
+            badgeOkSisbov.classList.remove('visivel');
+            bloquearCamposRestantes(true);
+            campoSisbov.focus();
+        });
+
+        function bloquearCamposRestantes(bloquear) {
+            camposRestantes.forEach(function(campo) { campo.disabled = bloquear; });
+            btnGravar.disabled = bloquear;
+        }
+
+        // ==========================================================
+        // ETAPA 3 - Dados do Animal (cadeia de avanco automatico
+        // Especie -> Raca -> Sexo -> Nro Meses -> Nascimento ->
+        // Lote -> Peso -> Gravar).
+        // ==========================================================
+        campoEspecie.addEventListener('change', function() {
+            if (this.value) campoRaca.focus();
+        });
+        campoRaca.addEventListener('change', function() {
+            if (this.value) campoSexo.focus();
+        });
+        campoSexo.addEventListener('change', function() {
+            if (this.value) campoNroMeses.focus();
+        });
+
+        // ==========================================================
+        // v1.6.0 - aviso da COTA HILTON (so Nascimento): idade em
+        // dias na Data de Brincagem. Ate o limite = elegivel; acima
+        // = so avisa (nao bloqueia o Gravar). Copia do Leitor v1.11.0.
+        // ==========================================================
+        var avisoCth = document.getElementById('aviso-cth');
+
+        function atualizarAvisoCth() {
+            if (!avisoCth) return;
+            avisoCth.className = 'aviso-cth';
+            avisoCth.textContent = '';
+            if (modoConferencia) return;   // v1.7.0 - CTH ja calculada no lancamento
+
+            var valorNasc = document.getElementById('nascimento').value;
+            var nasc = (valorNasc.length === 10) ? parseDataBR(valorNasc) : null;
+            var base = parseDataBR(dataBrincagem);
+            if (!nasc || !base) return;
+
+            var dias = Math.round((base.getTime() - nasc.getTime()) / 86400000);
+            if (dias < 0) {
+                avisoCth.classList.add('incoerente');
+                avisoCth.textContent = '\u26A0\uFE0F Nascimento depois da Data de Brincagem — confira as datas.';
+            } else if (dias <= diasMaxCotaHilton) {
+                avisoCth.classList.add('elegivel');
+                avisoCth.textContent = '\u2705 Idade na brincagem: ' + dias + ' dias — elegível à Cota Hilton.';
+            } else if (tipoEntrada === 'COMPRA') {
+                // s114 - Compra acima do limite: sem aviso (o produtor ja sabe; so Nascimento avisa)
+                } else {
+                avisoCth.classList.add('acima');
+                avisoCth.textContent = '\u26A0\uFE0F Idade na brincagem: ' + dias + ' dias — acima de ' +
+                    diasMaxCotaHilton + ' dias, NÃO elegível à Cota Hilton (pode gravar normalmente).';
+            }
+        }
+
+        campoNascimento.addEventListener('input', function() {
+            var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+            var formatado = digitos;
+            if (digitos.length > 4) {
+                formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+            } else if (digitos.length > 2) {
+                formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+            }
+            this.value = formatado;
+            nascimentoEditadoManualmente = true;
+            atualizarAvisoCth();   // v1.6.0
+
+            if (this.value.length === 10) {
+                document.getElementById('lote').focus();
+            }
+        });
+
+        var campoPeso = document.getElementById('peso');
+        campoPeso.addEventListener('input', function() {
+            var valor = parseFloat(this.value.replace(',', '.'));
+            if (!isNaN(valor) && valor > 1000) {
+                this.value = '1000';
+            }
+
+            var digitosPeso = this.value.replace(/\D/g, '');
+            if (digitosPeso.length === 3 && !btnGravar.disabled) {
+                btnGravar.focus();
+            }
+        });
+
+        var campoNroMeses = document.getElementById('nro_meses');
+        campoNroMeses.addEventListener('input', function() {
+            // v1.1.0 - editar o Nro Meses reseta a trava de edicao
+            // manual do Nascimento e recalcula sem condicao.
+            nascimentoEditadoManualmente = false;
+
+            var meses = parseInt(this.value, 10);
+            var base = parseDataBR(dataBrincagem);
+            if (!isNaN(meses) && base) {
+                var nascimento = new Date(base);
+                nascimento.setDate(nascimento.getDate() - (meses * 30));
+                campoNascimento.value = formatarDataBR(nascimento);
+            }
+            atualizarAvisoCth();   // v1.6.0
+
+            if (this.value.length === 2) {
+                campoNascimento.focus();
+            }
+        });
+
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        // v1.7.0 - Confirmar brinco (conferencia no brete)
+        function conferirBrinco() {
+            var loteEnviado = document.getElementById('lote').value;   // v1.11.1
+            gravando = true;
+            btnGravar.disabled = true;
+            erroGravar.style.display = 'none';
+
+            fetch('{{ url_for("brincagem_bastao.conferir") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rfid: campoRfid.value.trim(),
+                    sisbov: campoSisbov.value.trim(),
+                    id_propriedade: idPropriedade,
+                    data_brincagem: dataBrincagem,
+                    tipo_entrada: tipoEntrada,   // v1.11.0
+                    lote: loteEnviado,           // v1.11.1
+                    id_gta: idGta,               // v1.11.0
+                    peso: campoPeso.value
+                })
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                gravando = false;
+                if (resultado.status !== 200) {
+                    if (resultado.dados.duplicado) {
+                        if (resultado.dados.campo === 'rfid') {
+                            mostrarAlertaRfid(resultado.dados.mensagem);
+                            rfidLiberado = false;
+                            sairModoConferencia();
+                            bloquearSisbov(true);
+                            bloquearCamposRestantes(true);
+                        } else {
+                            mostrarAlertaSisbov(resultado.dados.mensagem);
+                            sisbovLiberado = false;
+                            bloquearCamposRestantes(true);
+                        }
+                    } else {
+                        erroGravar.textContent = resultado.dados.erro || 'Não foi possível conferir.';
+                        erroGravar.style.display = 'block';
+                        btnGravar.disabled = false;
+                    }
+                    return;
+                }
+
+                totalLidos += 1;
+                contadorLidos.textContent = totalLidos;
+                atualizarPainelLancado(resultado.dados.controle, resultado.dados.total_lancado,
+                                       resultado.dados.conferidos, resultado.dados.faltam);
+                marcarLancadoConferido(resultado.dados.sisbov);
+                ultimoLoteGta = loteEnviado;   // v1.11.3
+                if (idGta) { contadorGravados.textContent = resultado.dados.conferidos; }   // v1.11.0 - CONFERIDOS da GTA
+                else if (resultado.dados.total_gravados !== undefined) { contadorGravados.textContent = resultado.dados.total_gravados; }   // Sessao 094 - Nascimento sem GTA: gravados + conferidos da data
+
+                modalSisbov.textContent = 'SISBOV: ' + resultado.dados.sisbov +
+                    ' — conferidos ' + resultado.dados.conferidos + '/' + resultado.dados.total_lancado;
+                modalRfid.textContent = 'RFID: ' + resultado.dados.rfid;
+                if (resultado.dados.encerrada) {   // Sessao 094 - ultimo brinco: a Brincagem encerra sozinha (GTA de Compra ou Notificacao de Nascimento)
+                    var nascimentoSemGta = !idGta;
+                    var pendentes = document.querySelectorAll('.linha-lancado:not(.completo)').length;
+                    gtaEncerrada = !nascimentoSemGta || pendentes === 0;   // Nascimento com outra NAS aberta na data: continua na tela
+                    modalTitulo.textContent = nascimentoSemGta
+                        ? 'BRINCAGEM ENCERRADA - ' + resultado.dados.controle
+                        : 'GTA ' + resultado.dados.controle + ' ENCERRADA';
+                    modalSisbov.textContent = 'SISBOV: ' + resultado.dados.sisbov + ' — todos os ' +
+                        resultado.dados.total_lancado + ' brincos conferidos. ' +
+                        (gtaEncerrada ? 'Clique em Sair para voltar à Seleção.' : 'Há outra Notificação desta data ainda aberta.');
+                }
+                modalSucesso.classList.add('aberto');
+
+                rfidLiberado = false;
+                sisbovLiberado = false;
+                ultimoRfidChecado = null;
+                ultimoSisbovChecado = null;
+                sairModoConferencia();
+                campoRfid.value = '';
+                campoSisbov.value = '';
+                campoRfid.classList.remove('rfid-ok');
+                campoSisbov.classList.remove('sisbov-ok');
+                badgeOkRfid.classList.remove('visivel');
+                badgeOkSisbov.classList.remove('visivel');
+                bloquearSisbov(true);
+                bloquearCamposRestantes(true);
+            })
+            .catch(function() {
+                gravando = false;
+                btnGravar.disabled = false;
+                erroGravar.textContent = 'Não foi possível conferir. Verifique sua conexão.';
+                erroGravar.style.display = 'block';
+            });
+        }
+
+        // ==========================================================
+        // Gravar
+        // ==========================================================
+        // v1.26.0 - caso 1: avisa NA HORA quando sexo / especie / nascimento nao batem com a GTA (nao espera o Gravar)
+        var categoriaInvalida = false;
+        var timerCategoria = null;
+        function limparCategoria() {
+            if (categoriaInvalida) {
+                categoriaInvalida = false;
+                erroGravar.style.display = 'none';
+                btnGravar.disabled = !(rfidLiberado && sisbovLiberado);
+            }
+        }
+        function conferirCategoriaGta() {
+            if (!idGtaReserva) { return; }
+            clearTimeout(timerCategoria);
+            timerCategoria = setTimeout(function() {
+                var nasc = campoNascimento.value.trim();
+                if (!campoSexo.value || !campoEspecie.value || nasc.length !== 10) { limparCategoria(); return; }
+                fetch('{{ url_for("brincagem_bastao.checar_categoria") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_propriedade: idPropriedade, id_gta_reserva: idGtaReserva, data_brincagem: dataBrincagem,
+                        id_especie: campoEspecie.value, sexo: campoSexo.value, nascimento: nasc
+                    })
+                })
+                .then(function(resp) { return resp.json(); })
+                .then(function(d) {
+                    if (d.ok) { limparCategoria(); return; }
+                    if (!d.erro) { return; }
+                    categoriaInvalida = true;
+                    erroGravar.textContent = d.erro;
+                    erroGravar.style.display = 'block';
+                    btnGravar.disabled = true;
+                })
+                .catch(function() {});
+            }, 250);
+        }
+        [campoSexo, campoEspecie].forEach(function(c) { c.addEventListener('change', conferirCategoriaGta); });
+        [campoNascimento, campoNroMeses].forEach(function(c) {
+            c.addEventListener('input', conferirCategoriaGta);
+            c.addEventListener('change', conferirCategoriaGta);
+        });
+
+        btnGravar.addEventListener('click', function() {
+            if (categoriaInvalida) { erroGravar.style.display = 'block'; return; }   // v1.26.0 - animal fora da GTA: corrija antes de gravar
+            if (!rfidLiberado || !sisbovLiberado) return;
+            if (gravando) return;          // v1.3.0 - ja tem gravacao em andamento
+            // v1.11.0 - peso OBRIGATORIO no brete (gravar e conferir)
+            // v1.11.3 - LOTE obrigatorio no brete (gravar e conferir)
+            if (!document.getElementById('lote').value.trim()) {
+                erroGravar.textContent = 'Lote é obrigatório no brete.';
+                erroGravar.style.display = 'block';
+                document.getElementById('lote').focus();
+                return;
+            }
+            if (!pesoValido()) {
+                erroGravar.textContent = campoPeso.value.trim() ? 'Peso incorreto, verifique.' : 'Peso é obrigatório no brete.';
+                erroGravar.style.display = 'block';
+                campoPeso.focus();
+                return;
+            }
+            if (modoConferencia) { conferirBrinco(); return; }   // v1.7.0
+
+            gravando = true;
+            btnGravar.disabled = true;
+            erroGravar.style.display = 'none';
+
+            var corpo = {
+                id_propriedade: idPropriedade,
+                data_brincagem: dataBrincagem,
+                saida_brincos: saidaBrincos,
+                tipo_entrada: tipoEntrada,          // v1.6.0
+                rfid: campoRfid.value.trim(),
+                sisbov: campoSisbov.value.trim(),
+                id_especie: document.getElementById('id_especie').value,
+                id_raca: document.getElementById('id_raca').value,
+                sexo: document.getElementById('sexo').value,
+                nro_meses: campoNroMeses.value,
+                nascimento: campoNascimento.value,
+                peso: document.getElementById('peso').value,
+                lote: document.getElementById('lote').value,
+                id_gta_reserva: idGtaReserva,       // v1.15.0
+            };
+
+            fetch('{{ url_for("brincagem_bastao.gravar") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                gravando = false;          // v1.3.0 - libera a trava
+                if (resultado.status !== 200) {
+                    if (resultado.dados.duplicado) {
+                        if (resultado.dados.campo === 'rfid') {
+                            mostrarAlertaRfid(resultado.dados.mensagem);
+                            rfidLiberado = false;
+                            bloquearSisbov(true);
+                            bloquearCamposRestantes(true);
+                        } else {
+                            mostrarAlertaSisbov(resultado.dados.mensagem);
+                            sisbovLiberado = false;
+                            bloquearCamposRestantes(true);
+                        }
+                    } else {
+                        erroGravar.textContent = resultado.dados.erro || 'Não foi possível gravar.';
+                        erroGravar.style.display = 'block';
+                        btnGravar.disabled = false;   // v1.3.0 - deixa corrigir e tentar de novo
+                    }
+                    return;
+                }
+
+                // Sucesso
+                totalLidos += 1;
+                contadorLidos.textContent = totalLidos;
+                contadorGravados.textContent = resultado.dados.total_gravados;
+
+                // v1.6.0 - Numero de Controle (Nascimento): mostra o
+                // NAS reservado/em uso depois do Gravar.
+                var spanControle = document.getElementById('controle-numero');
+                if (spanControle && resultado.dados.controle) {
+                    spanControle.textContent = resultado.dados.controle;
+                }
+
+                if (resultado.dados.integrado) {   // v1.8.0
+                    atualizarPainelLancado(resultado.dados.controle, resultado.dados.total_lancado,
+                                           resultado.dados.conferidos, resultado.dados.faltam);
+                    adicionarConferidoNoPainel(resultado.dados.sisbov, resultado.dados.sexo, resultado.dados.lote, resultado.dados.nro_meses);
+                } else {
+                    adicionarNaListaLidos(resultado.dados.sisbov, resultado.dados.rfid, document.getElementById('sexo').value);
+                }
+
+                modalSisbov.textContent = resultado.dados.integrado
+                    ? 'SISBOV: ' + resultado.dados.sisbov + ' — integrado à ' + resultado.dados.controle +
+                      ' (' + resultado.dados.conferidos + '/' + resultado.dados.total_lancado + ')'
+                    : 'SISBOV: ' + resultado.dados.sisbov;   // v1.8.0
+                modalRfid.textContent = 'RFID: ' + resultado.dados.rfid;
+                var semModal = false;
+                if (resultado.dados.reserva) {   // v1.15.0 - caso 1: leitura reservada a GTA PENDENTE
+                    var elLidos = document.getElementById('reserva-lidos');
+                    var elFaltam = document.getElementById('reserva-faltam');
+                    if (elLidos) { elLidos.textContent = resultado.dados.lidos; }
+                    if (elFaltam) { elFaltam.textContent = resultado.dados.faltam; }
+                    modalSisbov.textContent = 'SISBOV: ' + resultado.dados.sisbov + ' — lidos ' +
+                        resultado.dados.lidos + '/' + resultado.dados.total_lancado;
+                    if (resultado.dados.completa) {
+                        gtaEncerrada = true;
+                        modalTitulo.textContent = 'GTA ' + resultado.dados.numero_gta + ' COMPLETA';
+                        modalSucesso.setAttribute('data-segundos', '12');   // v1.16.1 - mensagem longa: 12 s para ler
+                        modalSisbov.textContent = 'Todos os ' + resultado.dados.total_lancado +
+                            ' animais lidos. A GTA foi brincada e aguarda GERAR o Comunicado de Entrada.';
+                        modalRfid.textContent = '';
+                    } else if (resultado.dados.aviso) {
+                        gtaEncerrada = true;
+                        semModal = true;   // o aviso fica na tela (a mensagem de sucesso fecha sozinha em 3 s)
+                        erroGravar.textContent = resultado.dados.aviso;
+                        erroGravar.style.display = 'block';
+                    }
+                }
+                if (!semModal) { modalSucesso.classList.add('aberto'); }
+
+                // Bastao: RFID e SISBOV limpam sozinhos e voltam a
+                // ficar bloqueados; demais campos mantem o valor. v1.11.0 -
+                // exceto o PESO, que e de cada animal e limpa tambem.
+                campoPeso.value = '';
+                rfidLiberado = false;
+                sisbovLiberado = false;
+                ultimoRfidChecado = null;
+                ultimoSisbovChecado = null;
+                campoRfid.value = '';
+                campoSisbov.value = '';
+                campoRfid.classList.remove('rfid-ok');
+                campoSisbov.classList.remove('sisbov-ok');
+                badgeOkRfid.classList.remove('visivel');
+                badgeOkSisbov.classList.remove('visivel');
+                bloquearSisbov(true);
+                bloquearCamposRestantes(true);
+            })
+            .catch(function() {
+                gravando = false;          // v1.3.0
+                btnGravar.disabled = false;
+                erroGravar.textContent = 'Não foi possível gravar. Verifique sua conexão.';
+                erroGravar.style.display = 'block';
+            });
+        });
+
+        // ==========================================================
+        // ENTER GRAVA (v1.3.0, ampliado na v1.5.0):
+        //   - Enter com o foco no Gravar -> grava (respeitando a
+        //     trava do Enter do aparelho).
+        //   - Enter nos campos de TEXTO (Nro Meses, Nascimento,
+        //     Lote, Peso) -> grava se tudo estiver preenchido; se
+        //     faltar algo, leva ao primeiro campo vazio.
+        //   - Nos dropdowns o Enter NAO grava (escolhe a opcao).
+        // preventDefault() evita o clique "nativo" somar com o nosso.
+        // ==========================================================
+        btnGravar.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter') return;
+            evento.preventDefault();
+            if (enterPodeGravar()) btnGravar.click();
+        });
+
+        ['nro_meses', 'nascimento', 'lote', 'peso'].forEach(function(idCampo) {
+            document.getElementById(idCampo).addEventListener('keydown', function(evento) {
+                if (evento.key !== 'Enter') return;
+                evento.preventDefault();
+                var vazio = primeiroCampoVazio();
+                if (vazio) {
+                    vazio.focus();
+                    return;
+                }
+                if (enterPodeGravar()) btnGravar.click();
+            });
+        });
+
+        // v1.8.0 - brinco lido no brete INTEGRADO a Notificacao do escritorio:
+        // entra no quadro lateral ja como CONFERIDO (verde).
+        function adicionarConferidoNoPainel(sisbov, sexo, lote, meses) {
+            var lista = document.getElementById('lista-lancados');
+            if (!lista) return;
+            var agora = new Date();
+            var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+            var detalhe = (sexo === 'MACHO' ? 'M' : 'F');
+            if (meses) detalhe += ' \u00B7 ' + meses + 'm';
+            if (lote) detalhe += ' \u00B7 ' + lote;
+            detalhe += ' \u00B7 ' + hora + ' \u00B7 novo';
+            var item = document.createElement('div');
+            item.className = 'item-lancado conferido';
+            item.setAttribute('data-sisbov', sisbov);
+            item.innerHTML = '<span class="marca">\u2713</span><span class="sisbov">' + sisbov + '</span>' +
+                '<span class="detalhe">' + detalhe + '</span>';
+            var referencia = document.getElementById('sub-extras');
+            if (referencia) { lista.insertBefore(item, referencia); } else { lista.appendChild(item); }
+            item.scrollIntoView({ block: 'nearest' });
+        }
+
+        // v1.7.1 - brinco lido FORA do lancamento: entra no quadro lateral
+        function adicionarExtraNoPainel(sisbov, sexo) {
+            var lista = document.getElementById('lista-extras');
+            if (!lista) return;
+            document.getElementById('sub-extras').style.display = 'block';
+            var item = document.createElement('div');
+            item.className = 'item-lancado extra';
+            item.setAttribute('data-sisbov', sisbov);
+            var agora = new Date();
+            var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+            item.innerHTML = '<span class="marca">+</span><span class="sisbov">' + sisbov + '</span>' +
+                '<span class="detalhe">' + (sexo === 'MACHO' ? 'M' : 'F') + ' \u00B7 ' + hora + '</span>';
+            lista.insertBefore(item, lista.firstChild);
+            item.scrollIntoView({ block: 'nearest' });
+        }
+
+        function adicionarNaListaLidos(sisbov, rfid, sexo) {
+            if (!listaLidos) { adicionarExtraNoPainel(sisbov, sexo); return; }   // v1.7.1
+            if (listaVazia) { listaVazia.remove(); }
+            var item = document.createElement('div');
+            item.className = 'item-lido';
+            var agora = new Date();
+            var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+            item.innerHTML = '<div class="linha-topo"><div class="sisbov">' + sisbov + '</div>' +
+                '<div class="detalhe">' + (sexo || '-') + ' — ' + hora + '</div></div>' +
+                '<div class="rfid">RFID: ' + rfid + '</div>';
+            listaLidos.insertBefore(item, listaLidos.firstChild);
+        }
+
+        // ---- Fechar modal (Sair) -> volta foco pro RFID (ja vazio) ----
+        function fecharModal() {
+            modalSucesso.classList.remove('aberto');
+            if (gtaEncerrada) {   // v1.11.0 - GTA encerrada: nao ha mais o que ler, volta para a Tela 02
+                window.location.href = urlSelecao;
+                return;
+            }
+            campoRfid.focus();
+        }
+        btnModalSair.addEventListener('click', fecharModal);
+        document.addEventListener('keydown', function(evento) {
+            if (evento.key === 'Enter' && modalSucesso.classList.contains('aberto')) {
+                evento.preventDefault();
+                fecharModal();
+            }
+        });
+
+        // ---- Limpar Tela: so os campos desta tela, nunca a lista ----
+        document.getElementById('btn-limpar').addEventListener('click', function() {
+            campoRfid.value = '';
+            campoSisbov.value = '';
+            camposRestantes.forEach(function(campo) { campo.value = ''; });
+            nascimentoEditadoManualmente = false;
+            sairModoConferencia(); // v1.7.0
+            atualizarAvisoCth();   // v1.6.0 - campos vazios escondem o aviso
+            rfidLiberado = false;
+            sisbovLiberado = false;
+            ultimoRfidChecado = null;
+            ultimoSisbovChecado = null;
+            bloquearSisbov(true);
+            bloquearCamposRestantes(true);
+            alertaDupRfid.style.display = 'none';
+            alertaDupSisbov.style.display = 'none';
+            erroGravar.style.display = 'none';
+            campoRfid.classList.remove('rfid-ok');
+            campoSisbov.classList.remove('sisbov-ok');
+            badgeOkRfid.classList.remove('visivel');
+            badgeOkSisbov.classList.remove('visivel');
+            campoRfid.focus();
+        });
+
+        campoRfid.focus();
+    </script>
+
+    <!-- Mensagem de gravacao fecha sozinha em 3 segundos (peca unica: static/js/auto_fechar_gravacao.js) -->
+    <script src="/static/js/auto_fechar_gravacao.js"></script>
+    <script>AutoFecharGravacao.iniciar({ modal: 'modal-sucesso', botao: 'btn-modal-sair', segundos: 3 });</script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincagem_bastao_leitura.html
+     v1.16.3: Sessao 114 (04/11/2026, 10:37 -03) - Cota Hilton: na COMPRA acima de 306 dias nao mostra mais o aviso amarelo "NAO elegivel" (so o verde ate o limite); Nascimento igual.  REVERSAO: .bak_antes_s114_cth.
+     v1.16.4: Sessao 114 (04/11/2026, 10:41 -03) - Mensagem de peso da Entrada igual a das outras telas: "Peso incorreto, verifique." (pedido de Benedito).  REVERSAO: .bak_antes_s114_peso2.
+     ========================================================= -->

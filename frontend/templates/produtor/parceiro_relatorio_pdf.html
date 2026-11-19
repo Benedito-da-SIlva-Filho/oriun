@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\parceiro_relatorio_pdf.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-18 19:37 -03
+     ATUALIZADO EM: 2026-10-29 20:00 -03
+     VERSAO: 2.3.0
+
+     DESCRICAO:
+         Template do relatorio em PDF da ficha de 1 Parceiro/
+         Fornecedor, renderizado pelo xhtml2pdf (chamado em
+         parceiros_fornecedores.py, rota relatorio_pdf()). Mostra
+         os dados do Parceiro + todas as Propriedades vinculadas a
+         ele.
+
+         PADRAO VISUAL: copiado de proposito de templates\consiste\
+         produtor_relatorio_pdf.html v1.7.0 (Sessao 011.2), unico
+         relatorio do projeto ja validado ao vivo por Benedito sem
+         nenhum problema de espacamento. Mesma receita: caixa-dados
+         (div com border/border-radius/padding, contendo UMA UNICA
+         table) + table de rotulo/valor com <colgroup> em cm fixo
+         (nunca %), td.rotulo em negrito, zebra striping via
+         tr.linha-par (#FBE9E4), "border: none" explicito em toda
+         celula.
+
+         v1.0.0 a v1.4.0 (Sessao 034 cont.9 / Sessao 035): historico
+         de tentativas com layout em cards (div com border-radius
+         contendo DUAS tabelas irmas - cabecalho + dados). Series de
+         bugs de espacamento (texto colado na borda, rotulo
+         quebrando linha) nunca totalmente resolvidos.
+         v2.3.0: Sessao 108 (29/10/2026, 20:00 -03) - Rotulo 'Codigo MAPA' vira 'Código do Estabelecimento (OESA)' (Cód. Estabelecimento (OESA) nos lugares apertados). REVERSAO: .bak_antes_s108_oesa_geral.
+         v2.0.0: Sessao 035 (19/08/2026) - REESCRITO DO ZERO.
+             Causa raiz real identificada: o problema nao era
+             padding de div isolado, e sim ter DUAS tabelas dentro
+             da mesma div (cabecalho + dados) - o padrao que
+             realmente funciona neste motor (comprovado em
+             produtor_relatorio_pdf.html) tem sempre UMA div com
+             UMA table dentro. Cada Propriedade agora e uma
+             caixa-dados propria (com Estabelecimento como a
+             primeira linha rotulo/valor, dentro da mesma table -
+             nao mais um cabecalho separado), exatamente como a
+             caixa "Dados Cadastrais" do relatorio de Produtor.
+         v2.1.0: Sessao 095 (13/10/2026, 19:10 -03) - Cód. Município em linha separada e UF deixa de sair repetida. REVERSAO: .bak_antes_novo_parceiro_s095.
+         v2.2.0: Sessao 095 (13/10/2026, 19:30 -03) - Regiao do Brasil, Mesorregiao e Microrregiao (IBGE) na impressao. REVERSAO: bak_antes_regioes_s095.
+     ========================================================= -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            color: #333333;
+        }
+
+        .cabecalho-relatorio {
+            border-bottom: 3px solid #D4370A;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .cabecalho-relatorio h1 {
+            font-size: 17pt;
+            color: #D4370A;
+            margin: 0 0 4px 0;
+        }
+        .cabecalho-relatorio .subtitulo {
+            font-size: 9.5pt;
+            color: #777777;
+        }
+
+        .secao-titulo {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #D4370A;
+            border-bottom: 1px solid #D4370A;
+            padding-bottom: 4px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* ---- Caixa de dados: SEMPRE 1 div com 1 table dentro,
+           nunca duas tables irmas na mesma div (essa combinacao
+           foi a causa raiz dos bugs de espacamento da v1.x). ---- */
+        .caixa-dados {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #fafafa;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+        }
+
+        table.dados-parceiro,
+        table.dados-propriedade {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.dados-parceiro td,
+        table.dados-propriedade td {
+            border: none;
+            padding: 4px 10px;
+            font-size: 10.5pt;
+            line-height: 1.3;
+            vertical-align: top;
+        }
+        table.dados-parceiro td.rotulo,
+        table.dados-propriedade td.rotulo {
+            width: 4.5cm;
+            font-weight: bold;
+            color: #555555;
+        }
+        table.dados-parceiro tr.linha-par td,
+        table.dados-propriedade tr.linha-par td {
+            background-color: #FBE9E4;
+        }
+
+        .sem-propriedades {
+            font-size: 10.5pt;
+            color: #999999;
+            font-style: italic;
+            padding: 10px 0;
+        }
+        .rodape-relatorio {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #cccccc;
+            font-size: 9pt;
+            color: #999999;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho-relatorio">
+        <h1>Ficha de Parceiro / Fornecedor</h1>
+        <div class="subtitulo">Orion SISBOV — Emitido em {{ data_emissao }}</div>
+    </div>
+
+    <div class="secao-titulo">Dados do Parceiro</div>
+    <div class="caixa-dados">
+        <table class="dados-parceiro">
+            <colgroup>
+                <col style="width: 4.5cm;">
+                <col style="width: 12.5cm;">
+            </colgroup>
+            <tr class="linha-par">
+                <td class="rotulo">Nome / Razão Social:</td>
+                <td>{{ parceiro.nome }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">CPF / CNPJ:</td>
+                <td>{{ parceiro.cpf_cnpj }}</td>
+            </tr>
+            <tr class="linha-par">
+                <td class="rotulo">Status:</td>
+                <td>{{ 'Ativo' if parceiro.ativo else 'Inativo' }}</td>
+            </tr>
+            <tr>
+                <td class="rotulo">Cadastrado em:</td>
+                <td>{{ parceiro.criado_em.strftime('%d/%m/%Y às %H:%M') if parceiro.criado_em else '-' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="secao-titulo">Propriedades Vinculadas</div>
+
+    {% if propriedades %}
+        {% for prop in propriedades %}
+        <div class="caixa-dados">
+            <table class="dados-propriedade">
+                <colgroup>
+                    <col style="width: 4.5cm;">
+                    <col style="width: 12.5cm;">
+                </colgroup>
+                <tr class="linha-par">
+                    <td class="rotulo">Estabelecimento:</td>
+                    <td>{{ prop.estabelecimento }}</td>
+                </tr>
+                <tr>
+                    <td class="rotulo">Cód. Estabelecimento (OESA):</td>
+                    <td>{{ prop.codigo_mapa or '-' }}</td>
+                </tr>
+                <tr class="linha-par">
+                    <td class="rotulo">Insc. Estadual:</td>
+                    <td>{{ prop.insc_estadual or '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="rotulo">Município/UF:</td>
+                    <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+                </tr>
+                <tr class="linha-par">
+                    <td class="rotulo">Cód. Município:</td>
+                    <td>{{ prop.municipio_codigo or '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="rotulo">Região do Brasil:</td>
+                    <td>{{ prop.regiao_brasil or '-' }}</td>
+                </tr>
+                <tr class="linha-par">
+                    <td class="rotulo">Mesorregião:</td>
+                    <td>{{ prop.regiao or prop.mesorregiao_ibge or '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="rotulo">Microrregião:</td>
+                    <td>{{ prop.microrregiao or '-' }}</td>
+                </tr>
+                <tr class="linha-par">
+                    <td class="rotulo">Status:</td>
+                    <td>{{ 'Ativa' if prop.ativo else 'Inativa' }}</td>
+                </tr>
+            </table>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="sem-propriedades">Nenhuma Propriedade vinculada a este Parceiro.</div>
+    {% endif %}
+
+    <div class="rodape-relatorio">
+        Orion SISBOV &copy; 2026 &#8212; Consiste Informática — Documento gerado automaticamente
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\parceiro_relatorio_pdf.html
+     ========================================================= -->

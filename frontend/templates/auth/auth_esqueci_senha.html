@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\auth
+     MODULO: templates\auth\auth_esqueci_senha.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-23 15:10 -03
+     ATUALIZADO EM: 2026-06-25 09:55 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Tela de esqueci minha senha.
+         Recebe apenas o login do usuario.
+         O sistema busca o email no banco automaticamente.
+         Gera senha provisoria aleatoria e envia por email.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Removido campo email — sistema busca no banco.
+                 Atualizado texto explicativo do fluxo.
+         v1.2.0: Aviso de spam adicionado na mensagem de sucesso.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Esqueci minha senha</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
+        .cabecalho { width: 100%; max-width: 500px; margin-bottom: 20px; }
+        .cabecalho img { width: 100%; border-radius: 8px; }
+        .container { background-color: #ffffff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; border-top: 4px solid #D4370A; }
+        .titulo { text-align: center; margin-bottom: 30px; }
+        .titulo h1 { color: #D4370A; font-size: 24px; font-weight: bold; }
+        .titulo p { color: #666666; font-size: 13px; margin-top: 8px; line-height: 1.6; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #333333; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+        .form-group input { width: 100%; padding: 12px 15px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; }
+        .form-group input:focus { outline: none; border-color: #D4370A; }
+        .btn-redefinir { width: 100%; padding: 14px; background-color: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-redefinir:hover { background-color: #C0392B; }
+        .voltar { text-align: center; margin-top: 15px; }
+        .voltar a { color: #D4370A; font-size: 13px; text-decoration: none; }
+        .voltar a:hover { text-decoration: underline; }
+        .mensagem-sucesso { background-color: #e8f5e9; color: #2e7d32; padding: 12px 15px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; border-left: 4px solid #2e7d32; }
+        .mensagem-spam { background-color: #fff8e1; color: #6d4c00; padding: 12px 15px; border-radius: 6px; font-size: 13px; margin-bottom: 20px; border-left: 4px solid #f9a825; }
+        .mensagem-erro { background-color: #ffe0e0; color: #C0392B; padding: 12px 15px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; border-left: 4px solid #D4370A; }
+        .rodape { text-align: center; margin-top: 30px; color: #999999; font-size: 12px; }
+        .rodape a { color: #D4370A; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho">
+        <img src="/static/img/Consiste_Cabec.png" alt="Consiste Informatica">
+    </div>
+
+    <div class="container">
+
+        <div class="titulo">
+            <h1>&#128273; Esqueci minha senha</h1>
+            <p>Digite seu login.<br>
+            Uma senha provisoria sera enviada<br>
+            para o seu email cadastrado.</p>
+        </div>
+
+        {% if mensagem %}
+        <!-- Mensagem de sucesso — formulario fica oculto -->
+        <div class="mensagem-sucesso">
+            &#9989; {{ mensagem }}
+        </div>
+        <!-- Aviso de spam — exibido sempre apos o envio -->
+        <div class="mensagem-spam">
+            &#9888;&#65039; Nao encontrou o email? Verifique tambem a pasta
+            <strong>Spam</strong> ou <strong>Lixo Eletronico</strong>.
+        </div>
+        <div class="voltar">
+            <a href="/login">&#8592; Voltar para o login</a>
+        </div>
+
+        {% else %}
+
+        {% if erro %}
+        <!-- Mensagem de erro — formulario permanece visivel -->
+        <div class="mensagem-erro">
+            &#10060; {{ erro }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/esqueci-senha">
+
+            <div class="form-group">
+                <label for="login">Login *</label>
+                <input type="text" id="login" name="login"
+                       placeholder="Digite seu login" required autofocus autocomplete="off">
+            </div>
+
+            <button type="submit" class="btn-redefinir">Enviar senha provisoria</button>
+
+        </form>
+
+        <div class="voltar">
+            <a href="/login">&#8592; Voltar para o login</a>
+        </div>
+
+        {% endif %}
+
+        <div class="rodape">
+            Orion SISBOV &copy; 2026 &#8212;
+            <a href="https://www.consisteti.com.br" target="_blank">Consiste Informatica</a>
+        </div>
+
+    </div>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\auth\auth_esqueci_senha.html
+     ========================================================= -->

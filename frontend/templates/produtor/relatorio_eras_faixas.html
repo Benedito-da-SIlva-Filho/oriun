@@ -1,0 +1,233 @@
+<!--
+=========================================================
+PROJETO:      Orion
+PASTA:        C:\orion\frontend\templates\produtor
+MODULO:       frontend\templates\produtor\relatorio_eras_faixas.html
+AUTOR:        Benedito Silva Filho
+CRIADO EM:    2026-09-17 10:25 -03
+ATUALIZADO EM: 2026-10-13 11:50 -03
+VERSAO:       1.7.0
+            v1.7.0: Sessao 123 (13/11/2026) - AUDITORIA ETAPA 6: faixas amarelas de aviso (animais sem Nascimento; pedido incompleto). REVERSAO: .bak_antes_etapa6d.
+
+DESCRICAO:
+    Tela de selecao de Faixa Etaria do Relatorio de ERAS
+    (Sessao 054/055) - 5 botoes lidos dinamicamente de
+    tb_4006_idade_meses (nunca fixados aqui - a lista
+    'faixas_etarias' vem do router ja ordenada por
+    codigo_geras). Clique num botao leva direto pra geracao
+    do PDF (/produtor/relatorio-eras/gerar).
+
+    v1.0.0: Criacao do modulo (Sessao 055, 17/09/2026, 10:25 -03).
+    v1.1.0: Sessao 055 (17/09/2026, 11:05 -03) - correcao do
+            CSS/JS do menu lateral, alinhado ao Padrao
+            Reutilizavel numero 4.
+    v1.1.1: Sessao 055 (17/09/2026, 11:10 -03) - correcao de
+            sintaxe Jinja escrita literal dentro de comentario
+            HTML.
+    v1.2.0: Sessao 055 (17/09/2026, 17:15 -03) - botoes Voltar e
+            Home adicionados no topo (Padrao Reutilizavel
+            numero 4).
+    v1.3.0: Sessao 055 (17/09/2026, 17:40 -03) - Adicionado aviso
+            visual de confirmacao (banner temporario) disparado
+            no onclick de cada card de faixa etaria - o download
+            do PDF (as_attachment=True) nao dava nenhum sinal
+            visual de que o clique funcionou, e o usuario ficava
+            clicando repetidamente achando que estava com
+            problema. Padrao registrado em padroes-de-codigo.md,
+            secao 10.
+    v1.4.0: Sessao 055 (17/09/2026, 17:45 -03) - BUG REAL: o
+            banner de sucesso ficava no canto superior direito,
+            exatamente onde o Adobe/Chrome mostra seu proprio
+            popup nativo de "arquivo salvo" - o aviso do Orion
+            ficava escondido por tras. Corrigido: banner movido
+            para o CENTRO exato da tela (position fixed, top/left
+            50% + transform translate(-50%,-50%)), area onde
+            nenhum popup nativo do navegador/Adobe costuma
+            aparecer por cima. Tambem aumentado o tamanho/
+            destaque do banner (fonte maior, borda mais grossa,
+            sombra mais forte), ja que agora fica no centro,
+            precisa ser bem visivel.
+    v1.5.0: Sessao 076 (21/09/2026, 21:52 -03) - TOPO e RODAPE
+            substituidos por comandos de INCLUDE das
+            pecas-mestras produtor_topo.html / produtor_
+            rodape.html. Voltar nao precisou de configuracao
+            extra - o padrao ja usado aqui (voltar uma pagina no
+            historico do navegador) e exatamente o mesmo
+            comportamento padrao ja embutido na peca-mestra por
+            default. Home continua aparecendo normalmente. Sem
+            mudanca de comportamento.
+         v1.6.0: Sessao 095 (13/10/2026, 11:50 -03) - AVISO DE DOWNLOAD PADRAO: sai o aviso proprio (caixa verde no centro, sem o nome do arquivo)
+                 e entra a peca aviso_download (banner "Gerando", banner verde com o local do arquivo, trava de
+                 clique repetido). REVERSAO: .bak_antes_aviso_download_s095.
+=========================================================
+-->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de ERAS — {{ nome_sistema }}</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+    .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+    .topo h1 { font-size: 18px; font-weight: bold; }
+    .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+    .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+    .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+    .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+    .btn-sair:hover { text-decoration: underline; }
+    .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+    .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* ---- Sidebar (Padrao Reutilizavel No4) ---- */
+    .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+    .sidebar.recolhido { width: 52px; }
+    .sidebar.recolhido .menu-texto { display: none; }
+    .sidebar.recolhido .menu-secao { display: none; }
+    .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+    .menu-item:hover { background-color: #f5f5f5; }
+    .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+    .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+    .menu-item.ativo .menu-icone { color: #D4370A; }
+    .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+    /* ---- Conteudo ---- */
+    .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+
+    .cabecalho-pagina { margin-bottom: 20px; }
+    .cabecalho-pagina h2 { font-size: 20px; color: #333; }
+    .cabecalho-pagina p { font-size: 13px; color: #666; margin-top: 4px; }
+
+    .grid-faixas {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        max-width: 900px;
+    }
+
+    .card-faixa {
+        display: block;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        text-decoration: none;
+        color: #333;
+        transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .card-faixa:hover {
+        border-color: {{ cor_primaria }};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .card-faixa .titulo-faixa {
+        font-size: 16px;
+        font-weight: bold;
+        color: {{ cor_primaria }};
+        margin-bottom: 6px;
+    }
+    .card-faixa .intervalo-faixa {
+        font-size: 12px;
+        color: #888;
+    }
+
+    .aviso-vazio {
+        background: #fff3cd;
+        border: 1px solid #ffe08a;
+        color: #7a5c00;
+        padding: 14px 18px;
+        border-radius: 6px;
+        font-size: 14px;
+        max-width: 900px;
+    }
+
+    .rodape {
+        background: #ffffff;
+        color: #999999;
+        text-align: center;
+        padding: 10px;
+        font-size: 11px;
+        border-top: 1px solid #e0e0e0;
+        flex-shrink: 0;
+    }
+
+    /* ---- Aviso de sucesso (Padrao registrado - secao 10) ----
+       v1.4.0: movido para o CENTRO da tela (antes ficava no
+       canto superior direito, escondido pelo popup nativo do
+       Adobe/Chrome de "arquivo salvo", que aparece exatamente
+       naquele canto). */
+    .aviso-sucesso {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #d4edda;
+        border: 2px solid #28a745;
+        color: #155724;
+        padding: 20px 32px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        z-index: 1000;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+{% include 'produtor/produtor_topo.html' with context %}
+
+<div class="layout">
+    {% include 'produtor/produtor_menu.html' %}
+
+    <div class="conteudo">
+        {% include 'produtor/aviso_download.html' %}
+        {% if aviso %}
+        <div style="background:#FFF8E1;border:2px solid #F9A825;color:#5D4037;padding:12px 16px;border-radius:8px;margin:0 0 14px 0;font-weight:600;">{{ aviso }}</div>
+        {% endif %}
+        {% if sem_nascimento %}
+        <div style="background:#FFF8E1;border:2px solid #F9A825;color:#5D4037;padding:12px 16px;border-radius:8px;margin:0 0 14px 0;font-weight:600;">{{ sem_nascimento }} animal(is) sem Data de Nascimento não aparecem nos relatórios por faixa. Corrija a data (Correções do Hub de Entrada) ou avise a Consiste.</div>
+        {% endif %}
+        <div class="cabecalho-pagina">
+            <h2>Relatório de ERAS — Selecionar Faixa Etária</h2>
+            <p>Escolha a faixa etária desejada para gerar o relatório dos animais em estoque nesta faixa.</p>
+        </div>
+
+        {% if faixas_etarias %}
+        <div class="grid-faixas">
+            {% for faixa in faixas_etarias %}
+            <a class="card-faixa" data-aviso-descricao="Relatório ERAS — {{ faixa.descricao }}"
+               href="/produtor/relatorio-eras/gerar?id_propriedade={{ id_propriedade }}&codigo_geras={{ faixa.codigo_geras }}">
+                <div class="titulo-faixa">{{ faixa.descricao }}</div>
+                <div class="intervalo-faixa">{{ faixa.dias_min }} a {{ faixa.dias_max }} dias</div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="aviso-vazio">
+            Nenhuma faixa etária cadastrada no sistema. Contate a Consiste.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% include 'produtor/produtor_rodape.html' %}
+
+<script>
+    function toggleMenu() {
+        var sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('recolhido');
+    }
+</script>
+
+</body>
+</html>
+
+<!--
+=========================================================
+FIM DE ARQUIVO: frontend\templates\produtor\relatorio_eras_faixas.html
+=========================================================
+-->

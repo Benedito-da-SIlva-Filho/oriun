@@ -1,0 +1,81 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\complemento_tb_2017_numero_comunicado_s081.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-28 20:45 -03
+-- ATUALIZADO EM: 2026-09-28 20:45 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   A v1.3.0 do comunicado_entrada.py (entregue na Sessao 080)
+--   nunca chegou a C:\orion - o projeto rodou a v1.2.0, que NAO
+--   grava o numero do Comunicado na linha de Entrada do kardex
+--   (tb_2017_movimentacoes). Todo Comunicado gerado depois do
+--   complemento da Sessao 080 ficou com o kardex em branco.
+--   Este script completa esses casos, em TODOS os schemas de
+--   Produtor, copiando o numero que a tb_2001 ja tem.
+--
+--   Filtro preciso (so a linha certa): mesmo animal
+--   (m.id_animal = e.id) + gta_entrada igual ao numero da GTA do
+--   animal + linha de Entrada (tipo_saida vazio) + kardex ainda
+--   sem numero. Texto de 6 digitos ("000002"), igual ao codigo.
+--
+--   PASSO 1: previa (so conta - nao altera nada).
+--   PASSO 2: complemento (bloco DO, atomico).
+--   Rodar DEPOIS de instalar o comunicado_entrada.py v1.4.0.
+--
+--   v1.0.0: Criacao (Sessao 081).
+-- =========================================================
+
+
+-- =========================================================
+-- PASSO 1 - Previa: quantas linhas seriam completadas no Zopone
+-- (troque o schema para conferir outro Produtor)
+-- =========================================================
+SELECT COUNT(*) AS linhas_a_completar
+FROM produtor_00004.tb_2017_movimentacoes m
+JOIN produtor_00004.tb_2001 e     ON e.id = m.id_animal
+JOIN produtor_00004.tb_4001_gta g ON g.id = e.id_gta_entrada
+WHERE e.numero_comunicado IS NOT NULL
+  AND m.numero_comunicado IS NULL
+  AND m.tipo_saida IS NULL
+  AND m.gta_entrada = g.numero_gta_completo;
+
+
+-- =========================================================
+-- PASSO 2 - Complemento em todos os schemas de Produtor
+-- (o resultado aparece na aba Messages)
+-- =========================================================
+DO $$
+DECLARE
+    r       RECORD;
+    v_qtde  INTEGER;
+BEGIN
+    FOR r IN
+        SELECT t.table_schema AS esquema
+        FROM information_schema.tables t
+        WHERE t.table_schema LIKE 'produtor\_%'
+          AND t.table_name = 'tb_2017_movimentacoes'
+        ORDER BY t.table_schema
+    LOOP
+        EXECUTE format($sql$
+            UPDATE %1$I.tb_2017_movimentacoes m
+               SET numero_comunicado = lpad(e.numero_comunicado::text, 6, '0')
+              FROM %1$I.tb_2001 e
+              JOIN %1$I.tb_4001_gta g ON g.id = e.id_gta_entrada
+             WHERE e.id = m.id_animal
+               AND e.numero_comunicado IS NOT NULL
+               AND m.numero_comunicado IS NULL
+               AND m.tipo_saida IS NULL
+               AND m.gta_entrada = g.numero_gta_completo
+        $sql$, r.esquema);
+        GET DIAGNOSTICS v_qtde = ROW_COUNT;
+
+        RAISE NOTICE '% : % linha(s) do kardex completada(s)', r.esquema, v_qtde;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\complemento_tb_2017_numero_comunicado_s081.sql
+-- =========================================================

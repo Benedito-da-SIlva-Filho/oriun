@@ -1,0 +1,49 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\alter_backup_restore_pedido_expirado.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-04 17:30 -03
+-- ATUALIZADO EM: 2026-09-04 17:30 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   v1.0.0: Adiciona a coluna expirado_em em
+--   tb_backup_restore_pedido, em TODOS os schemas de Produtor
+--   existentes (produtor_NNNNN) - mesma logica de loop ja usada
+--   em create_backup_restore.sql, adaptada para ALTER TABLE.
+--
+--   Alinhamento fechado com Benedito (Sessao 046, 04/09/2026):
+--   mecanismo de expiracao automatica de Pedidos de Restore nao
+--   atendidos. Pedido sem atendimento da Consiste em 7 dias
+--   corridos passa a ser marcado como expirado (expirado_em
+--   preenchido) na proxima vez que a tela do Consiste ou do
+--   Produtor for aberta - sem apagar o registro (mesmo espirito
+--   de auditoria ja usado em atendido_em/desfeito_em).
+--
+--   expirado_em fica NULO ate o pedido vencer - usado tanto para
+--   saber SE ja expirou (nao aparece mais como pendente para a
+--   Consiste) quanto para exibir o selo "Expirado" na tela do
+--   Produtor.
+-- =========================================================
+
+DO $$
+DECLARE
+    schema_rec RECORD;
+BEGIN
+    FOR schema_rec IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor_%'
+    LOOP
+        EXECUTE format('
+            ALTER TABLE %I.tb_backup_restore_pedido
+            ADD COLUMN IF NOT EXISTS expirado_em TIMESTAMP;
+        ', schema_rec.schema_name);
+
+        RAISE NOTICE 'Coluna expirado_em adicionada em %', schema_rec.schema_name;
+    END LOOP;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alter_backup_restore_pedido_expirado.sql
+-- =========================================================

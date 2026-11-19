@@ -1,0 +1,272 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\zerar_base_teste_s084.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-01 12:26 -03
+-- ATUALIZADO EM: 2026-10-01 12:52 -03
+-- VERSAO: 1.2.0
+--
+-- DESCRICAO:
+--   ZERA A MOVIMENTACAO da BASE DE TESTES nos 4 schemas de
+--   Produtor (produtor_00001, 00004, 00005 e 00010), MANTENDO os
+--   cadastros. Decisao de Benedito, Sessao 084: a base de teste
+--   acumulou lotes de brincos repetidos e comecar do zero e o
+--   caminho mais curto. Substitui (e torna desnecessario) o
+--   script cancelar_brincos_solicitacao_123456_s084.sql.
+--
+--   APAGA (TRUNCATE ... RESTART IDENTITY - numeracao volta ao 1):
+--     tb_2001 (animais), tb_2012_com_entrada (Comunicados),
+--     tb_2017_movimentacoes, tb_3007_brincos_entrada (lotes),
+--     tb_3008_brincos_saida, tb_4001_gta (GTAs e Notificacoes
+--     NAS), tb_4001_gta_animais, tb_5001_brincagem,
+--     tb_5003_rejeicoes_brincagem, tb_7002_pia,
+--     tb_7017_entrada_brincos_rfid, tb_log_alteracao_gta,
+--     tb_log_conferencia_parceiro, tb_log_operacoes e
+--     tb_log_operacoes_itens (Log de
+--     Operacoes e Desfazer: ficariam apontando para registros
+--     que nao existem mais).
+--
+--   MANTEM (nao e tocado): schema public inteiro (usuarios,
+--   produtores, propriedades, proprietarios, certificadoras,
+--   protocolos, catalogos) e, em cada schema de Produtor:
+--     tb_4005_racas, tb_parceiros, tb_parceiros_propriedades,
+--     tb_versao_schema e tb_backup_restore_pedido.
+--
+--   DEPOIS DE RODAR: refazer a Entrada de Brincos (os lotes
+--   foram apagados), cada faixa UMA vez so - a Entrada de
+--   Brincos ainda aceita faixa repetida (pendencia vigente).
+--
+--   COMO FUNCIONA: e UM comando so (DO), entao e tudo-ou-nada:
+--   se qualquer trava falhar ou der erro, NADA e apagado e NAO
+--   e preciso rodar ROLLBACK. Sem tabela temporaria, sem BEGIN
+--   nem COMMIT.
+--
+--   TRAVAS (qualquer uma falhando, nada e apagado):
+--     1. Os 4 schemas precisam existir.
+--     2. Se alguma tabela COM DADOS nao estiver nas listas de
+--        apagar nem de manter (ex.: tabela de outro modulo num
+--        schema que ainda nao foi inventariado), o script PARA e
+--        lista TODAS elas na mensagem.
+--     3. TRUNCATE sem CASCADE, num UNICO comando com todos os
+--        schemas. Se uma tabela FORA da lista de apagar (de
+--        qualquer schema) apontar por chave estrangeira para uma
+--        tabela que seria apagada, o script PARA e mostra o par
+--        exato (schema.tabela -> schema.tabela).
+--     4. No fim: todas as tabelas da lista de apagar com 0 linhas
+--        e as tabelas mantidas (4 schemas + public) com exatamente
+--        as mesmas quantidades de antes.
+--
+--   COMO RODAR (pgAdmin, Query Tool, base de teste): 1) gerar um
+--   backup; 2) PARAR o Orion (Waitress) para nao haver conexao
+--   segurando as tabelas; 3) abrir este arquivo e executar tudo
+--   (F5). O resumo aparece na aba Mensagens (NOTICE). Para
+--   conferir, rodar conferir_base_zerada_s084.sql.
+--
+--   v1.0.0: Criacao (Sessao 084, 01/10/2026, 12:26 -03).
+--   v1.1.0: Sessao 084 (01/10/2026, 12:36 -03) - o inventario do
+--       produtor_00001 trouxe uma tabela que nao estava nas listas:
+--       tb_log_conferencia_parceiro (2 linhas, so log - nao e
+--       cadastro). Entrou na lista de APAGAR. Era exatamente o caso
+--       para o qual existe a TRAVA 2 (a v1.0.0 parava nela, sem
+--       apagar nada). Nenhuma outra mudanca.
+--   v1.2.0: Sessao 084 (01/10/2026, 12:52 -03) - a 1a execucao real da v1.1.0
+--       falhou: "tb_2012_com_entrada referencia tb_4001_gta". Como a
+--       tb_2012 do produtor_00004 ja estava na lista, a tabela que
+--       atrapalhava era OUTRA, de outro schema, com chave estrangeira
+--       apontando para a GTA do produtor_00004 (FK entre schemas). A
+--       v1.1.0 fazia um TRUNCATE por schema, e o banco so aceita
+--       quando as duas pontas da FK estao no mesmo comando. Agora e
+--       UM TRUNCATE so, com as tabelas de todos os schemas, e a trava
+--       3 passou a mostrar o par exato quando sobrar FK de fora.
+--       Nada foi apagado na falha (e tudo-ou-nada).
+-- =========================================================
+
+DO $$
+DECLARE
+    -- Schemas de Produtor afetados.
+    v_schemas  text[] := ARRAY['produtor_00001', 'produtor_00004', 'produtor_00005', 'produtor_00010'];
+
+    -- Tabelas de MOVIMENTACAO (apagadas em cada schema).
+    v_apagar   text[] := ARRAY[
+        'tb_2001', 'tb_2012_com_entrada', 'tb_2017_movimentacoes',
+        'tb_3007_brincos_entrada', 'tb_3008_brincos_saida',
+        'tb_4001_gta', 'tb_4001_gta_animais',
+        'tb_5001_brincagem', 'tb_5003_rejeicoes_brincagem',
+        'tb_7002_pia', 'tb_7017_entrada_brincos_rfid',
+        'tb_log_alteracao_gta', 'tb_log_conferencia_parceiro',
+        'tb_log_operacoes', 'tb_log_operacoes_itens'
+    ];
+
+    -- Tabelas de CADASTRO conhecidas (mantidas em cada schema).
+    v_manter   text[] := ARRAY[
+        'tb_4005_racas', 'tb_parceiros', 'tb_parceiros_propriedades',
+        'tb_versao_schema', 'tb_backup_restore_pedido'
+    ];
+
+    s                text;
+    t                text;
+    n                bigint;
+    v_lista          text;
+    v_desconhecidas  text := '';
+    v_antes          text := '';
+    v_depois         text := '';
+    v_total_linhas   bigint := 0;
+    v_total_tabelas  integer := 0;
+    v_ausentes       text := '';
+    v_todas          text[] := ARRAY[]::text[];
+    v_fks            text;
+BEGIN
+    -- -----------------------------------------------------
+    -- Trava 1: os 4 schemas existem.
+    -- -----------------------------------------------------
+    FOREACH s IN ARRAY v_schemas LOOP
+        IF NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = s) THEN
+            RAISE EXCEPTION 'TRAVA 1: o schema % nao existe nesta base. Nada foi apagado.', s;
+        END IF;
+    END LOOP;
+
+    -- -----------------------------------------------------
+    -- Trava 2: nenhuma tabela COM DADOS fora das duas listas.
+    -- Junta TODAS antes de parar (uma rodada so para resolver).
+    -- -----------------------------------------------------
+    FOREACH s IN ARRAY v_schemas LOOP
+        FOR t IN
+            SELECT table_name::text
+            FROM information_schema.tables
+            WHERE table_schema = s
+              AND table_type = 'BASE TABLE'
+              AND NOT (table_name::text = ANY (v_apagar))
+              AND NOT (table_name::text = ANY (v_manter))
+            ORDER BY table_name
+        LOOP
+            EXECUTE format('SELECT count(*) FROM %I.%I', s, t) INTO n;
+            IF n > 0 THEN
+                v_desconhecidas := v_desconhecidas || E'\n   ' || s || '.' || t || ' (' || n || ' linhas)';
+            END IF;
+        END LOOP;
+    END LOOP;
+    IF v_desconhecidas <> '' THEN
+        RAISE EXCEPTION E'TRAVA 2: tabela(s) com dados que nao estao nas listas de apagar nem de manter:%\nMande esta lista para a Consiste decidir. Nada foi apagado.', v_desconhecidas;
+    END IF;
+
+    -- -----------------------------------------------------
+    -- "Foto" ANTES das tabelas que devem ficar intactas: as
+    -- mantidas de cada schema + todas as do schema public.
+    -- -----------------------------------------------------
+    FOREACH s IN ARRAY v_schemas LOOP
+        FOREACH t IN ARRAY v_manter LOOP
+            IF to_regclass(format('%I.%I', s, t)) IS NOT NULL THEN
+                EXECUTE format('SELECT count(*) FROM %I.%I', s, t) INTO n;
+                v_antes := v_antes || s || '.' || t || '=' || n || ';';
+            END IF;
+        END LOOP;
+    END LOOP;
+    FOR t IN
+        SELECT table_name::text FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        ORDER BY table_name
+    LOOP
+        EXECUTE format('SELECT count(*) FROM public.%I', t) INTO n;
+        v_antes := v_antes || 'public.' || t || '=' || n || ';';
+    END LOOP;
+
+    -- -----------------------------------------------------
+    -- Monta a lista UNICA de tabelas a apagar (todos os schemas)
+    -- e conta as linhas. v1.2.0: um TRUNCATE so (antes era um por
+    -- schema), porque pode haver chave estrangeira ENTRE schemas.
+    -- -----------------------------------------------------
+    v_lista := NULL;
+    FOREACH s IN ARRAY v_schemas LOOP
+        FOREACH t IN ARRAY v_apagar LOOP
+            IF to_regclass(format('%I.%I', s, t)) IS NULL THEN
+                v_ausentes := v_ausentes || s || '.' || t || ' ';
+            ELSE
+                EXECUTE format('SELECT count(*) FROM %I.%I', s, t) INTO n;
+                v_total_linhas  := v_total_linhas + n;
+                v_total_tabelas := v_total_tabelas + 1;
+                v_todas := v_todas || (s || '.' || t);
+                IF v_lista IS NULL THEN
+                    v_lista := format('%I.%I', s, t);
+                ELSE
+                    v_lista := v_lista || ', ' || format('%I.%I', s, t);
+                END IF;
+            END IF;
+        END LOOP;
+    END LOOP;
+
+    -- -----------------------------------------------------
+    -- Trava 3: alguma tabela FORA da lista (de qualquer schema)
+    -- aponta por chave estrangeira para uma tabela da lista? Mostra
+    -- TODOS os pares antes de parar.
+    -- -----------------------------------------------------
+    SELECT string_agg(E'\n   ' || (n1.nspname || '.' || c1.relname) || '  ->  ' || (n2.nspname || '.' || c2.relname), '')
+    INTO v_fks
+    FROM pg_constraint c
+    JOIN pg_class c1     ON c1.oid = c.conrelid
+    JOIN pg_namespace n1 ON n1.oid = c1.relnamespace
+    JOIN pg_class c2     ON c2.oid = c.confrelid
+    JOIN pg_namespace n2 ON n2.oid = c2.relnamespace
+    WHERE c.contype = 'f'
+      AND (n2.nspname || '.' || c2.relname) = ANY (v_todas)
+      AND NOT ((n1.nspname || '.' || c1.relname) = ANY (v_todas));
+    IF v_fks IS NOT NULL THEN
+        RAISE EXCEPTION E'TRAVA 3: tabela(s) FORA da lista apontam por chave estrangeira para tabela(s) que seriam apagadas:%\nMande esta lista para a Consiste decidir. Nada foi apagado.', v_fks;
+    END IF;
+
+    -- -----------------------------------------------------
+    -- Apaga (UM comando, sem CASCADE, numeracao reiniciada).
+    -- -----------------------------------------------------
+    IF v_lista IS NOT NULL THEN
+        EXECUTE 'TRUNCATE TABLE ' || v_lista || ' RESTART IDENTITY';
+    END IF;
+
+    -- -----------------------------------------------------
+    -- Trava 4: tudo que devia zerar esta zerado e o que devia
+    -- ficar esta igual.
+    -- -----------------------------------------------------
+    FOREACH s IN ARRAY v_schemas LOOP
+        FOREACH t IN ARRAY v_apagar LOOP
+            IF to_regclass(format('%I.%I', s, t)) IS NOT NULL THEN
+                EXECUTE format('SELECT count(*) FROM %I.%I', s, t) INTO n;
+                IF n <> 0 THEN
+                    RAISE EXCEPTION 'TRAVA 4: %.% ficou com % linha(s). Nada foi apagado.', s, t, n;
+                END IF;
+            END IF;
+        END LOOP;
+    END LOOP;
+
+    FOREACH s IN ARRAY v_schemas LOOP
+        FOREACH t IN ARRAY v_manter LOOP
+            IF to_regclass(format('%I.%I', s, t)) IS NOT NULL THEN
+                EXECUTE format('SELECT count(*) FROM %I.%I', s, t) INTO n;
+                v_depois := v_depois || s || '.' || t || '=' || n || ';';
+            END IF;
+        END LOOP;
+    END LOOP;
+    FOR t IN
+        SELECT table_name::text FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        ORDER BY table_name
+    LOOP
+        EXECUTE format('SELECT count(*) FROM public.%I', t) INTO n;
+        v_depois := v_depois || 'public.' || t || '=' || n || ';';
+    END LOOP;
+
+    IF v_antes <> v_depois THEN
+        RAISE EXCEPTION 'TRAVA 4: alguma tabela que devia ficar intacta mudou. Antes: % | Depois: %. Nada foi apagado.', v_antes, v_depois;
+    END IF;
+
+    -- -----------------------------------------------------
+    -- Resumo (aba Mensagens do pgAdmin).
+    -- -----------------------------------------------------
+    RAISE NOTICE 'BASE DE TESTE ZERADA: % linha(s) apagadas em % tabela(s) de % schema(s). Cadastros mantidos.',
+        v_total_linhas, v_total_tabelas, array_length(v_schemas, 1);
+    IF v_ausentes <> '' THEN
+        RAISE NOTICE 'Tabelas da lista que nao existem nestes schemas (ignoradas): %', v_ausentes;
+    END IF;
+END $$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\zerar_base_teste_s084.sql
+-- =========================================================

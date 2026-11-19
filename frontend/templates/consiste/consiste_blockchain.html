@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\consiste
+     MODULO: templates\consiste\consiste_blockchain.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-09 19:00 -03
+     ATUALIZADO EM: 2026-10-10 18:00 -03
+     VERSAO: 1.1.0
+
+     DESCRICAO:
+         Tela Consiste > Blockchain (Sessao 092): painel de
+         acompanhamento e validacao do blockchain de TODOS os
+         Produtores ativos. So o perfil CONSISTE acessa. SO LEITURA -
+         o envio continua automatico (carteiro), esta tela nao
+         interfere em nada. Unica gravacao: a marca "conferido" dos
+         eventos OK, feita pelo botao "Validar agora".
+
+         Duas partes:
+           1) Tabela-resumo por Produtor (sempre): provedores ligados,
+              total de eventos e envios por status.
+           2) Validacao (quando o usuario clica "Validar agora"):
+              resultado das conferencias, com [OK] / [ATENCAO] /
+              [FALHA], e botao para baixar o relatorio em .txt.
+
+         Variaveis esperadas do router (consiste_blockchain.py):
+           resumo             - lista de ResumoProdutor
+           resultados         - None ou lista de ResultadoProdutor
+           totais             - None ou {'OK','ATENCAO','FALHA'}
+           quando             - datetime da validacao (ou None)
+           id_produtor_filtro - id escolhido no filtro (ou None)
+           tipo_filtro        - tipo de evento escolhido (ou None)
+           mostrar_ok         - True = mostra tambem as linhas OK
+           tudo               - True = "reconferir tudo" marcado
+           conferencia        - None ou {'conferidos_agora','pulados','marcados'}
+           tipos_evento       - lista dos tipos de evento validos
+
+     v1.0.0: Criacao (Sessao 092, 09/10/2026, 19:00 -03).
+     v1.1.0: Sessao 093 (10/10/2026, 18:00 -03) - Entrega 2: caixa "Reconferir
+             tudo"; coluna "A conferir" no resumo; linha com conferidos agora
+             / ja conferidos antes / marcados; a pagina rola sozinha ate o
+             resultado depois de "Validar agora"; textos ajustados (o botao
+             "Validar agora" agora grava a marca de conferido).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Blockchain</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .pagina-subtitulo { font-size: 13px; color: #777777; margin-bottom: 20px; }
+
+        .bloco { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 1000px; margin-bottom: 18px; }
+        .bloco h3 { font-size: 15px; color: #333333; margin-bottom: 4px; }
+        .bloco .nota { font-size: 12px; color: #888888; margin-bottom: 14px; }
+
+        table.resumo { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.resumo th { text-align: left; font-size: 11px; color: #777777; text-transform: uppercase; padding: 8px 10px; border-bottom: 2px solid #e0e0e0; }
+        table.resumo td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; color: #333333; vertical-align: top; }
+        table.resumo td.num, table.resumo th.num { text-align: right; }
+        .zero { color: #bbbbbb; }
+        .alerta-amarelo { color: #b26a00; font-weight: bold; }
+        .alerta-vermelho { color: #c62828; font-weight: bold; }
+        .ok-verde { color: #2e7d32; font-weight: bold; }
+        .sem-provedor { color: #999999; font-style: italic; }
+        .linha-problema { color: #c62828; font-size: 12px; }
+
+        .form-validar { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+        .form-validar .campo label { display: block; font-size: 12px; font-weight: bold; color: #555555; margin-bottom: 6px; }
+        .form-validar select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; min-width: 190px; }
+        .form-validar .check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #444444; padding-bottom: 9px; }
+        .btn-validar { background: #1F4E79; color: #ffffff; border: none; border-radius: 6px; padding: 10px 18px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-validar:hover { background: #173b5d; }
+        .btn-baixar { background: #ffffff; color: #1F4E79; border: 1px solid #1F4E79; border-radius: 6px; padding: 9px 16px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-baixar:hover { background: #eef4fa; }
+
+        .faixa-total { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .pilula { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .pilula.ok { background: #E8F3E8; color: #2e7d32; }
+        .pilula.atencao { background: #FFF6DD; color: #b26a00; }
+        .pilula.falha { background: #FDE7E7; color: #c62828; }
+        .quando { font-size: 12px; color: #888888; margin-bottom: 14px; }
+
+        .cartao-produtor { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        .cartao-produtor .cabec { background: #f7f7f7; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .cartao-produtor .cabec .nome { font-weight: bold; font-size: 14px; color: #333333; }
+        .cartao-produtor .cabec .sub { font-size: 12px; color: #888888; font-weight: normal; }
+        .cartao-produtor .corpo { padding: 6px 14px 10px; }
+        .achado { font-size: 13px; padding: 6px 0; border-bottom: 1px solid #f3f3f3; display: flex; gap: 10px; align-items: flex-start; }
+        .achado:last-child { border-bottom: none; }
+        .etiqueta { font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; margin-top: 1px; min-width: 66px; text-align: center; }
+        .etiqueta.ok { background: #E8F3E8; color: #2e7d32; }
+        .etiqueta.atencao { background: #FFF6DD; color: #b26a00; }
+        .etiqueta.falha { background: #FDE7E7; color: #c62828; }
+        .tudo-certo { font-size: 13px; color: #2e7d32; padding: 8px 0; }
+        .resumo-linha { font-size: 12px; color: #777777; padding-top: 8px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% include 'consiste/consiste_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128279;</span> Blockchain</h2>
+            </div>
+            <div class="pagina-subtitulo">Acompanhamento e validação do blockchain de todos os Produtores ativos. O envio continua automático (carteiro).</div>
+
+            <!-- ============ 1) RESUMO POR PRODUTOR ============ -->
+            <div class="bloco">
+                <h3>Resumo por Produtor</h3>
+                <div class="nota">Eventos gerados e situação dos envios. &quot;A conferir&quot; = eventos que o validador ainda não conferiu. Quem não tem provedor ligado não gera eventos.</div>
+
+                <table class="resumo">
+                    <thead>
+                        <tr>
+                            <th>Produtor</th>
+                            <th>Provedores ligados</th>
+                            <th class="num">Eventos</th>
+                            <th class="num">A conferir</th>
+                            <th class="num">Pendente</th>
+                            <th class="num">Enviando</th>
+                            <th class="num">Confirmado</th>
+                            <th class="num">Erro</th>
+                            <th class="num">Cancelado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in resumo %}
+                        <tr>
+                            <td><strong>{{ p.nome or p.rotulo }}</strong><br><span class="sub" style="font-size:11px;color:#999;">{{ p.rotulo }}</span></td>
+                            {% if p.sem_tabelas %}
+                            <td colspan="8" class="linha-problema">Faltam as tabelas do blockchain neste Produtor &#8212; rode o script Tabelas\12_create_tb_blk_8001_8003_produtor.sql.</td>
+                            {% elif p.erro %}
+                            <td colspan="8" class="linha-problema">Não foi possível ler: {{ p.erro }}</td>
+                            {% else %}
+                            <td>
+                                {% if p.provedores %}{{ p.provedores | join(', ') }}{% else %}<span class="sem-provedor">nenhum</span>{% endif %}
+                            </td>
+                            <td class="num">{% if p.eventos %}{{ p.eventos }}{% else %}<span class="zero">0</span>{% endif %}</td>
+                            <td class="num">{% if p.a_conferir %}<span class="alerta-amarelo">{{ p.a_conferir }}</span>{% else %}<span class="zero">0</span>{% endif %}</td>
+                            {% set n_pend = p.envios.get('PENDENTE', 0) %}
+                            {% set n_env = p.envios.get('ENVIANDO', 0) %}
+                            {% set n_conf = p.envios.get('CONFIRMADO', 0) %}
+                            {% set n_erro = p.envios.get('ERRO', 0) %}
+                            {% set n_canc = p.envios.get('CANCELADO', 0) %}
+                            <td class="num">{% if n_pend %}<span class="alerta-amarelo">{{ n_pend }}</span>{% else %}<span class="zero">0</span>{% endif %}</td>
+                            <td class="num">{% if n_env %}{{ n_env }}{% else %}<span class="zero">0</span>{% endif %}</td>
+                            <td class="num">{% if n_conf %}<span class="ok-verde">{{ n_conf }}</span>{% else %}<span class="zero">0</span>{% endif %}</td>
+                            <td class="num">{% if n_erro %}<span class="alerta-vermelho">{{ n_erro }}</span>{% else %}<span class="zero">0</span>{% endif %}</td>
+                            <td class="num">{% if n_canc %}{{ n_canc }}{% else %}<span class="zero">0</span>{% endif %}</td>
+                            {% endif %}
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="9" class="sem-provedor">Nenhum Produtor ativo encontrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ============ 2) VALIDACAO ============ -->
+            <div class="bloco">
+                <h3>Validação</h3>
+                <div class="nota">Confere hashes, fila e envios, só dos eventos ainda não conferidos. Não envia nem cancela nada; só grava a marca &quot;conferido&quot; nos eventos que passaram em tudo.</div>
+
+                <form method="GET" action="/consiste/blockchain" class="form-validar">
+                    <div class="campo">
+                        <label for="produtor">Produtor</label>
+                        <select id="produtor" name="produtor">
+                            <option value="">Todos os Produtores ativos</option>
+                            {% for p in resumo %}
+                            <option value="{{ p.id_produtor }}" {{ 'selected' if id_produtor_filtro == p.id_produtor else '' }}>{{ p.nome or p.rotulo }} ({{ p.rotulo }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="tipo">Tipo de evento</label>
+                        <select id="tipo" name="tipo">
+                            <option value="">Todos os tipos</option>
+                            {% for t in tipos_evento %}
+                            <option value="{{ t }}" {{ 'selected' if tipo_filtro == t else '' }}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label class="check">
+                        <input type="checkbox" name="mostrar_ok" value="1" {{ 'checked' if mostrar_ok else '' }}>
+                        Mostrar também o que está OK
+                    </label>
+                    <label class="check">
+                        <input type="checkbox" name="tudo" value="1" {{ 'checked' if tudo else '' }}>
+                        Reconferir tudo (inclusive o que já foi conferido)
+                    </label>
+                    <button type="submit" name="validar" value="1" class="btn-validar">&#10004; Validar agora</button>
+                    <button type="submit" formaction="/consiste/blockchain/relatorio.txt" class="btn-baixar" title="Sempre confere tudo e nunca marca nada">&#11015; Baixar relatório (.txt)</button>
+                </form>
+            </div>
+
+            {% if resultados is not none %}
+            <div class="bloco" id="resultado">
+                <h3>Resultado da validação</h3>
+                <div class="quando">Conferido em {{ quando.strftime('%d/%m/%Y %H:%M:%S') }}{% if tipo_filtro %} &#8212; só eventos {{ tipo_filtro }}{% endif %} &#8212; {{ 'reconferiu tudo' if tudo else 'só o que ainda não tinha sido conferido' }}</div>
+                {% if conferencia %}
+                <div class="quando">Conferidos agora: <strong>{{ conferencia['conferidos_agora'] }}</strong> &#183; Já conferidos antes (pulados): <strong>{{ conferencia['pulados'] }}</strong> &#183; Marcados como conferidos: <strong>{{ conferencia['marcados'] }}</strong></div>
+                {% endif %}
+
+                <div class="faixa-total">
+                    <span class="pilula ok">{{ totais['OK'] }} OK</span>
+                    <span class="pilula atencao">{{ totais['ATENCAO'] }} atenção</span>
+                    <span class="pilula falha">{{ totais['FALHA'] }} falha</span>
+                </div>
+
+                {% for r in resultados %}
+                <div class="cartao-produtor">
+                    <div class="cabec">
+                        <div class="nome">{{ r.nome or r.rotulo }} <span class="sub">{{ r.rotulo }}</span></div>
+                        <div class="faixa-total" style="margin:0;">
+                            <span class="pilula ok">{{ r.total['OK'] }} OK</span>
+                            <span class="pilula atencao">{{ r.total['ATENCAO'] }} atenção</span>
+                            <span class="pilula falha">{{ r.total['FALHA'] }} falha</span>
+                        </div>
+                    </div>
+                    <div class="corpo">
+                        {% set ns = namespace(mostrados=0) %}
+                        {% for a in r.achados %}
+                            {% if a.nivel != 'OK' or mostrar_ok %}
+                            {% set ns.mostrados = ns.mostrados + 1 %}
+                            <div class="achado">
+                                <span class="etiqueta {{ a.nivel | lower }}">{{ 'ATENÇÃO' if a.nivel == 'ATENCAO' else a.nivel }}</span>
+                                <span>{{ a.texto }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% if ns.mostrados == 0 %}
+                        <div class="tudo-certo">&#9989; Nada a apontar neste Produtor.</div>
+                        {% endif %}
+                        {% if r.eventos > 0 %}
+                        <div class="resumo-linha">{{ r.eventos }} evento(s); conferidos agora: {{ r.conferidos_agora }}; já conferidos antes: {{ r.pulados }}; marcados: {{ r.marcados }}; envios: {{ r.resumo_envios }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="tudo-certo">Nenhum Produtor encontrado.</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // v1.1.0: depois de "Validar agora" a pagina rola sozinha ate o resultado
+        window.addEventListener('load', function () {
+            var alvo = document.getElementById('resultado');
+            if (alvo) { alvo.scrollIntoView(); }
+        });
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\consiste\consiste_blockchain.html
+     ========================================================= -->

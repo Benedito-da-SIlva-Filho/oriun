@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO:      Orion
+     PASTA:        C:\orion\frontend\templates\produtor
+     MODULO:       frontend\templates\produtor\reimpressao_comunicado_listar.html
+     AUTOR:        Benedito Silva Filho
+     CRIADO EM:    2026-09-16 11:05 -03
+     ATUALIZADO EM: 2026-10-13 14:25 -03
+     VERSAO: 1.8.0
+
+     DESCRICAO:
+         Tela de listagem do modulo "Reimpressao Comunicado" - mostra
+         TODOS os Comunicados de Entrada da Propriedade escolhida
+         (qualquer status), com badge indicando ABERTO/IMPRESSO. Botao
+         "Reimprimir" so gera o PDF de novo - o router nunca grava
+         nada no banco (ver backend/routers/reimpressao_comunicado.py).
+
+         TESTADO em producao (Sessao 054, Comunicado 000001, Fazenda
+         Campo Grande) - listagem e reimpressao confirmadas
+         funcionando por Benedito (badge IMPRESSO exibido
+         corretamente apos a Impressao original).
+
+         v1.0.0: Criacao do template (Sessao 054) - CSS/estrutura de
+                 topo+sidebar INVENTADOS (sem ver uma pagina real
+                 antes), resultou em botao "Menu" com glifo quebrado
+                 e menu lateral sem estilo nenhum (classes .menu-
+                 lateral/.aberto nao existem no projeto real).
+         v1.0.1: Sessao 054 (16/09/2026, 11:40 -03) - botao "Voltar"
+                 corrigido (apontava para o proprio 'iniciar' do
+                 modulo, que com 1 so par Produtor/Propriedade
+                 redireciona de volta pra esta mesma tela - mesmo
+                 bug da Regra de Ouro #4); icone do menu trocado por
+                 texto "Menu" (correcao pontual, ainda sem resolver a
+                 causa raiz do sidebar sem estilo).
+         v1.1.0: Sessao 054 (16/09/2026, 11:50 -03) - CSS de topo/
+                 sidebar/layout/rodape reescrito do zero, copiado
+                 literalmente de produtor_home.html (pagina real
+                 fornecida por Benedito) em vez de inventado: classes
+                 corretas .sidebar/.menu-item/.menu-icone/.menu-
+                 texto/.menu-secao/.ativo, toggle via toggleMenu()/
+                 #sidebar/.recolhido (nao mais .menu-lateral/.aberto).
+                 Botao de menu volta a usar a entidade &#9776; (igual
+                 ao original) - o "?" visto antes era sintoma do CSS
+                 quebrado, nao da fonte. Adicionado link "Voltar" no
+                 topo (produtor_home.html nao tem esse botao, por ser
+                 a propria Home).
+         v1.1.1: Sessao 054 (16/09/2026, 12:15 -03) -
+                 Correcao pedida por Benedito: "Voltar" apontava para
+                 '/produtor/hub/entrada' (v1.1.0) - errado, a tela de
+                 origem logica do fluxo (Regra de Ouro #4) e o proprio
+                 'iniciar' deste modulo (Padrao Nº1), nao o Hub.
+                 Corrigido para '/produtor/reimpressao-comunicado/
+                 iniciar'. Com 1 so par Propriedade/Produtor, iniciar()
+                 so re-resolve e volta pra esta mesma tela (esperado,
+                 nao ha nada a escolher); com 2+ pares (ex.: Claudenor
+                 Zopone Junior, 4 propriedades - bug P-036 corrigido no
+                 router v1.1.0), Voltar mostra a tela real de selecao.
+         v1.2.0: Sessao 056 (18/09/2026, 11:10 -03) - Varredura
+                 Voltar/Home (Checklist Pre-Codigo): botao Voltar
+                 usava classe propria .btn-voltar (so texto, sem
+                 caixa/seta) em vez de .btn-voltar-topo do Padrao
+                 Reutilizavel Nº4 (Regra de Ouro #5) - corrigido para
+                 a classe e o glifo &#8592; reais. Adicionado botao
+                 Home (ausente desde a criacao) - decisao fechada
+                 nesta sessao: toda tela, exceto a propria Home, tem
+                 Home, para atalho direto de qualquer ponto do
+                 sistema. Ordem no topo: usuario -> badge -> Voltar ->
+                 Home -> Sair (Padrao Nº4).
+         v1.3.0: Sessao 076 (21/09/2026, 21:51 -03) - TOPO e RODAPE
+                 substituidos por comandos de INCLUDE das
+                 pecas-mestras produtor_topo.html / produtor_
+                 rodape.html. Voltar (fixo para /produtor/
+                 reimpressao-comunicado/iniciar desde a v1.1.1)
+                 passado via um comando de atribuicao antes do
+                 include - mesmo destino de sempre, sem mudanca de
+                 comportamento. Home continua aparecendo
+                 normalmente (mostrar_home default True).
+         v1.4.0: Sessao 090 (08/10/2026, 07:42 -03) - FAZENDA EM USO (Lote 2 -
+                 Comunicados). O Voltar da tela deixa de ser fixo no iniciar do
+                 modulo e passa a vir do router pela variavel url_voltar (Hub
+                 Comunicados de Entrada, caminho inverso do de ida); se o
+                 router nao informar, vale o destino de antes, com valor padrao
+                 no comando de atribuicao do Voltar. Com fazenda em uso o
+                 iniciar nao mostra mais a selecao, e voltar a ele reabriria
+                 a Lista (laco). Nenhuma outra mudanca.
+     v1.5.0: Sessao 091 (08/10/2026, 20:45 -03) - SO OS IMPRESSOS + QUEM E QUANDO: a
+         lista passa a mostrar apenas comunicados impressos, com as colunas
+         Impresso em (data e hora) e Por (usuario). Sem o selo ABERTO (ele so
+         existe na Impressao). Textos ajustados. Nenhuma outra mudanca.
+         v1.6.0: Sessao 095 (13/10/2026, 10:50 -03) - AVISO E TRAVA NO REIMPRIMIR (mesmo problema
+                 da Impressao: sem aviso e com clique repetido gerando varios PDFs iguais).
+                 Ao clicar: botao travado por alguns segundos, banner azul "Gerando PDF" e
+                 depois banner verde. A lista NAO recarrega (a Reimpressao lista todos e nunca
+                 grava nada). Nenhuma mudanca no router.
+                 REVERSAO: devolver .bak_antes_avisos_s095.
+         v1.7.0: Sessao 095 (13/10/2026, 11:27 -03) - PADRAO DE DOWNLOAD: o PDF agora vai para a pasta Downloads (nao abre mais em aba nova).
+                 Aviso fixo na tela, banner verde com o nome do arquivo e o local, banners fora do bloco
+                 condicional, link sem target blank. REVERSAO: .bak_antes_download_s095.
+         v1.8.0: Sessao 095 (13/10/2026, 14:25 -03) - Troca do aviso de download copiado nesta tela pela peca
+                 padrao aviso_download (banners, trava e mensagem agora vem da peca). REVERSAO: .bak_antes_peca_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Reimpressão Comunicado</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar (identico a produtor_home.html) ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4f8; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; margin-bottom: 4px; }
+        .pagina-subtitulo { font-size: 13px; color: #777777; margin-bottom: 20px; }
+
+        /* ---- Conteudo especifico desta tela ---- */
+        .aviso-vazio { background: #eeeeee; border: 1px solid #999999; color: #555555; padding: 16px 20px; border-radius: 8px; font-size: 14px; }
+        table.tabela-comunicados { width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; }
+        table.tabela-comunicados th { background: #f5f5f5; text-align: left; padding: 10px 14px; font-size: 12px; color: #666666; text-transform: uppercase; letter-spacing: 0.02em; border-bottom: 1px solid #e0e0e0; }
+        table.tabela-comunicados td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333; }
+        table.tabela-comunicados tbody tr:last-child td { border-bottom: none; }
+        table.tabela-comunicados tbody tr:hover { background-color: #fafafa; }
+        .badge-status { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .badge-aberto { background: #FBE9E4; color: #D4370A; }
+        .badge-impresso { background: #e6f4ea; color: #1e7e34; }
+        .btn-acao { background: #D4370A; color: #ffffff; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; white-space: nowrap; }
+        .btn-acao:hover { opacity: 0.9; }
+
+
+        .btn-acao.travado, .btn-confirmar.travado { opacity: 0.55; cursor: not-allowed; }
+
+
+        /* ---- v-s095: aviso de download (mesmo padrao visual da tela PIA) ---- */
+        .nota-download { background: #fff8e1; border-left: 6px solid #f9a825; padding: 10px 14px; border-radius: 6px; font-size: 13.5px; font-weight: bold; color: #8a6d00; margin: 0 0 16px 0; }
+        .btn-acao.travado { opacity: 0.55; cursor: not-allowed; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_voltar | default('/produtor/reimpressao-comunicado/iniciar') %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        <!-- MENU LATERAL -->
+        {% include 'produtor/produtor_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo">
+
+            <div class="pagina-titulo">&#128260; Reimpressão Comunicado</div>
+            <div class="pagina-subtitulo">{{ propriedade.nome }} — Comunicados de Entrada já impressos (segunda via)</div>
+
+            <div class="nota-download">&#128190; O PDF do Comunicado &eacute; salvo na pasta <b>Downloads</b> do seu computador. Depois de clicar em Reimprimir, abra o arquivo baixado para imprimir.</div>
+            {% include 'produtor/aviso_download.html' %}
+
+            {% if comunicados|length == 0 %}
+                <div class="aviso-vazio">
+                    Nenhum Comunicado impresso ainda para esta Propriedade. Os comunicados novos são impressos na tela Impressão Comunicado.
+                </div>
+            {% else %}
+                <table class="tabela-comunicados">
+                    <thead>
+                        <tr>
+                            <th>Comunicado</th>
+                            <th>Status</th>
+                            <th>Impresso em</th>
+                            <th>Por</th>
+                            <th>Data Entrada</th>
+                            <th>Qtde GTAs</th>
+                            <th>Qtde Animais</th>
+                            <th>Tipo Entrada</th>
+                            <th>Produtor Origem</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in comunicados %}
+                        <tr>
+                            <td>{{ '%06d' % c.numero_comunicado }}</td>
+                            <td><span class="badge-status badge-impresso">IMPRESSO</span></td>
+                            <td>{{ c.impresso_texto }}</td>
+                            <td>{{ c.impresso_por }}</td>
+                            <td>{{ c.data_entrada }}</td>
+                            <td>{{ c.qtde_gtas }}</td>
+                            <td>{{ c.total_animais }}</td>
+                            <td>{{ c.tipo_entrada }}</td>
+                            <td>{{ c.produtor_origem }}</td>
+                            <td>
+                                <a class="btn-acao"
+                                   href="/produtor/reimpressao-comunicado/pdf/{{ c.numero_comunicado }}?id_propriedade={{ id_propriedade }}{% if c.transfer %}&amp;tipo=TRANSFER{% endif %}"
+                                   data-aviso-descricao="Comunicado nº {{ '%06d' % c.numero_comunicado }}"
+                                   data-aviso-arquivo="comunicado{% if c.transfer %}_transfer{% endif %}_{{ '%06d' % c.numero_comunicado }}_anexo_xix.pdf">Reimprimir</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('recolhido');
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: frontend\templates\produtor\reimpressao_comunicado_listar.html
+     ========================================================= -->

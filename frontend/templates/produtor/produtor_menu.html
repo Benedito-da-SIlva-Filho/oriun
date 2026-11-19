@@ -1,0 +1,279 @@
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_menu.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-25 13:08 -03
+     ATUALIZADO EM: 2026-10-21 12:35 -03
+     VERSAO: 1.14.1
+
+     DESCRICAO:
+         Menu lateral da plataforma Produtor (operacional).
+         Incluido em todos os templates da plataforma Produtor
+         via diretiva Jinja "include" apontando para este
+         caminho: produtor/produtor_menu.html
+         Variavel menu_ativo define o item destacado em vermelho.
+
+         v1.0.0: Criacao do modulo. OBS (Sessao 034): o cabecalho
+             deste arquivo estava com o campo MODULO desatualizado
+             (dizia "fazenda_menu.html" - nome do perfil FAZENDA,
+             removido na migracao registrada em auth.py v1.9.0,
+             que unificou FAZENDA em PRODUTOR + cargo do vinculo).
+             O arquivo fisico sempre foi este mesmo
+             (produtor_menu.html, e e ele que produtor_home.html
+             de fato inclui) - so a documentacao do cabecalho
+             estava desalinhada. Corrigido nesta versao.
+         v1.1.0: Sessao 034 - Adicionada secao CADASTRO com o
+             item "Minha Propriedade" (ver versoes anteriores
+             para detalhe completo).
+         v1.2.0: Sessao 034 (continuacao, 07/08/2026) - Adicionado
+             item "Usuário" no rodape do menu (ver versoes
+             anteriores para detalhe completo).
+         v1.3.0: Sessao 034 (continuacao, 07/08/2026) - Correcao
+             pontual: item "Entrada" apontava para
+             /produtor/entrada, uma rota PLACEHOLDER que nunca
+             foi implementada (Referencia: "Modulos de animais,
+             entradas e saidas ainda nao implementados"). Como
+             hoje SO a Compra esta pronta (gta_compra.py v2.2.0,
+             desde a Sessao 029) - Venda/Abate/Transferencia
+             ainda nao existem - o link foi redirecionado
+             DIRETO para gta_compra.nova (/produtor/entrada/
+             compra/nova), destravando o teste real da tela.
+             Quando a Tela GTA unificada (porta de entrada que le
+             o documento e decide automaticamente o tipo -
+             Entrada/Venda/Abate/Transferencia, arquitetura
+             fechada nesta mesma sessao) for construida, este
+             link volta a apontar para ela, e gta_compra.nova
+             passa a ser chamado so por tras, nunca diretamente
+             pelo menu. Ate la, este e um atalho INTENCIONAL, nao
+             a arquitetura final.
+             Demais itens ainda-placeholder (Brincos, Saidas,
+             Pesos, Inventario, Eventos, Formularios, Inspecao,
+             Consistencia, Utilitarios) NAO foram mexidos nesta
+             versao - continuam apontando para rotas que ainda
+             nao existem, ficam 404 se clicados. Fora do escopo
+             desta correcao pontual.
+         v1.4.0: Sessao 041 (28/08/2026, 14:10 -03) - Duas
+             mudancas de escopo de Brincos, alinhadas com
+             Benedito: (1) item "Brincos" RENOMEADO para
+             "Brincagem" (href tambem trocado para
+             /produtor/brincagem, ainda placeholder ate o
+             sub-hub de Brincagem dentro do Hub de Entrada ser
+             construido - ver decisao de arquitetura de
+             26/08/2026). (2) NOVO item "Brincos" adicionado,
+             agora apontando para o Hub de Brincos real
+             (hubs.ver, slug='brincos'; 7 cards administrativos:
+             Fornecedor, Entrada de Brincos, Disponiveis,
+             Cancelamento, Saidas, Relatorio Resumo, Relatorio
+             N.Fiscais - ver backend/routers/hubs.py). Uso
+             administrativo (compra de insumo), nao dia a dia de
+             fazenda - por isso fica na lista compacta de texto,
+             nao como card grande na Home (decisao de Benedito,
+             27/08/2026: "quem usara sao as pessoas do
+             administrativo"). Toda a secao OPERACAO foi
+             REORDENADA em ordem alfabetica nesta versao
+             (decisao de Benedito) - conferir Referencia do
+             Sistema para o novo mapeamento visual completo.
+             Icone do novo item "Brincos" e um SVG inline
+             (silhueta de brinco SISBOV, formato gota com furo)
+             em vez de emoji - mesmo estilo visual dos demais
+             itens (18px), mas usa SVG por nao existir emoji
+             padrao para "brinco de gado". Item antigo
+             "Brincagem" mantem o emoji original (tesoura),
+             sem mudanca de icone.
+         v1.4.1: Sessao 041 (28/08/2026, 14:25 -03) - Correcao de
+             2 problemas encontrados no teste real feito por
+             Benedito: (1) ordem alfabetica estava errada -
+             "Brincos" vinha antes de "Brincagem" no v1.4.0, mas
+             alfabeticamente "Brincagem" precede "Brincos" (letra
+             6: 'a' < 'o') - trocada a ordem dos dois itens. (2)
+             icone SVG do item "Brincos" renderizou como um
+             blob/circulo em vez do formato de brinco pretendido -
+             corrigido trocando currentColor por cor solida
+             (#666666) explicita no stroke/fill, e movendo
+             width/height/style diretamente para a tag svg em
+             vez de depender do span .menu-icone para dimensionar.
+         v1.5.0: Sessao 045 (03/09/2026, 15:30 -03) - Item
+             "Utilitarios" deixa de apontar para o placeholder
+             /produtor/utilitarios (nunca implementado) e passa a
+             apontar para o novo Hub de Utilitarios (hubs.ver,
+             slug='utilitarios'), criado nesta sessao para abrigar
+             o modulo "Operações Recentes" (mecanismo Desfazer por
+             Operacao/Log de Operacoes). Nenhuma outra mudanca
+             neste arquivo.
+         v1.6.0: Sessao 079 (24/09/2026, 11:15 -03) - Item
+             "Inventario" deixa de apontar para o placeholder
+             /produtor/inventario (nunca implementado) e passa a
+             abrir o novo Hub de Inventario (hubs.ver,
+             slug='inventario' - hubs.py v1.32.0). Mesmo padrao de
+             Brincos/Utilitarios: acesso pela lista do menu, sem
+             card na Home (decisao de Benedito). OBS: o campo
+             VERSAO do cabecalho estava parado em 1.4.1 apesar do
+             changelog ja ter a v1.5.0 - alinhado agora para
+             1.6.0. Nenhuma outra mudanca neste arquivo.
+         v1.7.0: Sessao 089 (07/10/2026, 09:45 -03) - Item "Parceiros"
+             entra no grupo CADASTRO, abaixo de "Minha Propriedade",
+             abrindo a lista de Parceiros/Fornecedores
+             (/produtor/parceiros). Fica destacado quando menu_ativo e
+             parceiros (parceiros_fornecedores.py v1.3.0). Nenhuma outra
+             mudanca neste arquivo.
+         v1.8.0: Sessao 089 (07/10/2026, 12:05 -03) - Item "Auditorias
+             ERAS" entra no grupo CADASTRO, abaixo de "Parceiros", abrindo a
+             lista das fazendas com codigo ERAS e suas vistorias
+             (/produtor/auditoria-eras). Fica destacado quando menu_ativo e
+             auditoria_eras (auditoria_eras.py v1.0.0). Nenhuma outra
+             mudanca neste arquivo.
+         v1.9.0: Sessao 090 (07/10/2026, 19:05 -03) - Item "Brincagem"
+             deixa de apontar para o placeholder /produtor/brincagem (nunca
+             implementado, dava "Nao encontrado") e passa a abrir o Hub de
+             Brincagem (hubs.ver, slug='brincagem'), que desde a troca
+             definitiva dos Hubs (hubs.py v1.44.0) abre a tela nova. Nenhuma
+             outra mudanca neste arquivo.
+     v1.10.0: Sessao 090 (08/10/2026, 09:10 -03) - PAINEL SUBSTITUI O HOME: o item Home
+         abre o Painel da FAZENDA EM USO (mantem a fazenda); sem fazenda em uso
+         abre o Painel simples. Nenhuma outra mudanca.
+     v1.11.0: Sessao 097 (15/10/2026, 06:45 -03) - MENU MAIS ENXUTO (decisao de
+         Benedito): saem Brincagem e Entrada (ja tem card na Home) e os 6 links
+         mortos sem rota (Consistencia, Eventos, Formularios, Inspecao, Pesos,
+         Saidas). Ficam Home, CADASTRO (Minha Propriedade, Parceiros, Auditorias
+         ERAS), Brincos, Inventario, Utilitarios e Usuario. Motivo: Brincos e
+         Inventario nao tem card na Home, entao so chegam pelo menu. Nada foi
+         apagado do sistema; os itens retirados ficam descritos em comentario
+         no grupo OPERACAO, para voltar quando o modulo existir.
+     v1.12.0: Sessao 097 (15/10/2026, 10:05 -03) - PERMISSOES POR CARGO (Etapa 1): cada
+         item do menu so aparece se o cargo tem acesso ao modulo (ajudante
+         pode_ver(), backend/routers/permissoes.py). Os titulos CADASTRO e
+         OPERACAO somem quando nenhum item deles aparece. Home sempre aparece.
+         Quem barra de verdade e o porteiro; o menu so esconde.
+     v1.13.0: Sessao 099 (17/10/2026, 14:50 -03) - Item "Frigorificos" no grupo CADASTRO, abaixo de "Parceiros", com a mesma
+         permissao de Parceiros (pode_ver('parceiros')). Fica destacado quando menu_ativo e frigorificos. Nenhuma outra mudanca.
+     v1.14.0: Sessao 102 (21/10/2026, 12:20 -03) - Item "Consulta Brinco" no grupo OPERACAO (entre Brincos e Inventario, ordem alfabetica), aberto a quem tem
+         acesso a Consulta por Manejo (pode_ver('consulta_manejo')). Destacado quando menu_ativo e consulta_animal. O titulo OPERACAO tambem aparece por ele.
+     v1.14.1: Sessao 102 (21/10/2026, 12:35 -03) - texto do item encurtado para "Consulta Brinco" (pedido de Benedito). A tela continua "Consulta de Animal e Brinco".
+     ========================================================= -->
+
+<div class="sidebar" id="sidebar">
+
+    <!-- Home -->
+    {# v1.10.0 - Home = Painel da fazenda em uso (mantem a fazenda); sem fazenda em uso, Painel simples #}
+    {% set fazenda_em_uso_menu = session.get('fazenda_ativa') %}
+    <a href="{{ ('/produtor/home?id_produtor=' ~ fazenda_em_uso_menu.id_produtor ~ '&id_propriedade=' ~ fazenda_em_uso_menu.id_propriedade) if fazenda_em_uso_menu else '/produtor/home' }}" class="menu-item {{ 'ativo' if menu_ativo == 'home' else '' }}">
+        <span class="menu-icone">&#127968;</span>
+        <span class="menu-texto">Home</span>
+    </a>
+
+    {# v1.12.0 (Sessao 097): cada item so aparece se o cargo tem acesso ao modulo (pode_ver, permissoes.py). O porteiro barra o endereco de qualquer jeito. #}
+    {% if pode_ver('propriedade') or pode_ver('parceiros') %}
+    <!-- CADASTRO -->
+    <div class="menu-secao">CADASTRO</div>
+    {% endif %}
+
+    {% if pode_ver('propriedade') %}
+    <a href="{{ url_for('propriedades.minha_propriedade') }}" class="menu-item {{ 'ativo' if menu_ativo == 'propriedade' else '' }}">
+        <span class="menu-icone">&#127806;</span>
+        <span class="menu-texto">Minha Propriedade</span>
+    </a>
+    {% endif %}
+
+    <!-- v1.7.0 (Sessao 089): Parceiros/Fornecedores no grupo Cadastro. -->
+    {% if pode_ver('parceiros') %}
+    <a href="/produtor/parceiros" class="menu-item {{ 'ativo' if menu_ativo == 'parceiros' else '' }}">
+        <span class="menu-icone">&#129309;</span>
+        <span class="menu-texto">Parceiros</span>
+    </a>
+    {% endif %}
+
+    <!-- v1.13.0 (Sessao 099): Frigorificos, abaixo de Parceiros (mesma permissao). -->
+    {% if pode_ver('parceiros') %}
+    <a href="/produtor/frigorificos" class="menu-item {{ 'ativo' if menu_ativo == 'frigorificos' else '' }}">
+        <span class="menu-icone">&#127981;</span>
+        <span class="menu-texto">Frigor&#237;ficos</span>
+    </a>
+    {% endif %}
+
+    <!-- v1.8.0 (Sessao 089): Auditorias ERAS no grupo Cadastro. -->
+    {% if pode_ver('propriedade') %}
+    <a href="/produtor/auditoria-eras" class="menu-item {{ 'ativo' if menu_ativo == 'auditoria_eras' else '' }}">
+        <span class="menu-icone">&#128221;</span>
+        <span class="menu-texto">Auditorias ERAS</span>
+    </a>
+    {% endif %}
+
+    {% if pode_ver('brincos') or pode_ver('consulta_manejo') or pode_ver('inventario') or pode_ver('utilitarios') %}
+    <!-- OPERACAO (ordem alfabetica - Sessao 041) -->
+    <div class="menu-secao">OPERACAO</div>
+    {% endif %}
+
+    <!-- v1.11.0 (Sessao 097): itens RETIRADOS do menu (nada foi apagado do
+         sistema - so deixaram de aparecer aqui):
+         - Brincagem e Entrada: ja tem card na Home (enderecos
+           /produtor/hub-novo/brincagem e /produtor/hub-novo/entrada).
+           Para voltar: link para o Hub de Brincagem (hubs.ver, slug
+           brincagem) e para o Hub de Entrada (hubs.ver, slug entrada).
+           O item Entrada apontava direto para gta_compra.nova.
+         - Consistencia, Eventos, Formularios, Inspecao, Pesos e Saidas:
+           rotas /produtor/consistencia, /eventos, /formularios, /inspecao,
+           /pesos e /saidas NAO existem ainda (links mortos). Voltam quando
+           o modulo existir.
+         Os valores de menu_ativo (brincagem, entrada, consistencia, eventos,
+         formularios, inspecao, pesos, saidas) continuam aceitos pelas telas;
+         sem item no menu, simplesmente nada fica destacado. -->
+
+    <!-- Hub de Brincos (administrativo: Fornecedor, Entrada de
+         Brincos, Disponiveis, Cancelamento, Saidas, Relatorios).
+         Icone SVG inline (silhueta de brinco SISBOV) - nao existe
+         emoji padrao equivalente. Sessao 041 (corrigido: SVG com
+         width/height fixos direto na tag e stroke em cor solida,
+         sem depender de currentColor/span para dimensionar -
+         primeira versao renderizou como blob/circulo em vez do
+         formato de brinco). -->
+    {% if pode_ver('brincos') %}
+    <a href="{{ url_for('hubs.ver', slug='brincos') }}" class="menu-item {{ 'ativo' if menu_ativo == 'brincos' else '' }}">
+        <span class="menu-icone">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;">
+                <path d="M12 3 C8 3 5 6.5 5 10.5 C5 14 7.5 17 9.5 19 L12 20.5 L14.5 19 C16.5 17 19 14 19 10.5 C19 6.5 16 3 12 3 Z"/>
+                <circle cx="12" cy="8.5" r="1.3" fill="#666666" stroke="none"/>
+                <line x1="8.5" y1="13.5" x2="15.5" y2="13.5"/>
+            </svg>
+        </span>
+        <span class="menu-texto">Brincos</span>
+    </a>
+    {% endif %}
+
+    <!-- v1.14.0 (Sessao 102): Consulta de Animal e Brinco (manejo, SISBOV ou RFID - onde o animal esta e a situacao do brinco). -->
+    {% if pode_ver('consulta_manejo') %}
+    <a href="/produtor/consulta-animal/iniciar" class="menu-item {{ 'ativo' if menu_ativo == 'consulta_animal' else '' }}">
+        <span class="menu-icone">&#128269;</span>
+        <span class="menu-texto">Consulta Brinco</span>
+    </a>
+    {% endif %}
+
+    <!-- v1.6.0 (Sessao 079): abre o Hub de Inventario. -->
+    {% if pode_ver('inventario') %}
+    <a href="{{ url_for('hubs.ver', slug='inventario') }}" class="menu-item {{ 'ativo' if menu_ativo == 'inventario' else '' }}">
+        <span class="menu-icone">&#128230;</span>
+        <span class="menu-texto">Inventario</span>
+    </a>
+    {% endif %}
+
+    {% if pode_ver('utilitarios') %}
+    <a href="{{ url_for('hubs.ver', slug='utilitarios') }}" class="menu-item {{ 'ativo' if menu_ativo == 'utilitarios' else '' }}">
+        <span class="menu-icone">&#128295;</span>
+        <span class="menu-texto">Utilitarios</span>
+    </a>
+    {% endif %}
+
+    <!-- Usuario (rodape, separado por linha divisoria - Sessao 034 continuacao) -->
+    {% if pode_ver('equipe') %}
+    <a href="{{ url_for('produtor_usuarios.lista') }}" class="menu-item {{ 'ativo' if menu_ativo == 'usuario' else '' }}"
+        style="border-top: 1px solid #f0f0f0; margin-top: 8px; padding-top: 12px;">
+        <span class="menu-icone">&#128100;</span>
+        <span class="menu-texto">Usuário</span>
+    </a>
+    {% endif %}
+
+</div>
+
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_menu.html
+     ========================================================= -->

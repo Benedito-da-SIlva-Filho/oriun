@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_entrada_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-31 18:32 -03
+     ATUALIZADO EM: 2026-10-12 16:00 -03
+     VERSAO: 1.6.0
+
+     DESCRICAO:
+         Formulario completo de Entrada de Brincos (Sessao 042).
+         Segue o MESMO padrao visual/estrutural ja fechado em
+         gta_manual_cadastro.html:
+           - Bloco de cabecalho (Propriedade/Produtor) SO PARA
+             CONFERENCIA (readonly, bloco-conferencia) - ja
+             resolvido no passo anterior do fluxo (iniciar/
+             selecionar-vinculo), nao e digitado aqui.
+           - Campos do documento (Solicitacao/Fabricacao/NF/PIA/
+             Fabricante/Qtde/Codigo Inicial) EDITAVEIS, com
+             mascara de data (mesmo JS de gta_manual_cadastro.html).
+           - 1 unico checkbox de confirmacao antes do Salvar.
+           - Mesmos padroes obrigatorios do Orion: aviso de
+             alteracoes nao salvas, botao Voltar/Cancelar,
+             maxlength nos campos, uppercase automatico onde
+             aplicavel.
+           - Campo "Controle" do desenho original do GERAS: NAO
+             existe nesta tela (removido, Benedito Sessao 042).
+           - Campo "Responsavel": NAO existe nesta tela (usa
+             session['usuario_id'] automaticamente no servidor).
+
+         VALIDACAO AO VIVO (v1.4.0): cada campo e conferido
+         enquanto o usuario digita, com as MESMAS regras do
+         servidor (brincos_entrada.py v1.3.0). Campo com problema
+         fica vermelho com a explicacao logo abaixo. O Salvar so
+         acende com TUDO correto + caixa de conferencia marcada.
+         Ao clicar em Salvar, a janelinha padrao do Orion
+         (modal_confirmacao.html, Padrao 2) mostra quantidade,
+         faixa e o NOME DA FAZENDA em destaque antes de gravar.
+         O servidor continua reconferindo tudo (e tambem barra
+         brinco ja cadastrado) - se recusar, a mensagem aparece no
+         topo e a tela rola ate ela.
+
+         Variaveis esperadas do router:
+           erro         - mensagem de erro (ou None)
+           cabecalho    - SimpleNamespace(id_propriedade,
+                          propriedade_nome, municipio, uf,
+                          id_produtor, produtor_nome, cpf_produtor)
+                          ou None
+           fabricantes  - lista de SimpleNamespace(id, nome)
+           lote         - SimpleNamespace com os dados ja
+                          digitados (reexibicao apos erro) ou None
+           url_voltar   - destino do Voltar (topo) e Cancelar
+                          (rodape) - calculado dinamicamente pelo
+                          router (ver v1.2.0)
+
+     v1.0.0: Criacao do modulo (Sessao 042, 31/08/2026, 18:32 -03).
+     v1.1.0: Ajustes de UX pedidos por Benedito (Sessao 043):
+       - Bloco de conferencia reduzido a 2 linhas (Propriedade com
+         Municipio/UF embutido, e Produtor) - CPF/CNPJ removido da
+         tela (permanece gravado no banco).
+       - Nro Nota Fiscal: maxlength 6 -> 10.
+       - Qtde de Caixas: convertido de number para text com
+         maxlength 4 e filtro de digitos via JS.
+       - Fornecedor: coluna do grid ampliada (col-3 -> col-6) para
+         exibir a Razao Social completa do Fabricante.
+       - Qtde de Brincos: convertido de number para text com
+         maxlength 6 e filtro de digitos via JS.
+       - NOVO campo Nro Final do Brinco: somente leitura, sem
+         atributo name (nao e enviado no POST - apenas preview),
+         calculado ao vivo via JS a partir de Qtde + Nro Inicial. O
+         servidor continua sendo a fonte oficial do calculo no
+         Salvar (codigo_final = codigo_inicial + qtde_entrada - 1).
+       - Secao "Faixa de Brincos": fonte dos campos aumentada para
+         melhor legibilidade.
+     v1.2.0: Sessao 044 (02/09/2026, 16:00 -03) - Bug real de
+         navegacao (Benedito, teste real): Voltar (topo) e
+         Cancelar (rodape) estavam hardcoded para
+         '/produtor/hub/brincos', pulando direto a tela de
+         Selecionar Propriedade quando ela existia (usuario com
+         2+ Propriedades). Ambos agora usam a variavel dinamica
+         url_voltar, calculada pelo router
+         (_url_voltar_formulario() em brincos_entrada.py v1.2.0) -
+         cadeia correta: 04-Formulario -> 03-Selecionar Propriedade
+         (se existiu) -> 01-Hub de Brincos. NOTA: este modulo ja
+         seguia o principio que virou a Regra de Ouro #9 (Sessao
+         076) antes mesmo dela ser formalizada.
+     v1.3.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html v1.1.0 / produtor_rodape.html. O link
+         Cancelar (rodape, id="link-cancelar") mantem seu proprio
+         aviso de "dados nao salvos" via window.confirm() - nao
+         mexido, continua identico. O link Voltar (topo) agora usa
+         o id="link-voltar-topo" exposto pela peca-mestra - NAO
+         tinha nenhum JS proprio anexado a ele antes (so o href
+         dinamico via url_voltar, que a peca-mestra ja repassa
+         normalmente), entao nao precisou de nenhum ajuste extra
+         aqui. Sem mudanca de comportamento.
+     v1.4.0: Sessao 079 (24/09/2026, 13:00 -03) - BLINDAGEM (pedido
+         de Benedito apos teste real em que o Salvar liberou e
+         "nada apareceu"). Mudancas:
+           - Salvar deixava de conferir CONTEUDO (so via se os
+             campos estavam preenchidos). NOVA funcao validar() com
+             as mesmas regras do servidor: datas reais e na ordem
+             certa (Fabricacao > Solicitacao, NF >= Solicitacao,
+             PIA >= Fabricacao), quantidades >= 1, Fornecedor
+             escolhido, Nro Inicial com 15 digitos e Nro Final sem
+             passar de 15 digitos.
+           - Mensagem por campo (div msg-campo abaixo de cada
+             campo, classe campo-erro no grupo) - so aparece
+             depois que o campo tem conteudo (tela nova nao nasce
+             toda vermelha).
+           - Salvar: confirmacao pela janelinha padrao do Orion
+             (modal_confirmacao.html, Padrao 2) com qtde, faixa e
+             NOME DA FAZENDA (vem do atributo data-propriedade do
+             formulario). Enquanto grava, botao mostra
+             "Gravando..." e fica travado (evita duplo clique).
+           - Erro vindo do servidor: a tela rola ate a mensagem.
+           - Todo o JavaScript do formulario so roda se o
+             formulario existir (tela aberta so com erro nao
+             quebra mais o script).
+     v1.5.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar).
+     v1.6.0: Sessao 094 (12/10/2026, 16:00 -03) - BRINCO EM DOIS MODELOS (demanda do
+         MAPA). Nro Inicial que comeca com 105 (modelo antigo): a digitacao trava em 14
+         digitos e aparece, ao lado, a caixinha NAO EDITAVEL com o DV (e outra ao lado do
+         Nro Final), como no Maker. Outro inicio (modelo novo): 15 digitos e sem caixinha
+         de DV. O Nro Final e o DV vem do SERVIDOR (rota calcular-faixa, regras_sisbov.py):
+         o algoritmo nao e repetido em JavaScript. O Salvar so libera com o calculo
+         pronto e a janela de confirmacao mostra os numeros completos (15 digitos).
+         REVERSAO: devolver brincos_entrada_cadastro.html.bak_antes_s094 (e o router).
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Entrada de Brincos</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1100px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-5  { grid-column: span 5; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+
+        /* v1.4.0 - validacao ao vivo: campo com problema + mensagem */
+        .form-group.campo-erro input, .form-group.campo-erro select { border: 2px solid #c62828; background: #fff6f6; }
+        .msg-campo { font-size: 11.5px; font-weight: bold; color: #c62828; min-height: 14px; }
+
+        .fonte-grande input { font-size: 19px; font-weight: bold; letter-spacing: 1px; padding: 12px 10px; }
+        .fonte-grande input:read-only { background-color: #f7f7f7; color: #555555; }
+
+        /* v1.6.0 - campo do numero + caixinha do DV (modelo antigo) */
+        .campo-com-dv { display: flex; gap: 8px; align-items: stretch; }
+        .campo-com-dv input.campo-principal { flex: 1 1 auto; width: auto; min-width: 0; }
+        .campo-com-dv input.dv-box { flex: 0 0 64px; width: 64px; padding-left: 4px; padding-right: 4px; }
+        .campo-com-dv input.dv-box[hidden] { display: none; }
+
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro label { font-size: 13px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; align-items: center; }
+        .aviso-salvar { font-size: 12px; color: #888888; margin-right: auto; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#127991;&#65039;</span> Entrada de Brincos</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro" id="erro-servidor">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if cabecalho %}
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('brincos_entrada.salvar') }}" autocomplete="off" id="form-brincos-entrada"
+                      data-propriedade="{{ cabecalho.propriedade_nome }}"
+                      data-prefixo-antigo="{{ regras_sisbov.prefixo_antigo }}"
+                      data-tam-antigo="{{ regras_sisbov.tamanho_antigo }}"
+                      data-tam-novo="{{ regras_sisbov.tamanho_novo }}"
+                      data-url-faixa="{{ url_for('brincos_entrada.calcular_faixa') }}">
+
+                    <input type="hidden" name="id_propriedade" value="{{ cabecalho.id_propriedade }}">
+
+                    <div class="bloco-conferencia">
+                        <div class="linha"><span class="rotulo">Propriedade</span><span class="valor">{{ cabecalho.propriedade_nome }} - {{ cabecalho.municipio or '-' }} / {{ cabecalho.uf or '-' }}</span></div>
+                        <div class="linha"><span class="rotulo">Produtor</span><span class="valor">{{ cabecalho.produtor_nome }}</span></div>
+                    </div>
+
+                    <div class="form-secao">Dados da Solicitação</div>
+                    <div class="form-grid">
+                        <div class="form-group col-3" id="grupo-solicitacao_nro">
+                            <label>Nro Solicitação *</label>
+                            <input type="text" name="solicitacao_nro" id="solicitacao_nro" required maxlength="15" class="centralizado" inputmode="numeric" autocomplete="off"
+                                value="{{ lote.solicitacao_nro if lote else '' }}">
+                            <div class="msg-campo" id="msg-solicitacao_nro"></div>
+                        </div>
+                        <div class="form-group col-3" id="grupo-solicitacao_data">
+                            <label>Data Solicitação *</label>
+                            <input type="text" name="solicitacao_data" id="solicitacao_data" required maxlength="10" class="centralizado campo-data" autocomplete="off" placeholder="dd/mm/aaaa"
+                                value="{{ lote.solicitacao_data if lote else '' }}">
+                            <div class="msg-campo" id="msg-solicitacao_data"></div>
+                        </div>
+                        <div class="form-group col-3" id="grupo-data_fabricacao">
+                            <label>Data Fabricação *</label>
+                            <input type="text" name="data_fabricacao" id="data_fabricacao" required maxlength="10" class="centralizado campo-data" autocomplete="off" placeholder="dd/mm/aaaa"
+                                value="{{ lote.data_fabricacao if lote else '' }}">
+                            <div class="msg-campo" id="msg-data_fabricacao"></div>
+                        </div>
+                        <div class="form-group col-3" id="grupo-impressao_pia">
+                            <label>Impressão PIA *</label>
+                            <input type="text" name="impressao_pia" id="impressao_pia" required maxlength="10" class="centralizado campo-data" autocomplete="off" placeholder="dd/mm/aaaa"
+                                value="{{ lote.impressao_pia if lote else '' }}">
+                            <div class="msg-campo" id="msg-impressao_pia"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Nota Fiscal</div>
+                    <div class="form-grid">
+                        <div class="form-group col-2" id="grupo-nota_fiscal">
+                            <label>Nro Nota Fiscal *</label>
+                            <input type="text" name="nota_fiscal" id="nota_fiscal" required maxlength="10" class="centralizado" inputmode="numeric" autocomplete="off"
+                                value="{{ lote.nota_fiscal if lote else '' }}">
+                            <div class="msg-campo" id="msg-nota_fiscal"></div>
+                        </div>
+                        <div class="form-group col-2" id="grupo-data_nf">
+                            <label>Data da NF *</label>
+                            <input type="text" name="data_nf" id="data_nf" required maxlength="10" class="centralizado campo-data" autocomplete="off" placeholder="dd/mm/aaaa"
+                                value="{{ lote.data_nf if lote else '' }}">
+                            <div class="msg-campo" id="msg-data_nf"></div>
+                        </div>
+                        <div class="form-group col-2" id="grupo-total_caixas">
+                            <label>Qtde de Caixas *</label>
+                            <input type="text" name="total_caixas" id="total_caixas" required maxlength="4" class="centralizado" inputmode="numeric" autocomplete="off"
+                                value="{{ lote.total_caixas if lote else '' }}">
+                            <div class="msg-campo" id="msg-total_caixas"></div>
+                        </div>
+                        <div class="form-group col-6" id="grupo-id_fabricante">
+                            <label>Fornecedor *</label>
+                            <select name="id_fabricante" id="id_fabricante" required autocomplete="off">
+                                <option value="">--</option>
+                                {% for f in fabricantes %}
+                                <option value="{{ f.id }}" {{ 'selected' if lote and lote.id_fabricante|string == f.id|string else '' }}>{{ f.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="msg-campo" id="msg-id_fabricante"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Faixa de Brincos</div>
+                    <div class="form-grid fonte-grande">
+                        <div class="form-group col-3" id="grupo-qtde_entrada">
+                            <label>Qtde de Brincos *</label>
+                            <input type="text" name="qtde_entrada" id="qtde_entrada" required maxlength="6" class="centralizado" inputmode="numeric" autocomplete="off"
+                                value="{{ lote.qtde_entrada if lote else '' }}">
+                            <div class="msg-campo" id="msg-qtde_entrada"></div>
+                        </div>
+                        <div class="form-group col-4" id="grupo-codigo_inicial">
+                            <label>Nro Inicial do Brinco *</label>
+                            <div class="campo-com-dv">
+                                <input type="text" name="codigo_inicial" id="codigo_inicial" required maxlength="15" class="centralizado campo-principal" inputmode="numeric" autocomplete="off" placeholder="14 (105...) ou 15 dígitos"
+                                    value="{{ lote.codigo_inicial if lote else '' }}">
+                                <input type="text" id="dv_inicial" class="centralizado dv-box" readonly tabindex="-1" hidden title="Dígito verificador (DV)" placeholder="DV">
+                            </div>
+                            <div class="msg-campo" id="msg-codigo_inicial"></div>
+                        </div>
+                        <div class="form-group col-5" id="grupo-codigo_final">
+                            <label>Nro Final do Brinco</label>
+                            <div class="campo-com-dv">
+                                <input type="text" id="codigo_final" class="centralizado campo-principal" readonly tabindex="-1" placeholder="calculado automaticamente">
+                                <input type="text" id="dv_final" class="centralizado dv-box" readonly tabindex="-1" hidden title="Dígito verificador (DV)" placeholder="DV">
+                            </div>
+                            <div class="msg-campo" id="msg-codigo_final"></div>
+                        </div>
+                    </div>
+
+                    <div class="confirma-quadro">
+                        <input type="checkbox" id="confirma_dados" name="confirma_dados"
+                            {% if lote and lote.confirma_dados %}checked{% endif %}>
+                        <label for="confirma_dados">Confirmo que os dados acima foram conferidos e estão corretos.</label>
+                    </div>
+
+                    <div class="form-botoes">
+                        <span class="aviso-salvar" id="aviso-salvar"></span>
+                        <a href="{{ url_voltar }}" class="btn-cancelar" id="link-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-salvar" disabled>Salvar</button>
+                    </div>
+
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // ---- v1.4.0: erro vindo do servidor - rola ate a mensagem ----
+        var erroServidor = document.getElementById('erro-servidor');
+        if (erroServidor) { erroServidor.scrollIntoView({ block: 'start' }); }
+
+        // v1.4.0 - todo o resto so roda se o formulario existir
+        // (tela aberta so com erro nao tem formulario).
+        var formularioBrincos = document.getElementById('form-brincos-entrada');
+        if (formularioBrincos) {
+
+            // ======================================================
+            // BLOCO 1 - Mascaras e filtros de digitacao
+            // ======================================================
+            function aplicarMascaraData(campo) {
+                if (!campo) return;
+                campo.addEventListener('input', function() {
+                    var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                    var formatado = digitos;
+                    if (digitos.length > 4) {
+                        formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                    } else if (digitos.length > 2) {
+                        formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                    }
+                    this.value = formatado;
+                });
+            }
+            document.querySelectorAll('.campo-data').forEach(aplicarMascaraData);
+
+            // Nro Solicitacao / Nota Fiscal / Qtde Caixas / Qtde Brincos: apenas digitos
+            ['solicitacao_nro', 'nota_fiscal', 'total_caixas', 'qtde_entrada'].forEach(function(id) {
+                document.getElementById(id).addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            });
+
+            // v1.6.0 - Codigo Inicial: apenas digitos. Comecou com o prefixo do
+            // modelo antigo (105): ate 14 digitos (o DV e calculado). Outro
+            // inicio: ate 15 digitos. Os numeros vem do servidor (data-*).
+            var PREFIXO_ANTIGO = formularioBrincos.dataset.prefixoAntigo;
+            var TAM_ANTIGO = parseInt(formularioBrincos.dataset.tamAntigo, 10);
+            var TAM_NOVO = parseInt(formularioBrincos.dataset.tamNovo, 10);
+            var URL_FAIXA = formularioBrincos.dataset.urlFaixa;
+            function limiteInicial(texto) {
+                return texto.indexOf(PREFIXO_ANTIGO) === 0 ? TAM_ANTIGO : TAM_NOVO;
+            }
+            document.getElementById('codigo_inicial').addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '');
+                this.value = digitos.slice(0, limiteInicial(digitos));
+            });
+
+            // ======================================================
+            // BLOCO 2 - Helpers
+            // ======================================================
+            function valor(id) { return document.getElementById(id).value.trim(); }
+
+            // Data real dd/mm/aaaa (recusa 31/02, 30/13 etc.) -> Date ou null
+            function lerData(texto) {
+                if (!/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) return null;
+                var p = texto.split('/');
+                var d = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1, a = parseInt(p[2], 10);
+                var data = new Date(a, m, d);
+                if (data.getFullYear() !== a || data.getMonth() !== m || data.getDate() !== d) return null;
+                return data;
+            }
+
+            // v1.6.0 - FAIXA calculada pelo SERVIDOR (regras_sisbov.py): Nro Final
+            // e DV (modelo antigo) vem da rota calcular-faixa; o algoritmo do DV
+            // NAO e repetido aqui. faixaCache guarda a ultima resposta (chave =
+            // Nro Inicial + Qtde); resposta de outra chave nao vale.
+            var faixaCache = { chave: '', dados: null };
+            var faixaPedida = {};
+
+            function qtdeValida() { return parseInt(valor('qtde_entrada'), 10) >= 1; }
+            function inicialCompleto(ini) { return ini.length === limiteInicial(ini); }
+            function chaveFaixa() {
+                return valor('codigo_inicial') + '|' + (qtdeValida() ? valor('qtde_entrada') : '1');
+            }
+            function faixaDoMomento() {
+                return faixaCache.chave === chaveFaixa() ? faixaCache.dados : null;
+            }
+            function faixaPronta() {
+                var faixa = faixaDoMomento();
+                return !!(faixa && faixa.ok && qtdeValida());
+            }
+
+            function consultarFaixa() {
+                var ini = valor('codigo_inicial');
+                if (!inicialCompleto(ini)) return;
+                var chave = chaveFaixa();
+                if (faixaCache.chave === chave || faixaPedida[chave]) return;
+                faixaPedida[chave] = true;
+                fetch(URL_FAIXA + '?inicial=' + encodeURIComponent(ini) + '&qtde=' + encodeURIComponent(chave.split('|')[1]),
+                      { credentials: 'same-origin' })
+                    .then(function(resposta) { return resposta.json(); })
+                    .catch(function() { return { ok: false, erro: 'Não foi possível calcular o número final. Tente de novo.' }; })
+                    .then(function(dados) {
+                        delete faixaPedida[chave];
+                        faixaCache = { chave: chave, dados: dados };
+                        atualizarTela();
+                    });
+            }
+
+            // Preenche Nro Final e as caixinhas de DV (so no modelo antigo).
+            function mostrarFaixa() {
+                var faixa = faixaDoMomento();
+                var antigo = valor('codigo_inicial').indexOf(PREFIXO_ANTIGO) === 0;
+                var campoFinal = document.getElementById('codigo_final');
+                var dvInicial = document.getElementById('dv_inicial');
+                var dvFinal = document.getElementById('dv_final');
+                dvInicial.hidden = !antigo;
+                dvFinal.hidden = !antigo;
+                campoFinal.value = '';
+                dvInicial.value = '';
+                dvFinal.value = '';
+                if (!faixa || !faixa.ok) return;
+                if (faixa.modelo === 'ANTIGO') {
+                    dvInicial.value = faixa.inicial.slice(TAM_ANTIGO);
+                    if (qtdeValida()) {
+                        campoFinal.value = faixa.final.slice(0, TAM_ANTIGO);
+                        dvFinal.value = faixa.final.slice(TAM_ANTIGO);
+                    }
+                } else if (qtdeValida()) {
+                    campoFinal.value = faixa.final;
+                }
+            }
+
+            // ======================================================
+            // BLOCO 3 - validar(): MESMAS regras do servidor
+            // (brincos_entrada.py v1.3.0). Devolve { id_campo:
+            // mensagem } - objeto vazio = tudo correto.
+            // ======================================================
+            function validar() {
+                var erros = {};
+
+                if (!valor('solicitacao_nro')) erros.solicitacao_nro = 'Obrigatório.';
+
+                var dSol = lerData(valor('solicitacao_data'));
+                if (!dSol) erros.solicitacao_data = 'Data incorreta (dd/mm/aaaa).';
+
+                var dFab = lerData(valor('data_fabricacao'));
+                if (!dFab) erros.data_fabricacao = 'Data incorreta (dd/mm/aaaa).';
+                else if (dSol && dFab <= dSol) erros.data_fabricacao = 'Precisa ser DEPOIS da Solicitação.';
+
+                var dPia = lerData(valor('impressao_pia'));
+                if (!dPia) erros.impressao_pia = 'Data incorreta (dd/mm/aaaa).';
+                else if (dFab && dPia < dFab) erros.impressao_pia = 'Não pode ser antes da Fabricação.';
+
+                if (!valor('nota_fiscal')) erros.nota_fiscal = 'Obrigatório.';
+
+                var dNf = lerData(valor('data_nf'));
+                if (!dNf) erros.data_nf = 'Data incorreta (dd/mm/aaaa).';
+                else if (dSol && dNf < dSol) erros.data_nf = 'Não pode ser antes da Solicitação.';
+
+                if (!(parseInt(valor('total_caixas'), 10) >= 1)) erros.total_caixas = 'Mínimo 1.';
+
+                if (!valor('id_fabricante')) erros.id_fabricante = 'Escolha o Fornecedor.';
+
+                if (!(parseInt(valor('qtde_entrada'), 10) >= 1)) erros.qtde_entrada = 'Mínimo 1.';
+
+                var ini = valor('codigo_inicial');
+                if (ini.length < PREFIXO_ANTIGO.length) {
+                    erros.codigo_inicial = 'Digite o número do brinco.';
+                } else if (ini.indexOf(PREFIXO_ANTIGO) === 0 && ini.length !== TAM_ANTIGO) {
+                    erros.codigo_inicial = 'Modelo antigo (' + PREFIXO_ANTIGO + '): digite ' + TAM_ANTIGO + ' dígitos, sem o DV.';
+                } else if (ini.indexOf(PREFIXO_ANTIGO) !== 0 && ini.length !== TAM_NOVO) {
+                    erros.codigo_inicial = 'Precisa ter ' + TAM_NOVO + ' dígitos.';
+                }
+
+                // v1.6.0 - erro da faixa vem do servidor (ex.: passa do limite de digitos)
+                var faixa = faixaDoMomento();
+                if (!erros.codigo_inicial && qtdeValida() && faixa && !faixa.ok) erros.codigo_final = faixa.erro;
+
+                return erros;
+            }
+
+            // ======================================================
+            // BLOCO 4 - atualizarTela(): pinta os campos, calcula o
+            // Nro Final e liga/desliga o Salvar. Mensagem so aparece
+            // em campo que ja tem conteudo (tela nova nao nasce
+            // vermelha); o Salvar considera TODOS os campos.
+            // ======================================================
+            var CAMPOS = ['solicitacao_nro', 'solicitacao_data', 'data_fabricacao', 'impressao_pia',
+                          'nota_fiscal', 'data_nf', 'total_caixas', 'id_fabricante',
+                          'qtde_entrada', 'codigo_inicial', 'codigo_final'];
+            var btnSalvar = document.getElementById('btn-salvar');
+            var avisoSalvar = document.getElementById('aviso-salvar');
+
+            function atualizarTela() {
+                consultarFaixa();
+                mostrarFaixa();
+
+                var erros = validar();
+                CAMPOS.forEach(function(id) {
+                    var grupo = document.getElementById('grupo-' + id);
+                    var msg = document.getElementById('msg-' + id);
+                    var mostrar = erros[id] && (id === 'codigo_final' || valor(id) !== '');
+                    grupo.classList.toggle('campo-erro', !!mostrar);
+                    msg.textContent = mostrar ? erros[id] : '';
+                });
+
+                var tudoCerto = Object.keys(erros).length === 0;
+                var confirma = document.getElementById('confirma_dados').checked;
+                btnSalvar.disabled = !(tudoCerto && confirma && faixaPronta());
+
+                if (!tudoCerto) {
+                    avisoSalvar.textContent = 'Preencha/corrija os campos para liberar o Salvar.';
+                } else if (!faixaPronta()) {
+                    avisoSalvar.textContent = 'Calculando o número final do brinco...';
+                } else if (!confirma) {
+                    avisoSalvar.textContent = 'Marque a caixa de conferência para liberar o Salvar.';
+                } else {
+                    avisoSalvar.textContent = '';
+                }
+            }
+
+            formularioBrincos.addEventListener('input', atualizarTela);
+            formularioBrincos.addEventListener('change', atualizarTela);
+            atualizarTela();
+
+            // ======================================================
+            // BLOCO 5 - Salvar: reconfere e pede confirmacao na
+            // janelinha padrao do Orion (Padrao 2) com o nome da
+            // fazenda em destaque. So envia se o usuario confirmar.
+            // ======================================================
+            var formularioAlterado = false;
+            formularioBrincos.addEventListener('input', function() { formularioAlterado = true; });
+
+            formularioBrincos.addEventListener('submit', function(evento) {
+                evento.preventDefault();
+                if (Object.keys(validar()).length > 0 || !document.getElementById('confirma_dados').checked || !faixaPronta()) {
+                    atualizarTela();
+                    return;
+                }
+
+                // v1.6.0 - mostra os numeros COMPLETOS (15 digitos, com o DV no modelo antigo)
+                var faixaConfirmada = faixaDoMomento();
+                var nomeFazenda = formularioBrincos.dataset.propriedade;
+                var mensagem = 'Gravar ' + valor('qtde_entrada') + ' brinco(s), de ' + faixaConfirmada.inicial +
+                               ' a ' + faixaConfirmada.final + ', na ' + nomeFazenda + '?';
+
+                confirmarAcaoAssincrona(function() {
+                    formularioAlterado = false;
+                    btnSalvar.disabled = true;
+                    btnSalvar.textContent = 'Gravando...';
+                    formularioBrincos.submit();
+                }, mensagem, 'Gravar');
+            });
+
+            // ======================================================
+            // BLOCO 6 - Aviso de dados nao salvos (Voltar/Cancelar)
+            // ======================================================
+            window.addEventListener('beforeunload', function(evento) {
+                if (formularioAlterado) {
+                    evento.preventDefault();
+                    evento.returnValue = '';
+                }
+            });
+            // v1.5.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+            // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+            // Voltar, Home, menu) abre a janela do Orion em vez da do
+            // navegador. Chamado no DOMContentLoaded porque a peca do
+            // modal e incluida depois deste script.
+            document.addEventListener('DOMContentLoaded', function() {
+                vigiarSaidaPorLinks(
+                    function() { return formularioAlterado; },
+                    function() { formularioAlterado = false; }
+                );
+            });
+        }
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_entrada_cadastro.html
+     ========================================================= -->

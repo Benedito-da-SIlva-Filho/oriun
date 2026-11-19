@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\saida_comunicado_conferencia.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-20 10:47 -03
+     ATUALIZADO EM: 2026-11-06 20:00 -03
+     VERSAO: 1.4.2
+     v1.4.1: Sessao 115 (2026-11-05 19:25 -03) - Posse mostra DTA no lugar de GTA; aviso do topo em duas linhas (o limite de 6 so aparece se houver GTA). REVERSAO: .bak_antes_s115_dta_texto.
+     v1.4.0: Sessao 115 (2026-11-05 19:10 -03) - Bloco Alteracao de Posse: Motivo (Venda/Heranca) e Justificativa por Comunicado. REVERSAO: .bak_antes_s115_posse_com.
+     v1.3.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Gerar Comunicado de Saida - conferencia antes de gravar: a plataforma monta sozinha os Comunicados (GTAs vinculadas e sem Comunicado, agrupadas por frigorifico + Data de Saida, ate 6 GTAs cada) e mostra cada um com as GTAs e a lista de animais, mais as GTAs que ficaram de fora e o motivo. O botao Gerar Comunicados so libera depois da caixinha "Revisei os dados e confirmo" e o POST vai para /produtor/saida-comunicado/gerar (backend/routers/saida_comunicado.py, rotas conferencia e gerar). Esta tela nao grava nada.
+
+     v1.0.0: Criacao (Sessao 101, Pacote 1).
+     v1.1.0: Sessao 101 (2026-10-20 11:19 -03) - Automatico: mostra todos os Comunicados que serao gerados (sem marcar GTAs) e as GTAs que ficaram de fora com o motivo. Data de Saida futura permitida (so avisa).
+     v1.1.1: Sessao 103 (22/10/2026, 08:25 -03) - Caixa "Revisei os dados e confirmo" em LARANJA ORION (fundo #D4370A, letra branca, borda vinho #7a1f04), igual ao Abate por Arquivo. So o CSS mudou.  REVERSAO: .bak_antes_laranja_s103.
+     v1.2.0: Sessao 107 (28/10/2026) - Pacote 4: BLOCOS POR TIPO (Abate, Transferencia), so aparece o bloco que tem GTA. Transferencia: lote por destino + Data de Saida, aviso 'Entrada automatica no destino' ou 'destino fora da base - so a Saida'.  REVERSAO: .bak_antes_s107ze.
+     v1.3.1: Sessao 113 (03/11/2026, 13:20 -03) - Aviso do Gerar Comunicado com fonte maior, icone e 2 linhas alinhadas.  REVERSAO: .bak_antes_s113_aviso.
+     v1.4.2: Sessao 117 (06/11/2026, 20:00 -03) - Aviso do Gerar Comunicado: retirada a frase sobre Alteracao de Posse. REVERSAO: .bak_antes_s117_aviso_posse.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Conferir Comunicado de Sa&iacute;da</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+        .subtitulo-propriedade { font-size: 13.5px; color: #888888; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+
+        .tabela-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden; }
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 12px 16px 0; font-style: italic; }
+        .tabela-gtas { width: 100%; border-collapse: collapse; }
+        .tabela-gtas th { text-align: left; padding: 10px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .tabela-gtas th.col-qtd { text-align: right; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .numero-gta { font-weight: bold; font-family: monospace, monospace; font-size: 14px; }
+        .col-qtd { text-align: right; font-weight: bold; }
+        .selo-situacao { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .selo-situacao.vinculada { background: #e8f5e9; color: #1b7a2b; }
+        .selo-situacao.pendente { background: #fff8e1; color: #8a6d00; }
+        .selo-tipo { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #1565c0; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-resultados { text-align: center; padding: 40px 20px; color: #999999; font-style: italic; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .btn-acao { padding: 5px 10px; border: 1px solid #D4370A; border-radius: 6px; background: #fff; color: #D4370A; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .btn-acao:hover { background: #D4370A; color: #fff; }
+        .btn-acao.desab { border-color: #bbb; color: #aaa; cursor: not-allowed; background: #f5f5f5; }
+        .btn-acao.principal { background: #D4370A; color: #ffffff; }
+        .banner-ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; font-weight: bold; }
+        .btn-acao.desab:hover { background: #f5f5f5; color: #aaa; }
+        .acoes { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .caixa { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; max-width: 640px; }
+        .caixa label { display: block; font-size: 12px; color: #888; margin: 12px 0 4px; }
+        .caixa input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 160px; }
+        .caixa .fixo { font-size: 18px; font-weight: bold; color: #333; }
+        .faixa-erro { background: #D32F2F; color: #fff; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; font-weight: bold; display: none; }
+        .faixa-aviso { background: #fff8e1; color: #6d5400; border: 1px solid #f0d878; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-info { background: #e3f2fd; color: #0d47a1; padding: 10px 14px; border-radius: 6px; margin-top: 14px; font-size: 13.5px; display: none; }
+        .faixa-aviso ul { margin: 6px 0 0 18px; }
+        .btn-principal { margin-top: 18px; padding: 9px 22px; border: none; border-radius: 6px; background: #D4370A; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-principal:disabled { background: #ccc; cursor: not-allowed; }
+        .tabela-gtas td { padding: 7px 12px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .tabela-gtas td input { padding: 5px 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100px; }
+        .tabela-gtas td input.alterado { background: #fff8e1; border-color: #e0a800; }
+        .tabela-gtas td input.invalido { border-color: #D32F2F; background: #fdecea; }
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); align-items: center; justify-content: center; z-index: 50; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #fff; padding: 26px 30px; border-radius: 10px; text-align: center; max-width: 420px; }
+        .modal-caixa p { margin-bottom: 16px; font-size: 15px; color: #333; }
+
+        /* v1.0.0 - Conferencia do Comunicado de Saida */
+        .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+        .card h2 { font-size: 15px; color: #D4370A; margin-bottom: 10px; }
+        .grade { display: flex; flex-wrap: wrap; gap: 10px 32px; }
+        .grade .item .rot { font-size: 11px; color: #888888; }
+        .grade .item .val { font-size: 14px; font-weight: bold; color: #333333; }
+        .titulo-tabela { font-size: 15px; font-weight: bold; color: #D4370A; padding: 14px 16px 0; }
+        .bloco { margin-bottom: 16px; }
+        .titulo-bloco { font-size: 17px; font-weight: bold; color: #333333; margin: 6px 0 10px; padding-bottom: 4px; border-bottom: 3px solid #D4370A; }
+        .posse-campos { padding: 12px 16px; background: #fff7f3; border-top: 1px solid #e0cfc8; }
+        .posse-linha { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+        .posse-linha label { font-size: 12px; font-weight: bold; color: #7a1f04; }
+        .posse-linha select, .posse-linha textarea { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
+        .posse-linha select { max-width: 240px; }
+        .selo-entrada { background: #1b7a2b; color: #ffffff; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; margin-right: 6px; }
+        .selo-fora { background: #8a6d00; color: #ffffff; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; margin-right: 6px; }
+        .resumo-gta { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px; font-size: 13.5px; color: #333333; flex-wrap: wrap; }
+        details.animais { padding: 0 16px 12px; }
+        details.animais summary { cursor: pointer; font-size: 13px; color: #D4370A; font-weight: bold; padding: 4px 0; }
+        .celula { padding: 6px 16px; font-size: 13px; border-bottom: 1px solid #f5f5f5; color: #333333; }
+        .aviso-final { background: #fff8e1; border: 1px solid #f0d878; color: #6d5400; padding: 14px 18px; border-radius: 8px; font-size: 16px; margin-bottom: 16px; font-weight: bold; display: flex; align-items: flex-start; gap: 12px; }
+        .aviso-final .aviso-icone { font-size: 24px; line-height: 1.2; }
+        .aviso-final .aviso-linha { line-height: 1.45; }
+        .aviso-final .aviso-linha + .aviso-linha { margin-top: 4px; }
+        .confirmacao-revisao { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #ffffff; background: #D4370A; border: 3px solid #7a1f04; border-radius: 8px; padding: 10px 16px; cursor: pointer; height: 40px; }
+        .confirmacao-revisao input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #7a1f04; }
+        .barra-acao { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+        .btn-principal { margin-top: 0; height: 40px; }
+        .btn-nav { height: 40px; display: inline-flex; align-items: center; }
+        .faixa-erro.visivel { display: block; }
+        .faixa-erro ul { margin: 6px 0 0 18px; font-weight: normal; }
+        .obs-aviso { color: #8a6d00; font-weight: bold; }
+        .resumo-geral { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; font-size: 14px; color: #333333; }
+        .lote-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+        .lote-header { background: #FBE9E4; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid #e0e0e0; }
+        .lote-header .procedencia { font-weight: bold; color: #333333; font-size: 14px; }
+        .lote-header .estabelecimento { color: #666666; font-size: 12px; }
+        .lote-badge { background: #D4370A; color: #ffffff; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
+        .banner-download { display: none; background: #E3F2FD; border-left: 6px solid #1565C0; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #1565C0; margin: 0 0 16px 0; }
+        .banner-download.visivel { display: block; }
+    </style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo"><span class="icone-titulo">&#128221;</span> Gerar Comunicado de Sa&iacute;da</div>
+                <div class="botoes-topo">
+                    <a href="{{ url_voltar }}" class="btn-nav">Voltar</a>
+                </div>
+            </div>
+            <div class="subtitulo-propriedade"><strong>{{ produtor_nome }}</strong> &#8212; {{ propriedade_nome }} &#8212; {{ propriedade_local }}</div>
+
+            {% if mensagens %}
+            <div class="faixa-erro visivel" style="margin-top:0; margin-bottom:16px;">
+                N&atilde;o foi poss&iacute;vel continuar:
+                <ul>
+                    {% for m in mensagens %}
+                    <li>{{ m }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if not blocos %}
+            <div class="tabela-container">
+                <div class="sem-resultados">Nenhuma GTA de sa&iacute;da est&aacute; pronta para Comunicado. Vincule os animais na tela Vincular GTA / Embarque.</div>
+            </div>
+            {% endif %}
+
+            {% if total_lotes %}
+            {% set total_dtas = blocos|selectattr('posse')|map(attribute='total_gtas')|sum %}
+            {% set total_so_gtas = total_gtas - total_dtas %}
+            <div class="resumo-geral">
+                Ser&atilde;o gerados <strong>{{ total_lotes }}</strong> Comunicado{{ 's' if total_lotes != 1 else '' }} de Sa&iacute;da, com
+                {% if total_so_gtas %}<strong>{{ total_so_gtas }}</strong> GTA{{ 's' if total_so_gtas != 1 else '' }}{% endif %}{% if total_so_gtas and total_dtas %} e {% endif %}{% if total_dtas %}<strong>{{ total_dtas }}</strong> DTA{{ 's' if total_dtas != 1 else '' }}{% endif %}
+                e <strong>{{ total_animais }}</strong> animais.<br>
+                {% if total_so_gtas %}Cada Comunicado leva at&eacute; {{ maximo }} GTAs do mesmo destino e da mesma Data de Sa&iacute;da. {% endif %}O n&uacute;mero de cada um &eacute; dado na hora de gerar.
+            </div>
+            {% endif %}
+
+            {% for bloco in blocos %}
+            <div class="titulo-bloco">{{ bloco.rotulo }}</div>
+
+            {% if bloco.bloqueadas %}
+            <div class="tabela-container bloco">
+                <div class="titulo-tabela">{{ 'DTAs' if bloco.posse else 'GTAs' }} de {{ bloco.rotulo }} que ficaram de fora ({{ bloco.bloqueadas|length }})</div>
+                <div class="resumo-gta">Estas {{ 'DTAs' if bloco.posse else 'GTAs' }} n&atilde;o entram em Comunicado agora. Corrija o motivo e volte aqui.</div>
+                <table class="tabela-gtas">
+                    <thead>
+                        <tr>
+                            <th>N&uacute;mero da {{ 'DTA' if bloco.posse else 'GTA' }}</th>
+                            <th>Data de Sa&iacute;da</th>
+                            {% if not bloco.transfer %}<th>Frigor&iacute;fico</th>{% endif %}
+                            <th>Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bloco.bloqueadas %}
+                        <tr>
+                            <td class="celula numero-gta">{{ b.numero }}</td>
+                            <td class="celula">{{ b.data_saida }}</td>
+                            {% if not bloco.transfer %}<td class="celula">{{ b.frigorifico }}</td>{% endif %}
+                            <td class="celula obs-aviso">{{ b.motivo }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% for lote in bloco.lotes %}
+            <div class="lote-card">
+                <div class="lote-header">
+                    <div>
+                        <div class="procedencia">{{ lote.frigorifico }}</div>
+                        <div class="estabelecimento">{{ 'CPF/CNPJ' if bloco.transfer else 'CNPJ' }} {{ lote.frigorifico_cnpj }} &#8212; Data de Sa&iacute;da {{ lote.data_saida }}{% if lote.futura %} (data futura){% endif %}</div>
+                    </div>
+                    <span>
+                        {% if bloco.posse %}
+                            <span class="selo-entrada">Entrada autom&aacute;tica no novo Produtor</span>
+                        {% elif bloco.transfer %}
+                            {% if lote.destino_na_base %}<span class="selo-entrada">Entrada autom&aacute;tica em {{ lote.destino_nome_base }}</span>{% else %}<span class="selo-fora">Destino fora da base &#8212; s&oacute; a Sa&iacute;da</span>{% endif %}
+                        {% endif %}
+                        <span class="lote-badge">{{ bloco.rotulo }} {{ loop.index }} &#8212; {{ lote.gtas|length }} {{ 'DTA' if bloco.posse else 'GTA' }}{{ 's' if lote.gtas|length != 1 else '' }} &#8212; {{ lote.total_animais }} animais</span>
+                    </span>
+                </div>
+                {% for g in lote.gtas %}
+                <div class="resumo-gta">
+                    <span><strong>{{ 'DTA' if bloco.posse else 'GTA' }} {{ g.numero }}</strong> &#8212; Emiss&atilde;o {{ g.emissao }} &#8212; Validade {{ g.validade }}</span>
+                    <span>Animais vinculados: <strong>{{ g.vinculados }}</strong> &#8212; a {{ 'DTA' if bloco.posse else 'GTA' }} tem: <strong>{{ g.qtde_gta }}</strong></span>
+                </div>
+                <details class="animais">
+                    <summary>Ver os {{ g.vinculados }} animais da {{ 'DTA' if bloco.posse else 'GTA' }} {{ g.numero }}</summary>
+                    <table class="tabela-gtas">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>C&oacute;digo SISBOV</th>
+                                <th>Manejo</th>
+                                <th>Sexo</th>
+                                <th>Nascimento</th>
+                                <th class="col-qtd">Peso (kg)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in g.animais %}
+                            <tr>
+                                <td class="celula">{{ loop.index }}</td>
+                                <td class="celula numero-gta">{{ a.sisbov }}</td>
+                                <td class="celula">{{ a.manejo }}</td>
+                                <td class="celula">{{ a.sexo }}</td>
+                                <td class="celula">{{ a.nascimento }}</td>
+                                <td class="celula col-qtd">{{ a.peso }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </details>
+                {% endfor %}
+                {% if bloco.posse %}
+                <div class="posse-campos">
+                    <div class="posse-linha">
+                        <label for="pm-{{ lote.chave }}">Motivo *</label>
+                        <select id="pm-{{ lote.chave }}" name="posse_motivo_{{ lote.chave }}" form="form-gerar" required>
+                            <option value="">--</option>
+                            <option value="VENDA">Venda</option>
+                            <option value="HERANCA">Heran&ccedil;a</option>
+                        </select>
+                    </div>
+                    <div class="posse-linha">
+                        <label for="pj-{{ lote.chave }}">Justificativa *</label>
+                        <textarea id="pj-{{ lote.chave }}" name="posse_just_{{ lote.chave }}" form="form-gerar" required maxlength="2000" rows="3" placeholder="Explique a Altera&ccedil;&atilde;o de Posse (ex.: venda da posse conforme contrato, invent&aacute;rio do falecido, etc.)"></textarea>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endfor %}
+
+            {% if total_lotes %}
+            <div class="aviso-final">
+                <span class="aviso-icone">&#9888;</span>
+                <div>
+                    <div class="aviso-linha">Ao gerar, os {{ total_animais }} animais saem da Propriedade e cada Comunicado recebe um n&uacute;mero oficial.</div>
+                    <div class="aviso-linha">Nas Transfer&ecirc;ncias e Vendas para fazendas da nossa base, os animais j&aacute; entram no destino, com o Comunicado de Entrada pronto para imprimir. Isso n&atilde;o pode ser desfeito pela plataforma.</div>
+                </div>
+            </div>
+
+            <div class="banner-download" id="banner-gerando">&#8987; Gerando Comunicados de Sa&iacute;da &#8212; aguarde, n&atilde;o feche esta tela...</div>
+
+            <form method="post" action="{{ url_gerar }}" id="form-gerar" onsubmit="return aoGerar();">
+                <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                <div class="barra-acao">
+                    <label class="confirmacao-revisao">
+                        <input type="checkbox" name="confirmo" value="1" id="chk-revisei">
+                        Revisei os dados e confirmo a baixa dos animais e os Comunicados.
+                    </label>
+                    <button type="submit" class="btn-principal" id="btn-gerar" disabled>Gerar Comunicados</button>
+                    <a href="{{ url_voltar }}" class="btn-nav">Cancelar</a>
+                </div>
+            </form>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var chk = document.getElementById('chk-revisei');
+        var botaoGerar = document.getElementById('btn-gerar');
+        var geracaoEmAndamento = false;
+        function atualizarBotao() { botaoGerar.disabled = !chk.checked; }
+        chk.addEventListener('change', atualizarBotao);
+        window.addEventListener('pageshow', function () {
+            geracaoEmAndamento = false;
+            document.getElementById('banner-gerando').classList.remove('visivel');
+            botaoGerar.textContent = 'Gerar Comunicado';
+            atualizarBotao();
+        });
+        atualizarBotao();
+
+        // Um clique so: trava o botao e mostra o aviso enquanto o servidor trabalha.
+        function aoGerar() {
+            if (geracaoEmAndamento || !chk.checked) { return false; }
+            geracaoEmAndamento = true;
+            botaoGerar.disabled = true;
+            botaoGerar.textContent = 'Gerando...';
+            document.getElementById('banner-gerando').classList.add('visivel');
+            return true;
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\saida_comunicado_conferencia.html
+     ========================================================= -->

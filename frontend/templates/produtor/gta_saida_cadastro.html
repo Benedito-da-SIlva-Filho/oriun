@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_saida_cadastro.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-17 15:00 -03
+     ATUALIZADO EM: 2026-11-12 19:20 -03
+     VERSAO: 1.18.0
+     v1.17.0: Sessao 120 (2026-11-10 12:43 -03) - GTA duplicada: tarja vermelha na linha toda e o resto do formulario (Emissao, Validade, Meio, Animais) fica TRAVADO ate corrigir o numero; Salvar ja ficava desligado. REVERSAO: .bak_antes_s120_gta_dup.
+     v1.16.0: Sessao 118 (2026-11-08 15:30 -03) - DTA de Posse: pede o CPF/CNPJ do novo Produtor antes (Buscar); achou na Propriedade = escolhe, nao achou = Cadastrar Produtor novo ja com o CPF/CNPJ. REVERSAO: .bak_antes_s118_dtacpf
+     v1.15.1: Sessao 118 (2026-11-08 13:25 -03) - Campo hidden "de" (origem Hub) para o Voltar da DTA de Posse nao se perder num erro de validacao. REVERSAO: .bak_antes_s118_voltar.
+     v1.15.0: Sessao 118 (2026-11-08 13:00 -03) - VENDA: ao buscar o CPF/CNPJ do comprador, a tela lista as Propriedades dele NA NOSSA BASE (selo verde, clique acha/cria o destino) e as Propriedades de Parceiros que nao estao na base (selo amarelo), com o botao Cadastrar Propriedade parceira. Motivo: a Geane nao tinha como escolher a 2a fazenda do comprador. Transferencia e Posse nao mudam. REVERSAO: .bak_antes_s118_destino.
+     v1.14.0: Sessao 116 (2026-11-06 16:01 -03) - Posse sem outro Produtor: botao "Cadastrar Produtor novo" (leva a Minha Propriedade), ativo so para Titular/Administrador; os outros veem o botao cinza e o aviso. REVERSAO: .bak_antes_s116_addprodutor.
+     v1.13.1: Sessao 115 (2026-11-05 18:05 -03) - Posse: campo Meio de Transporte escondido. REVERSAO: .bak_antes_s115_sem_meio.
+     v1.13.0: Sessao 115 (2026-11-05 18:45 -03) - Posse: lista dos outros Produtores da mesma Propriedade no lugar da busca por CPF/CNPJ. REVERSAO: .bak_antes_s115_posse_lista.
+     v1.12.1: Sessao 115 (2026-11-05 18:20 -03) - Mensagem "Cadastrar ... novo" conforme o tipo (Posse: Produtor novo). REVERSAO: .bak_antes_s115_msgposse.
+     v1.12.0: Sessao 115 (2026-11-05 17:55 -03) - DTA de Alteracao de Posse (tipo_gta POSSE): titulos, bloco Produtor de destino e Cadastrar Produtor novo. REVERSAO: .bak_antes_s115_dta3a.
+     v1.11.0: Sessao 111 (01/11/2026) - Venda e Morte (ver Diario de Bordo da Sessao 111). REVERSAO: arquivos .bak_antes_s111* ao lado.
+
+     DESCRICAO:
+         Formulario do Cadastro de GTA de SAIDA (Abate), lancamento a mao
+         (backend/routers/gta_saida.py). Mesmo modelo da GTA de Entrada
+         (gta_manual_cadastro.html): documento + Qtde declarada + categorias
+         (Especie/Sexo/Idade/Quantidade) + conferencia + confirmacao.
+         Diferencas: Procedencia = a propria fazenda (so conferencia);
+         Destino = Frigorifico escolhido por busca (nome ou CNPJ, UF,
+         municipio) em /produtor/frigorificos/api/buscar, com atalho para
+         cadastrar o Frigorifico novo; sem Data de Entrega (a data de saida
+         e digitada no Vincular GTA / Embarque). O Salvar so habilita com o
+         Frigorifico escolhido E CONFIRMADO.
+
+     v1.10.1: Sessao 108 (29/10/2026, 20:25 -03) - Sai o texto '(da nossa base)' ao lado da IE (o usuario nao conhece essa informacao); a IE completada continua aparecendo. REVERSAO: .bak_antes_s108_ie_base.
+
+     v1.10.0: Sessao 108 (29/10/2026, 20:10 -03) - IE do destino completada com a da nossa base ('(da nossa base)'). REVERSAO: .bak_antes_s108_ie_base.
+
+     v1.9.0: Sessao 108 (29/10/2026, 20:00 -03) - Rotulo OESA; destino 'fora da nossa base' (aviso) passa a mostrar TODOS os itens da conferencia (inclusive as Propriedades do Produtor na nossa base), em amarelo. REVERSAO: .bak_antes_s108_oesa_geral.
+     v1.0.0: Criacao (Sessao 099).
+     v1.1.0: Sessao 099 (17/10/2026, 15:15 -03) - Voltar e Cancelar levam a tela dos 3 cartoes (url_inicio), nao mais a lista.
+     v1.2.0: Sessao 100 (19/10/2026, 14:05 -03) - pedido do Benedito: o usuario nao percebia que faltava ESCOLHER o frigorifico
+             (o Salvar ficava cinza sem explicacao). Agora: (1) ao clicar no frigorifico da busca abre a janela do Orion
+             'Confirma este frigorifico?' com Sim / Nao; (2) Sim = cartao verde 'Frigorifico confirmado' e libera o resto
+             do formulario; Nao = volta a busca; (3) enquanto nao confirmar, a area 'Dados do Documento' ate a confirmacao
+             fica bloqueada (esmaecida, sem clique/foco) com aviso em vermelho; (4) 'Trocar Frigorifico' volta a bloquear.
+             CORRECAO: a tela chamava vigiarSaidaPorLinks() mas NAO incluia modal_confirmacao.html (a funcao nao existia
+             aqui, dava erro no console e o aviso de dados nao salvos nao funcionava) - peca agora incluida, como na GTA de Entrada.
+             O servidor (gta_saida.py) ja exigia o frigorifico: nada mudou la.
+     v1.3.0: Sessao 100 (19/10/2026, 14:20 -03) - pedido do Benedito: o resultado da busca do Frigorifico estava 'apagado' e nao
+             deixava claro que era para clicar. Agora cada frigorifico e um CARTAO com borda laranja, nome maior em negrito, dados
+             mais escuros e botao 'Selecionar' a direita; titulo 'Resultado da busca - clique em Selecionar'; destaque ao passar o
+             mouse. O clique no cartao inteiro continua valendo. So visual: a janela Sim/Nao e o bloqueio nao mudaram.
+     v1.8.0: Sessao 107 (28/10/2026) - Destino da Transferencia simplificado: dados do destino + resultado da conferencia (azul informativo; vermelho so se bloquear) e botoes Confirmar / Trocar Destino (sai a janela Sim/Nao e o amarelo).  REVERSAO: .bak_antes_s107n.
+     v1.4.0: Sessao 103 (22/10/2026, 12:45 -03) - Tela tambem usada para ALTERAR a GTA (variaveis modo_edicao, numero_atual, acao_form, avisos_topo, frigo_travado): titulo,
+             destino do formulario, avisos de topo vermelhos e Frigorifico travado depois do Comunicado. O cadastro novo nao muda.  REVERSAO: .bak_antes_alterar_excluir_s103.
+     v1.6.0: Sessao 103 (22/10/2026, 16:55 -03) - UF da GTA so mostrada (sempre a da Propriedade) tambem no cadastro novo; se a Propriedade nao tem UF, o campo continua editavel.  REVERSAO: .bak_antes_aposentar_s103.
+     v1.8.4: Sessao 108 (29/10/2026, 09:50 -03) - Destino da Transferencia: se o CPF/CNPJ digitado for o do proprio Produtor, a busca lista
+             "Suas outras Propriedades" (rota destino-proprio) e, ao clicar, o Orion acha ou cria o registro interno de destino (destino-proprio-escolher)
+             e segue o check-list normal. Qualquer outro CPF/CNPJ continua buscando em Parceiros.  REVERSAO: .bak_antes_s108_destino_proprio.
+     v1.7.0: Sessao 107 (28/10/2026, 13:10 -03) - GTA de TRANSFERENCIA (variaveis tipo_gta e destino): no lugar do Frigorifico, o Destino (Propriedade) e achado
+             pelo CPF/CNPJ em Parceiros; ao escolher aparece o check-list com a nossa base e a janela Sim/Nao. Na alteracao o destino fica travado.  REVERSAO: .bak_antes_s107f.
+     v1.5.2: Sessao 103 (22/10/2026, 16:15 -03) - Quebra de linha fixa nas duas mensagens (vermelha e amarela), com o icone ao lado e a 2a linha alinhada.  REVERSAO: .bak_antes_caixa_sucesso_s103.
+     v1.5.1: Sessao 103 (22/10/2026, 16:05 -03) - Mensagem 'Somente estes campos podem ser alterados' em duas linhas.  REVERSAO: .bak_antes_consulta_unica_s103.
+     v1.5.0: Sessao 103 (22/10/2026, 15:50 -03) - Alterar: UF so mostrada (sempre a da Propriedade); com Comunicado (travar_animais) o bloco de
+     v1.11.1: Sessao 113 (03/11/2026, 14:45 -03) - GTA duplicada avisada na hora ao digitar o numero e ao escolher o comprador/destino (aviso vermelho e Salvar desligado).  REVERSAO: .bak_antes_s113_gta_dup.
+             animais some e entra aviso amarelo, e Serie/Numero/Emissao/Validade/Meio de Transporte ganham moldura com a mensagem 'Somente estes
+             campos podem ser alterados'; Data de Saida so mostrada. O cadastro novo nao muda.  REVERSAO: .bak_antes_alterar_aviso_s103.
+     v1.14.1: Sessao 117 (06/11/2026, 20:00 -03) - Aviso do frigorifico: icone maior e texto em duas linhas (Busque, clique no Frigorifico e confirme. / O restante do formulario sera liberado.). REVERSAO: .bak_antes_s117_avisos.
+         v1.18.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ 'DTA' if tipo_gta == 'POSSE' else 'GTA' }} de {% if tipo_gta == 'VENDA' %}Venda{% elif tipo_gta == 'POSSE' %}Altera&ccedil;&atilde;o de Posse{% elif tipo_gta == 'TRANSFER' %}Transfer&ecirc;ncia{% else %}Sa&iacute;da{% endif %}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1100px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-1  { grid-column: span 1; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+        .campo-destaque input { font-size: 17px; font-weight: bold; }
+        .campo-uf-negrito { font-size: 17px; font-weight: bold; }
+
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; }
+        .divisor-vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .caixa-qtde-gta { background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .caixa-qtde-gta label { font-size: 17px; font-weight: bold; color: #7a1f04; }
+        .caixa-qtde-gta input { width: 120px; font-size: 26px; font-weight: bold; text-align: center; padding: 10px; border: 1px solid #D4370A; border-radius: 6px; }
+        .contador-restante { font-size: 20px; font-weight: bold; }
+        .contador-restante.ok { color: #2e7d32; }
+        .contador-restante.falta { color: #D4370A; }
+
+        .tabela-animais { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .tabela-animais th { text-align: left; font-size: 12px; color: #666666; padding: 8px 6px; border-bottom: 2px solid #e0e0e0; }
+        .tabela-animais th.col-acao { width: 10%; text-align: center; }
+        .tabela-animais td { padding: 6px; border-bottom: 1px solid #f0f0f0; }
+        .tabela-animais input, .tabela-animais select { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; width: 100%; font-family: Arial, sans-serif; }
+        .btn-excluir-linha { background: #ffffff; border: 1px solid #c62828; color: #c62828; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+        .btn-excluir-linha:hover { background: #c62828; color: #ffffff; }
+        .btn-adicionar-linha { padding: 8px 18px; background: #ffffff; border: 1px dashed #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .btn-adicionar-linha:hover { background: #FBE9E4; }
+        .btn-adicionar-linha:disabled { border-color: #cccccc; color: #aaaaaa; background: #f5f5f5; cursor: not-allowed; }
+        .btn-adicionar-linha:disabled:hover { background: #f5f5f5; }
+
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 20px; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-resumo .valor { font-size: 19px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.total { color: #D4370A; }
+
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro label { font-size: 13px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    
+        .busca-frigo { display: grid; grid-template-columns: 1fr 90px; gap: 8px; margin-bottom: 8px; }
+        .busca-frigo input, .busca-frigo select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; width: 100%; font-family: Arial, sans-serif; }
+        .busca-frigo input:focus, .busca-frigo select:focus { outline: none; border-color: #D4370A; }
+        .busca-frigo .linha-cheia { grid-column: 1; }
+        .resultado-frigo { max-height: 260px; overflow-y: auto; }
+        #dest-resultado { max-height: none; overflow: visible; }
+        /* v1.3.0 - resultado da busca em CARTOES com botao Selecionar */
+        .titulo-resultado-frigo { font-size: 13px; font-weight: bold; color: #7a1f04; margin: 4px 0 8px; }
+        .item-frigo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; margin-bottom: 8px; background: #ffffff; border: 2px solid #D4370A; border-radius: 8px; cursor: pointer; }
+        .item-frigo:hover { background: #FBE9E4; }
+        .item-frigo .nome { font-size: 16px; font-weight: bold; color: #222222; }
+        .item-frigo .detalhe { font-size: 13px; color: #444444; margin-top: 3px; }
+        .btn-selecionar { flex-shrink: 0; padding: 8px 16px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .item-frigo:hover .btn-selecionar { background: #C0392B; }
+        .msg-frigo { padding: 12px; font-size: 12.5px; color: #888888; font-style: italic; }
+        .dica-frigo { font-size: 11.5px; color: #888888; margin-top: 6px; }
+        .dica-frigo a { color: #D4370A; font-weight: bold; text-decoration: none; }
+        .dica-frigo a:hover { text-decoration: underline; }
+        .btn-trocar { margin-top: 10px; padding: 6px 14px; background: #ffffff; border: 1px solid #D4370A; color: #D4370A; border-radius: 6px; font-size: 12.5px; font-weight: bold; cursor: pointer; }
+        .btn-trocar:hover { background: #D4370A; color: #ffffff; }
+        .erro { background: #D32F2F; border-left: 6px solid #8e0000; color: #ffffff; }
+
+        /* v1.2.0 - Confirmacao do Frigorifico: aviso vermelho, cartao verde e area bloqueada */
+        .aviso-frigo { margin-top: 10px; padding: 8px 12px; background: #ffebee; border-left: 4px solid #c62828; border-radius: 4px; font-size: 12.5px; font-weight: bold; color: #c62828; display: flex; align-items: center; gap: 12px; }
+        .aviso-frigo-icone { font-size: 30px; line-height: 1; }
+        /* v1.7.0 - check-list do destino (Transferencia) */
+        .conf-itens { margin-top: 10px; padding: 10px 12px; border-radius: 6px; font-size: 13px; line-height: 1.5; border-left: 5px solid #2e7d32; background: #e8f5e9; }
+        .conf-itens.aviso { border-left-color: #f9a825; background: #fff8e1; }
+        .conf-itens.info { border-left-color: #1565C0; background: #E3F2FD; }
+        .conf-itens.bloqueio { border-left-color: #c62828; background: #ffebee; }
+        .acoes-destino { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .acoes-destino button { height: 40px; padding: 0 22px; margin: 0; font-size: 14px; line-height: 1; box-sizing: border-box; }
+        .conf-itens .conf-titulo { font-weight: bold; margin-bottom: 4px; }
+        .conf-itens .conf-item { margin: 2px 0; }
+        .conf-itens .ok { color: #2e7d32; font-weight: bold; }
+        .conf-itens .nao { color: #c62828; font-weight: bold; }
+        .selo-confirmado { font-size: 14px; font-weight: bold; color: #2e7d32; margin-bottom: 8px; }
+        .bloco-conferencia.frigo-confirmado { background: #e8f5e9; border-color: #2e7d32; }
+        #area-restante.bloqueado { opacity: 0.45; pointer-events: none; user-select: none; }
+        /* v1.4.0 - avisos de topo da tela Alterar GTA (vermelho do padrao) */
+        .aviso-amarelo { display: flex; gap: 8px; align-items: flex-start; background: #FFF8E1; border-left: 6px solid #F9A825; color: #5d4037; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin: 12px 0; line-height: 1.5; }
+        .aviso-editaveis { display: flex; gap: 8px; align-items: flex-start; color: #c62828; font-size: 14px; font-weight: bold; margin: 0 0 10px; line-height: 1.4; }
+        .moldura-editavel { border: 3px solid #e3202e; border-radius: 8px; padding: 6px 8px 8px; background: #ffffff; }
+        .info-so-mostrada { margin-top: 12px; font-size: 13px; color: #555; }
+        .info-so-mostrada b { color: #333; }
+        .aviso-topo { background: #D32F2F; border-left: 6px solid #8e0000; color: #ffffff; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; margin-bottom: 12px; }
+        /* s120 - GTA duplicada: tarja vermelha na linha toda + resto do formulario travado (Regra de Ouro #66) */
+        .tarja-gta-dup { display: none; width: 100%; background: #C62828; color: #ffffff; font-weight: bold; font-size: 15px; line-height: 1.35; text-align: center; padding: 12px 16px; border-radius: 6px; margin: 12px 0; }
+        .trava-dup { opacity: 0.45; pointer-events: none; user-select: none; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_inicio %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#9997;&#65039;</span> {% if modo_edicao %}Alterar {{ 'DTA' if tipo_gta == 'POSSE' else 'GTA' }} de {% if tipo_gta == 'VENDA' %}Venda{% elif tipo_gta == 'POSSE' %}Altera&ccedil;&atilde;o de Posse{% elif tipo_gta == 'TRANSFER' %}Transfer&ecirc;ncia{% else %}Sa&iacute;da{% endif %} &#8212; {{ numero_atual }}{% else %}{{ 'DTA' if tipo_gta == 'POSSE' else 'GTA' }} de {% if tipo_gta == 'VENDA' %}Venda{% elif tipo_gta == 'POSSE' %}Altera&ccedil;&atilde;o de Posse{% elif tipo_gta == 'TRANSFER' %}Transfer&ecirc;ncia{% else %}Sa&iacute;da{% endif %} &#8212; Preenchimento Manual{% endif %}</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#9888;&#65039; {{ erro }}</div>
+            {% endif %}
+            {% for aviso in (avisos_topo or []) %}
+            <div class="aviso-topo">&#9888;&#65039; {{ aviso }}</div>
+            {% endfor %}
+
+            <div class="form-container">
+                <form method="POST" action="{{ acao_form if acao_form else url_for('gta_saida.salvar') }}" autocomplete="off" id="form-gta-manual">
+
+                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+                    <input type="hidden" name="tipo_gta" value="{{ tipo_gta or 'ABATE' }}">
+                    <input type="hidden" name="de" value="{{ de or '' }}">
+                    <input type="hidden" name="id_parceiro_propriedade" id="id_parceiro_propriedade" value="{{ destino.id if destino else '' }}">
+                    <input type="hidden" name="id_frigorifico" id="id_frigorifico" value="{{ frigorifico.id if frigorifico else (gta.id_frigorifico if frigo_travado else '') }}">
+
+                    <div class="duas-colunas" style="margin-bottom: 24px;">
+                        <div class="divisor-vertical"></div>
+                        <div>
+                            <div class="form-secao">Proced&ecirc;ncia (sua Propriedade)</div>
+                            <div class="bloco-conferencia">
+                                <div class="linha"><span class="rotulo">Produtor</span><span class="valor">{{ procedencia.produtor_nome if procedencia and procedencia.produtor_nome else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">CPF/CNPJ</span><span class="valor">{{ procedencia.cpf_cnpj if procedencia and procedencia.cpf_cnpj else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Propriedade</span><span class="valor">{{ procedencia.nome if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Regi&atilde;o</span><span class="valor">{{ procedencia.regiao if procedencia and procedencia.regiao else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">C&oacute;d. Estabelecimento (OESA)</span><span class="valor">{{ procedencia.codigo_mapa if procedencia and procedencia.codigo_mapa else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Insc. Estadual</span><span class="valor">{{ procedencia.insc_estadual if procedencia and procedencia.insc_estadual else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Munic&iacute;pio/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+                            </div>
+                        </div>
+                        <div>
+{% if tipo_gta in ('TRANSFER', 'VENDA', 'POSSE') %}
+                            <div class="form-secao">{% if tipo_gta == 'VENDA' %}Comprador (Venda){% elif tipo_gta == 'POSSE' %}Produtor de destino (Altera&ccedil;&atilde;o de Posse){% else %}Destino (Transfer&ecirc;ncia){% endif %} *</div>
+
+                            <div id="dest-escolhido" style="{{ '' if destino else 'display:none;' }}">
+                                <div class="selo-confirmado">&#10003; Destino confirmado</div>
+                                <div class="bloco-conferencia frigo-confirmado">
+                                    <div class="linha"><span class="rotulo">Produtor</span><span class="valor" id="de-parceiro">{{ destino.parceiro_nome if destino else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">CPF/CNPJ</span><span class="valor" id="de-doc">{{ destino.cpf_cnpj if destino else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">Propriedade</span><span class="valor" id="de-estab">{{ destino.estabelecimento if destino else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">C&oacute;d. Estabelecimento (OESA)</span><span class="valor" id="de-mapa">{{ (destino.codigo_mapa or '-') if destino else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">Insc. Estadual</span><span class="valor" id="de-ie">{{ (destino.insc_estadual or '-') if destino else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">Munic&iacute;pio/UF</span><span class="valor" id="de-local">{% if destino %}{{ destino.municipio or '-' }} / {{ destino.uf or '-' }}{% endif %}</span></div>
+                                </div>
+                                <div id="dest-conferencia">
+                                {% if destino %}
+                                    <div class="conf-itens {{ 'bloqueio' if destino.conferencia.nivel == 'bloqueio' else ('aviso' if destino.conferencia.nivel == 'aviso' else 'info') }}">
+                                        {% if destino.conferencia.nivel in ('bloqueio', 'aviso') %}
+                                        <div class="conf-titulo">{{ destino.conferencia.titulo }}</div>
+                                        {% for it in destino.conferencia.itens %}
+                                        <div class="conf-item"><span class="{{ 'ok' if it.ok else ('nao' if it.ok == false else '') }}">{{ '&#10003;'|safe if it.ok else ('&#10007;'|safe if it.ok == false else '&#8226;'|safe) }}</span> {{ it.texto }}</div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <div class="conf-item">{{ destino.conferencia.itens[-1].texto }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                </div>
+                                <button type="button" class="btn-trocar" id="btn-trocar-dest"{% if frigo_travado %} style="display:none"{% endif %}>Trocar Destino</button>
+                            </div>
+
+                            <div id="dest-busca" style="{{ 'display:none;' if destino else '' }}">
+                                <div class="busca-frigo">
+                                    <input type="text" id="dest-doc" class="linha-cheia" placeholder="CPF ou CNPJ do {% if tipo_gta == 'POSSE' %}novo Produtor{% else %}destino{% endif %}" inputmode="numeric" maxlength="18" autocomplete="off">
+                                    <button type="button" class="btn-selecionar" id="btn-buscar-dest">Buscar</button>
+                                </div>
+                                <div class="resultado-frigo" id="dest-resultado"><div class="msg-frigo">{% if tipo_gta == 'POSSE' %}Carregando os Produtores desta Propriedade...{% else %}Digite o CPF ou o CNPJ do destino e clique em Buscar.{% endif %}</div></div>
+                                <div class="dica-frigo"{% if tipo_gta == 'POSSE' %} style="display:none"{% endif %}>N&atilde;o encontrou? <a href="/produtor/parceiro-manual?id_propriedade_interna={{ id_propriedade }}&origem={{ 'venda' if tipo_gta == 'VENDA' else ('posse' if tipo_gta == 'POSSE' else 'transfer') }}">Cadastrar {{ 'Comprador novo' if tipo_gta == 'VENDA' else ('Produtor novo' if tipo_gta == 'POSSE' else 'Destino novo') }}</a></div>
+                            </div>
+{% else %}
+                            <div class="form-secao">Destino (Frigor&iacute;fico) *</div>
+
+                            <div id="frigo-escolhido" style="{{ '' if frigorifico else 'display:none;' }}">
+                                <div class="selo-confirmado">&#10003; Frigor&iacute;fico confirmado</div>
+                                <div class="bloco-conferencia frigo-confirmado">
+                                    <div class="linha"><span class="rotulo">Frigor&iacute;fico</span><span class="valor" id="fe-nome">{{ frigorifico.nome if frigorifico else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">CNPJ</span><span class="valor" id="fe-cnpj">{{ frigorifico.cnpj if frigorifico else '' }}</span></div>
+                                    <div class="linha"><span class="rotulo">Munic&iacute;pio/UF</span><span class="valor" id="fe-local">{% if frigorifico %}{{ frigorifico.municipio or '-' }} / {{ frigorifico.uf or '-' }}{% endif %}</span></div>
+                                    <div class="linha"><span class="rotulo">Selos</span><span class="valor" id="fe-selos">{{ (frigorifico.selos or '-') if frigorifico else '' }}</span></div>
+                                </div>
+                                <button type="button" class="btn-trocar" id="btn-trocar-frigo"{% if frigo_travado %} style="display:none"{% endif %}>Trocar Frigor&iacute;fico</button>
+                            </div>
+
+                            <div id="frigo-busca" style="{{ 'display:none;' if frigorifico else '' }}">
+                                <div class="busca-frigo">
+                                    <input type="text" id="busca-termo" class="linha-cheia" placeholder="Nome ou CNPJ do frigor&iacute;fico (ex.: Marfrig)" autocomplete="off">
+                                    <select id="busca-uf" title="UF">
+                                        <option value="">Todas</option>
+                                        {% set ufs_busca = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                                        {% for sigla in ufs_busca %}
+                                        <option value="{{ sigla }}" {{ 'selected' if sigla == uf_fazenda else '' }}>{{ sigla }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="text" id="busca-municipio" placeholder="Munic&iacute;pio (opcional)" autocomplete="off">
+                                </div>
+                                <div class="resultado-frigo" id="resultado-frigo"><div class="msg-frigo">Digite o nome ou o CNPJ para buscar.</div></div>
+                                <div class="dica-frigo">N&atilde;o encontrou? <a href="/produtor/frigorificos/novo" target="_blank" rel="noopener">Cadastrar Frigor&iacute;fico novo</a> (abre em outra aba &#8212; depois volte e busque de novo).</div>
+                                <div class="aviso-frigo" id="aviso-frigo"><span class="aviso-frigo-icone">&#9888;&#65039;</span><div>Busque, clique no Frigor&iacute;fico e confirme.<br>O restante do formul&aacute;rio ser&aacute; liberado.</div></div>
+                            </div>
+{% endif %}
+                        </div>
+                    </div>
+
+                    {% set uf_travada = (uf_fixa if (modo_edicao and uf_fixa) else uf_fazenda) or '' %}
+                    <div id="area-restante" class="{{ '' if (frigorifico or frigo_travado or destino) else 'bloqueado' }}" {{ '' if (frigorifico or frigo_travado or destino) else 'inert' }}>
+                    <div class="form-secao" style="margin-top: 24px;">Dados do Documento (GTA)</div>
+                    {% if modo_edicao and travar_animais %}
+                    <div class="aviso-editaveis"><span>&#9888;&#65039;</span><span>Somente os campos em destaque (S&eacute;rie, N&uacute;mero, Emiss&atilde;o, Validade e Meio de Transporte) podem ser alterados.<br>Depois de salvar, reimprima o Comunicado.</span></div>
+                    {% endif %}
+                    <div class="form-grid">
+                        <div class="form-group col-1 campo-destaque">
+                            <label>UF *</label>
+                            <select name="uf_gta" id="uf_gta" {% if uf_travada %}disabled title="A UF da GTA é sempre a da Propriedade"{% else %}required{% endif %} class="centralizado campo-uf-negrito">
+                                <option value="">--</option>
+                                {% set ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if (uf_travada or (gta.uf_gta if gta else '')) == sigla else '' }}>{{ sigla }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-1 campo-destaque{% if travar_animais %} moldura-editavel{% endif %}">
+                            <label>S&eacute;rie *</label>
+                            <input type="text" name="serie_gta" id="serie_gta" required maxlength="{{ 2 if gta and gta.uf_gta == 'GO' else 1 }}" class="upper centralizado" autocomplete="off"
+                                value="{{ gta.serie_gta if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque{% if travar_animais %} moldura-editavel{% endif %}">
+                            <label>N&uacute;mero *</label>
+                            <input type="text" name="numero_gta_sequencial" id="numero_gta_sequencial" required maxlength="6" class="centralizado" autocomplete="off" placeholder="000000" inputmode="numeric"
+                                value="{{ gta.numero_gta_sequencial if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque{% if travar_animais %} moldura-editavel{% endif %}">
+                            <label>Emiss&atilde;o *</label>
+                            <input type="text" name="data_emissao" id="data_emissao" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_emissao if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque{% if travar_animais %} moldura-editavel{% endif %}">
+                            <label>Validade *</label>
+                            <input type="text" name="data_validade" id="data_validade" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_validade if gta else '' }}">
+                        </div>
+                        {% if tipo_gta != 'POSSE' %}
+                        <div class="form-group col-4{% if travar_animais %} moldura-editavel{% endif %}">
+                            <label>Meio de Transporte *</label>
+                            <select name="meio_transporte" id="meio_transporte" required>
+                                <option value="">--</option>
+                                {% set meios = [('RODOVIARIO', 'Rodoviário'), ('COMITIVA', 'A Pé (Comitiva / Tocada)'), ('FLUVIAL_MARITIMO', 'Fluvial / Marítimo'), ('FERROVIARIO', 'Ferroviário'), ('AEREO', 'Aéreo')] %}
+                                {% for valor, rotulo in meios %}
+                                <option value="{{ valor }}" {{ 'selected' if gta and gta.meio_transporte == valor else '' }}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- s120 - tarja de GTA duplicada (linha toda) -->
+                    <div id="aviso-gta-dup" class="tarja-gta-dup" role="alert"></div>
+
+                    {% if data_saida_txt %}
+                    <div class="info-so-mostrada">Data de Sa&iacute;da (s&oacute; mostrada, n&atilde;o muda aqui): <b>{{ data_saida_txt }}</b></div>
+                    {% endif %}
+                    {% if travar_animais %}
+                    <div class="form-secao">Animais (por categoria)</div>
+                    <div class="aviso-amarelo"><span>&#9888;&#65039;</span><span>Esta GTA j&aacute; est&aacute; no Comunicado n&ordm; {{ numero_comunicado_6 }}. As categorias e quantidades de animais n&atilde;o podem ser alteradas aqui.<br>Para trocar animal, use Substitui&ccedil;&atilde;o de Animal ou Troca depois do Comunicado.</span></div>
+                    {% endif %}
+                    <div id="bloco-animais"{% if travar_animais %} style="display:none"{% endif %}>
+                    <div class="caixa-qtde-gta" style="margin-top: 20px;">
+                        <label>Quantidade de Animais na GTA *</label>
+                        <input type="number" name="qtde_animais_gta" id="qtde_animais_gta" min="1" required
+                            value="{{ gta.qtde_animais_gta if gta else '' }}">
+                        <span class="contador-restante" id="contador-restante"></span>
+                    </div>
+
+                    <div class="form-secao">Animais (por categoria)</div>
+
+                    <table class="tabela-animais" id="tabela-animais">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Esp&eacute;cie</th>
+                                <th style="width: 20%;">Sexo</th>
+                                <th style="width: 30%;">Idade</th>
+                                <th style="width: 18%;">Quantidade</th>
+                                <th class="col-acao"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-animais">
+                            {% for animal in animais %}
+                            <tr class="linha-animal">
+                                <td>
+                                    <select name="especie[]" class="campo-especie">
+                                        <option value="">--</option>
+                                        {% for esp in especies %}
+                                        <option value="{{ esp.codigo }}" {{ 'selected' if animal.especie == esp.codigo else '' }}>{{ esp.descricao }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="sexo[]" class="campo-sexo">
+                                        <option value="">--</option>
+                                        {% for sx in sexos %}
+                                        <option value="{{ sx }}" {{ 'selected' if animal.sexo == sx else '' }}>{{ sx.capitalize() }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="idade_faixa[]" class="campo-idade">
+                                        <option value="">--</option>
+                                        {% for faixa in faixas_idade %}
+                                        <option value="{{ faixa }}" {{ 'selected' if animal.idade_meses == faixa else '' }}>{{ faixa }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="quantidade[]" min="1" class="campo-quantidade" value="{{ animal.quantidade }}"></td>
+                                <td style="text-align: center;"><button type="button" class="btn-excluir-linha" onclick="removerLinhaAnimal(this)">&#10005;</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <button type="button" class="btn-adicionar-linha" id="btn-adicionar-linha">+ Adicionar Categoria</button>
+
+                    <div class="painel-resumo">
+                        <div>
+                            <div class="rotulo">F&ecirc;mea</div>
+                            <div class="valor" id="resumo-femea">0</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Macho</div>
+                            <div class="valor" id="resumo-macho">0</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Total Inclu&iacute;do</div>
+                            <div class="valor total" id="resumo-total">0</div>
+                        </div>
+                    </div>
+
+                    </div>
+
+                    <div class="confirma-quadro">
+                        <input type="checkbox" id="confirma_dados" name="confirma_dados"
+                            {% if gta and gta.confirma_dados %}checked{% endif %}>
+                        <label for="confirma_dados">Confirmo que os dados acima foram conferidos e est&atilde;o corretos.</label>
+                    </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="{{ url_inicio }}" class="btn-cancelar" id="link-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-salvar" disabled>Salvar</button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+    {% include 'produtor/modal_confirmacao.html' %}
+
+    <template id="template-linha-animal">
+        <tr class="linha-animal">
+            <td>
+                <select name="especie[]" class="campo-especie">
+                    <option value="">--</option>
+                    {% for esp in especies %}
+                    <option value="{{ esp.codigo }}">{{ esp.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="sexo[]" class="campo-sexo">
+                    <option value="">--</option>
+                    {% for sx in sexos %}
+                    <option value="{{ sx }}">{{ sx.capitalize() }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="idade_faixa[]" class="campo-idade">
+                    <option value="">--</option>
+                    {% for faixa in faixas_idade %}
+                    <option value="{{ faixa }}">{{ faixa }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="number" name="quantidade[]" min="1" class="campo-quantidade" value=""></td>
+            <td style="text-align: center;"><button type="button" class="btn-excluir-linha" onclick="removerLinhaAnimal(this)">&#10005;</button></td>
+        </tr>
+    </template>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        function aplicarMascaraData(campo) {
+            if (!campo) return;
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                var formatado = digitos;
+                if (digitos.length > 4) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                } else if (digitos.length > 2) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                }
+                this.value = formatado;
+            });
+        }
+        aplicarMascaraData(document.getElementById('data_emissao'));
+        aplicarMascaraData(document.getElementById('data_validade'));
+
+        // ---- Serie: 1 letra (2 em GO) - v1.10.0: o limite segue a UF escolhida ----
+        var campoUf = document.getElementById('uf_gta');
+        var campoSerie = document.getElementById('serie_gta');
+        function ajustarSerie() {
+            var limite = (campoUf.value === 'GO') ? 2 : 1;
+            campoSerie.maxLength = limite;
+            campoSerie.value = campoSerie.value.replace(/[^A-Za-z]/g, '').slice(0, limite).toUpperCase();
+        }
+        campoUf.addEventListener('change', ajustarSerie);
+        campoSerie.addEventListener('input', ajustarSerie);
+        ajustarSerie();
+
+        // ---- Numero: 6 digitos, zero-padded a esquerda ao sair do campo ----
+        var campoNumero = document.getElementById('numero_gta_sequencial');
+        campoNumero.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+        campoNumero.addEventListener('blur', function() {
+            if (this.value.length > 0) {
+                this.value = this.value.padStart(6, '0');
+            }
+        });
+
+        var formularioGta = document.getElementById('form-gta-manual');
+        var corpoTabela = document.getElementById('corpo-tabela-animais');
+        var btnAdicionarLinha = document.getElementById('btn-adicionar-linha');
+        var templateLinha = document.getElementById('template-linha-animal');
+        var campoQtdeGta = document.getElementById('qtde_animais_gta');
+        var contadorRestante = document.getElementById('contador-restante');
+
+        function removerLinhaAnimal(botao) {
+            var linha = botao.closest('tr');
+            linha.remove();
+            atualizarResumoAnimais();
+        }
+
+        function adicionarLinhaAnimal() {
+            var fragmento = templateLinha.content.cloneNode(true);
+            corpoTabela.appendChild(fragmento);
+            ligarEventosLinha(corpoTabela.lastElementChild);
+        }
+
+        // ---- v1.6.0: auto-limita a Quantidade digitada ao restante ainda
+        // disponivel (declarado - soma das DEMAIS linhas), travando o
+        // excesso ANTES de acontecer. Padrao de UX do projeto (Sessao 047),
+        // reaproveitar em toda tela futura com "total declarado + N linhas". ----
+        function limitarQuantidadeCampo(campo) {
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            if (isNaN(declarado) || declarado <= 0) return;
+
+            var somaOutras = 0;
+            document.querySelectorAll('.campo-quantidade').forEach(function(outroCampo) {
+                if (outroCampo === campo) return;
+                var qtd = parseInt(outroCampo.value, 10);
+                if (!isNaN(qtd)) somaOutras += qtd;
+            });
+
+            var restante = declarado - somaOutras;
+            if (restante < 0) restante = 0;
+
+            var valorAtual = parseInt(campo.value, 10);
+            if (!isNaN(valorAtual) && valorAtual > restante) {
+                campo.value = restante;
+            }
+        }
+
+        function ligarEventosLinha(linha) {
+            linha.querySelector('.campo-sexo').addEventListener('change', atualizarResumoAnimais);
+            linha.querySelector('.campo-quantidade').addEventListener('input', function() {
+                limitarQuantidadeCampo(this);
+                atualizarResumoAnimais();
+            });
+        }
+
+        document.querySelectorAll('.linha-animal').forEach(ligarEventosLinha);
+
+        if (btnAdicionarLinha) {
+            btnAdicionarLinha.addEventListener('click', adicionarLinhaAnimal);
+        }
+
+        function atualizarResumoAnimais() {
+            var femea = 0;
+            var macho = 0;
+
+            document.querySelectorAll('.linha-animal').forEach(function(linha) {
+                var sexo = linha.querySelector('.campo-sexo').value;
+                var qtd = parseInt(linha.querySelector('.campo-quantidade').value, 10);
+                if (isNaN(qtd)) qtd = 0;
+
+                if (sexo === 'FEMEA') {
+                    femea += qtd;
+                } else if (sexo === 'MACHO') {
+                    macho += qtd;
+                }
+            });
+
+            var total = femea + macho;
+            document.getElementById('resumo-femea').textContent = femea;
+            document.getElementById('resumo-macho').textContent = macho;
+            document.getElementById('resumo-total').textContent = total;
+
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            if (!isNaN(declarado) && declarado > 0) {
+                var diferenca = declarado - total;
+                if (diferenca === 0) {
+                    contadorRestante.className = 'contador-restante ok';
+                    contadorRestante.innerHTML = '&#10003; Total confere com a GTA';
+                } else if (diferenca > 0) {
+                    contadorRestante.className = 'contador-restante falta';
+                    contadorRestante.textContent = 'Falta incluir ' + diferenca + ' animal(is)';
+                } else {
+                    contadorRestante.className = 'contador-restante falta';
+                    contadorRestante.textContent = 'Excedeu em ' + Math.abs(diferenca) + ' animal(is)';
+                }
+            } else {
+                contadorRestante.textContent = '';
+            }
+
+            // ---- v1.6.0: trava o "+ Adicionar Categoria" quando nao sobra
+            // mais nenhum animal pra incluir (restante = 0) ----
+            if (btnAdicionarLinha) {
+                btnAdicionarLinha.disabled = (!isNaN(declarado) && declarado > 0 && total >= declarado);
+            }
+
+            atualizarBotaoSalvar();
+        }
+
+        campoQtdeGta.addEventListener('input', atualizarResumoAnimais);
+
+        // v1.11.1 - GTA duplicada avisada NA HORA (origem e, se o destino/comprador esta na base, tambem o destino)
+        var gtaDuplicada = false;
+        var MODO_EDICAO = {{ 'true' if modo_edicao else 'false' }};
+        // s120 - GTA duplicada TRAVA o resto do preenchimento (Emissao, Validade, Meio e Animais) ate o numero ser corrigido
+        function travarPosGta(travar) {
+            var alvos = [];
+            ['data_emissao', 'data_validade', 'meio_transporte'].forEach(function(i) {
+                var c = document.getElementById(i);
+                if (c && c.closest('.form-group')) { alvos.push(c.closest('.form-group')); }
+            });
+            var bloco = document.getElementById('bloco-animais');
+            if (bloco) { alvos.push(bloco); }
+            alvos.forEach(function(el) {
+                if (travar) { el.classList.add('trava-dup'); el.setAttribute('inert', ''); }
+                else { el.classList.remove('trava-dup'); el.removeAttribute('inert'); }
+            });
+        }
+        function conferirGtaDuplicada() {
+            var aviso = document.getElementById('aviso-gta-dup');
+            if (MODO_EDICAO) { return; }
+            var uf = (document.getElementById('uf_gta').value || '').trim();
+            var serie = (document.getElementById('serie_gta').value || '').trim();
+            var numero = (document.getElementById('numero_gta_sequencial').value || '').trim();
+            if (!uf || !serie || numero.length !== 6) { gtaDuplicada = false; aviso.style.display = 'none'; travarPosGta(false); atualizarBotaoSalvar(); return; }
+            var idDest = document.getElementById('id_parceiro_propriedade').value || '';
+            fetch('/produtor/gta-saida/gta-checar?id_propriedade=' + encodeURIComponent(ID_PROP_ORIGEM) + '&tipo=' + encodeURIComponent(TIPO_GTA)
+                  + '&uf=' + encodeURIComponent(uf) + '&serie=' + encodeURIComponent(serie) + '&numero=' + encodeURIComponent(numero)
+                  + '&id_parceiro_propriedade=' + encodeURIComponent(idDest), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    var msg = (res && res.mensagem) ? res.mensagem : '';
+                    gtaDuplicada = !!msg;
+                    aviso.textContent = msg;
+                    aviso.style.display = msg ? 'block' : 'none';
+                    travarPosGta(gtaDuplicada);
+                    atualizarBotaoSalvar();
+                })
+                .catch(function() { /* sem rede: o Salvar confere de novo no servidor */ });
+        }
+        ['uf_gta', 'serie_gta', 'numero_gta_sequencial'].forEach(function(i) {
+            var c = document.getElementById(i);
+            if (c) { c.addEventListener('change', conferirGtaDuplicada); c.addEventListener('blur', conferirGtaDuplicada); }
+        });
+
+        function atualizarBotaoSalvar() {
+            var confirma = document.getElementById('confirma_dados').checked;
+
+            var camposObrigatorios = document.querySelectorAll('#form-gta-manual [required]');
+            var todosPreenchidos = Array.prototype.every.call(camposObrigatorios, function(campo) {
+                return campo.value.trim() !== '';
+            });
+
+            var femeaEl = document.getElementById('resumo-femea');
+            var machoEl = document.getElementById('resumo-macho');
+            var total = (femeaEl ? parseInt(femeaEl.textContent, 10) : 0) + (machoEl ? parseInt(machoEl.textContent, 10) : 0);
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            var totalBate = (!isNaN(declarado) && declarado === total && total > 0);
+
+            var temFrigo = (document.getElementById('id_frigorifico').value !== '' || document.getElementById('id_parceiro_propriedade').value !== '');
+            document.getElementById('btn-salvar').disabled = !(confirma && todosPreenchidos && totalBate && temFrigo && !gtaDuplicada);
+        }
+
+        document.getElementById('confirma_dados').addEventListener('change', atualizarBotaoSalvar);
+        document.querySelectorAll('#form-gta-manual [required]').forEach(function(campo) {
+            campo.addEventListener('input', atualizarBotaoSalvar);
+        });
+
+        atualizarResumoAnimais();
+
+        var formularioAlterado = false;
+        formularioGta.addEventListener('input', function() { formularioAlterado = true; });
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioAlterado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+        formularioGta.addEventListener('submit', function() { formularioAlterado = false; });
+
+        function esc(t) {
+            var d = document.createElement('div');
+            d.textContent = (t == null ? '' : t);
+            return d.innerHTML;
+        }
+
+        // ---- v1.2.0: bloqueia/libera a area do documento conforme o Frigorifico confirmado ----
+        var areaRestante = document.getElementById('area-restante');
+        var avisoFrigo = document.getElementById('aviso-frigo');
+        function bloquearRestante(bloquear) {
+            if (bloquear) {
+                areaRestante.classList.add('bloqueado');
+                areaRestante.setAttribute('inert', '');
+            } else {
+                areaRestante.classList.remove('bloqueado');
+                areaRestante.removeAttribute('inert');
+            }
+            if (avisoFrigo) { avisoFrigo.style.display = bloquear ? '' : 'none'; }
+        }
+
+        {% if tipo_gta not in ('TRANSFER', 'VENDA', 'POSSE') %}
+        // ---- Busca de Frigorifico (Destino) ----
+        var campoIdFrigo = document.getElementById('id_frigorifico');
+        var boxEscolhido = document.getElementById('frigo-escolhido');
+        var boxBusca = document.getElementById('frigo-busca');
+        var campoTermo = document.getElementById('busca-termo');
+        var campoUfBusca = document.getElementById('busca-uf');
+        var campoMunBusca = document.getElementById('busca-municipio');
+        var boxResultado = document.getElementById('resultado-frigo');
+        var temporizador = null;
+        var contadorBusca = 0;
+
+        function mostrarMsg(texto) {
+            boxResultado.innerHTML = '<div class="msg-frigo">' + esc(texto) + '</div>';
+        }
+
+        function buscarFrigorificos() {
+            var termo = campoTermo.value.trim();
+            var mun = campoMunBusca.value.trim();
+            if (termo.length < 2 && mun.length < 2) {
+                mostrarMsg('Digite o nome ou o CNPJ para buscar.');
+                return;
+            }
+            var minha = ++contadorBusca;
+            var url = '/produtor/frigorificos/api/buscar?limite=15'
+                + '&termo=' + encodeURIComponent(termo)
+                + '&uf=' + encodeURIComponent(campoUfBusca.value)
+                + '&municipio=' + encodeURIComponent(mun);
+            mostrarMsg('Buscando...');
+            fetch(url, { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(dados) {
+                    if (minha !== contadorBusca) return;
+                    if (!dados.itens || dados.itens.length === 0) {
+                        mostrarMsg('Nenhum frigorífico encontrado. Tente a UF "Todas" ou cadastre um novo.');
+                        return;
+                    }
+                    boxResultado.innerHTML = '<div class="titulo-resultado-frigo">Resultado da busca &#8212; clique em Selecionar</div>';
+                    dados.itens.forEach(function(f) {
+                        var item = document.createElement('div');
+                        item.className = 'item-frigo';
+                        var local = (f.municipio || '-') + ' / ' + (f.uf || '-');
+                        item.innerHTML = '<div class="info"><div class="nome">' + esc(f.nome) + '</div>'
+                            + '<div class="detalhe">' + esc(f.cnpj) + ' • ' + esc(local)
+                            + (f.selos ? ' • ' + esc(f.selos) : '') + '</div></div>'
+                            + '<button type="button" class="btn-selecionar">Selecionar</button>';
+                        item.addEventListener('click', function() { pedirConfirmacaoFrigorifico(f); });
+                        boxResultado.appendChild(item);
+                    });
+                    if (dados.total > dados.itens.length) {
+                        var mais = document.createElement('div');
+                        mais.className = 'msg-frigo';
+                        mais.textContent = 'Mostrando ' + dados.itens.length + ' de ' + dados.total + '. Refine a busca.';
+                        boxResultado.appendChild(mais);
+                    }
+                })
+                .catch(function() { if (minha === contadorBusca) mostrarMsg('Não foi possível buscar agora. Tente de novo.'); });
+        }
+
+        function agendarBusca() {
+            clearTimeout(temporizador);
+            temporizador = setTimeout(buscarFrigorificos, 300);
+        }
+
+        // ---- v1.2.0: clicou no frigorifico da busca -> pergunta Sim / Nao (janela do Orion) ----
+        function pedirConfirmacaoFrigorifico(f) {
+            var local = (f.municipio || '-') + '/' + (f.uf || '-');
+            _modalConfirmacaoAcaoPendente = { tipo: 'callback', callback: function() { escolherFrigorifico(f); } };
+            _modalConfirmacaoAbrir(
+                'Confirma este frigorífico? ' + f.nome + ' • CNPJ ' + f.cnpj + ' • ' + local + (f.selos ? ' • ' + f.selos : ''),
+                'Sim',
+                { textoCancelar: 'Não', icone: '&#127981;' }
+            );
+        }
+
+        function escolherFrigorifico(f) {
+            campoIdFrigo.value = f.id;
+            document.getElementById('fe-nome').textContent = f.nome;
+            document.getElementById('fe-cnpj').textContent = f.cnpj;
+            document.getElementById('fe-local').textContent = (f.municipio || '-') + ' / ' + (f.uf || '-');
+            document.getElementById('fe-selos').textContent = f.selos || '-';
+            boxEscolhido.style.display = '';
+            boxBusca.style.display = 'none';
+            bloquearRestante(false);
+            formularioAlterado = true;
+            atualizarBotaoSalvar();
+        }
+
+        document.getElementById('btn-trocar-frigo').addEventListener('click', function() {
+            campoIdFrigo.value = '';
+            boxEscolhido.style.display = 'none';
+            boxBusca.style.display = '';
+            bloquearRestante(true);
+            mostrarMsg('Digite o nome ou o CNPJ para buscar.');
+            campoTermo.focus();
+            atualizarBotaoSalvar();
+        });
+
+        if (campoIdFrigo.value !== '') { bloquearRestante(false); }
+        campoTermo.addEventListener('input', agendarBusca);
+        campoMunBusca.addEventListener('input', agendarBusca);
+        campoUfBusca.addEventListener('change', buscarFrigorificos);
+        // Enter na busca nao pode enviar o formulario
+        [campoTermo, campoMunBusca].forEach(function(c) {
+            c.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscarFrigorificos(); } });
+        });
+
+        {% else %}
+        // ---- v1.7.0: Destino da Transferencia (CPF/CNPJ -> Parceiro -> Propriedade -> check-list) ----
+        var campoIdDest = document.getElementById('id_parceiro_propriedade');
+        var boxDestEscolhido = document.getElementById('dest-escolhido');
+        var boxDestBusca = document.getElementById('dest-busca');
+        var campoDestDoc = document.getElementById('dest-doc');
+        var boxDestRes = document.getElementById('dest-resultado');
+        var boxDestConf = document.getElementById('dest-conferencia');
+        var contadorDest = 0;
+        var ID_PROP_ORIGEM = '{{ id_propriedade }}';
+        var TIPO_GTA = '{{ tipo_gta }}';
+
+        function msgDest(texto) { boxDestRes.innerHTML = '<div class="msg-frigo">' + esc(texto) + '</div>'; }
+
+        function formatarDoc(v) {
+            var d = v.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 14);   // CNPJ alfanumerico
+            if (d.length <= 11 && !/[A-Z]/.test(d)) {
+                return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+            return d.replace(/([0-9A-Z]{2})([0-9A-Z])/, '$1.$2').replace(/([0-9A-Z]{3})([0-9A-Z])/, '$1.$2').replace(/([0-9A-Z]{3})([0-9A-Z])/, '$1/$2').replace(/([0-9A-Z]{4})([0-9A-Z]{1,2})$/, '$1-$2');
+        }
+        campoDestDoc.addEventListener('input', function() { this.value = formatarDoc(this.value); });
+        campoDestDoc.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscarDestinoDoc(); } });
+        document.getElementById('btn-buscar-dest').addEventListener('click', buscarDestinoDoc);
+
+        function buscarDestinoDoc() {
+            var dig = campoDestDoc.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            if (dig.length !== 11 && dig.length !== 14) { msgDest('Digite um CPF (11 números) ou um CNPJ (14 caracteres).'); return; }
+            var minha = ++contadorDest;
+            if (TIPO_GTA === 'POSSE') { carregarProdutoresPosse(dig); return; }
+            msgDest('Buscando...');
+            // v1.8.4 - primeiro: o CPF/CNPJ e o do proprio Produtor? Entao lista as OUTRAS Propriedades dele.
+            fetch('/produtor/gta-saida/destino-proprio?id_propriedade=' + encodeURIComponent(ID_PROP_ORIGEM) + '&documento=' + dig, { credentials: 'same-origin' })
+                .then(function(r) { return r.ok ? r.json() : { proprio: false }; })
+                .then(function(own) {
+                    if (minha !== contadorDest) return null;
+                    if (own && own.proprio) {
+                        if (TIPO_GTA === 'VENDA') { msgDest('Venda é para outro Produtor. Para as suas outras Propriedades use a GTA de Transferência.'); return null; }
+                        if (TIPO_GTA === 'POSSE') { msgDest('A Alteração de Posse é para outro Produtor. Digite o CPF ou CNPJ do novo Produtor.'); return null; }
+                        mostrarPropriasDestino(own); return null;
+                    }
+                    if (TIPO_GTA === 'VENDA') { return buscarDestinoVenda(dig, minha); }   // s118
+                    return fetch('/api/busca-parceiro?documento=' + dig, { credentials: 'same-origin' }).then(function(r) { return r.json(); });
+                })
+                .then(function(d) {
+                    if (!d) return;
+                    if (minha !== contadorDest) return;
+                    if (!d.encontrado) { msgDest('Este CPF/CNPJ não está em Parceiros. Use "' + (TIPO_GTA === 'POSSE' ? 'Cadastrar Produtor novo' : (TIPO_GTA === 'VENDA' ? 'Cadastrar Comprador novo' : 'Cadastrar Destino novo')) + '" abaixo e busque de novo.'); return; }
+                    if (!d.propriedades || d.propriedades.length === 0) { msgDest('O Parceiro ' + d.parceiro.nome + ' não tem Propriedade ativa. Cadastre a Propriedade e busque de novo.'); return; }
+                    if (d.propriedades.length === 1) { conferirEscolherDestino(d.propriedades[0]); return; }
+                    boxDestRes.innerHTML = '<div class="titulo-resultado-frigo">' + esc(d.parceiro.nome) + ' &#8212; clique na Propriedade de destino</div>';
+                    d.propriedades.forEach(function(p) {
+                        var item = document.createElement('div');
+                        item.className = 'item-frigo';
+                        var local = (p.municipio_nome || '-') + ' / ' + (p.uf || '-');
+                        item.innerHTML = '<div class="info"><div class="nome">' + esc(p.estabelecimento) + '</div>'
+                            + '<div class="detalhe">MAPA ' + esc(p.codigo_mapa || '-') + ' • IE ' + esc(p.insc_estadual || '-') + ' • ' + esc(local) + '</div></div>';
+                        item.addEventListener('click', function() { conferirEscolherDestino(p); });
+                        boxDestRes.appendChild(item);
+                    });
+                })
+                .catch(function() { if (minha === contadorDest) msgDest('Não foi possível buscar agora. Tente de novo.'); });
+        }
+
+        // v1.8.4 - CPF/CNPJ do proprio Produtor: lista as OUTRAS Propriedades dele (nunca a de origem).
+        function mostrarPropriasDestino(own) {
+            var lista = own.propriedades || [];
+            if (lista.length === 0) { msgDest('Você não tem outra Propriedade ativa para receber a Transferência.'); return; }
+            boxDestRes.innerHTML = '<div class="titulo-resultado-frigo">Suas outras Propriedades &#8212; clique na Propriedade de destino</div>';
+            lista.forEach(function(p) {
+                var item = document.createElement('div');
+                item.className = 'item-frigo';
+                var local = (p.municipio_nome || '-') + ' / ' + (p.uf || '-');
+                item.innerHTML = '<div class="info"><div class="nome">' + esc(p.estabelecimento) + '</div>'
+                    + '<div class="detalhe">Cód. Estabelecimento (OESA) ' + esc(p.codigo_mapa || '-') + ' • IE ' + esc(p.insc_estadual || '-') + ' • ' + esc(local) + '</div></div>';
+                item.addEventListener('click', function() { escolherPropriaDestino(p); });
+                boxDestRes.appendChild(item);
+            });
+        }
+
+        // v1.8.4 - clicou numa das suas Propriedades: o servidor acha/cria o registro de destino e o check-list normal roda.
+        function escolherPropriaDestino(p) {
+            msgDest('Conferindo...');
+            var corpo = new URLSearchParams();
+            corpo.append('id_propriedade', ID_PROP_ORIGEM);
+            corpo.append('id_propriedade_destino', p.id_propriedade);
+            fetch('/produtor/gta-saida/destino-proprio-escolher', { method: 'POST', credentials: 'same-origin', body: corpo })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.ok) { msgDest(res.erro || 'Não foi possível usar esta Propriedade como destino.'); return; }
+                    conferirEscolherDestino({ id: res.id });
+                })
+                .catch(function() { msgDest('Não foi possível conferir o destino. Tente de novo.'); });
+        }
+
+
+        // s118 - VENDA: junta as Propriedades do comprador na nossa base (verde) com as cadastradas em Parceiros que NAO estao na base (amarelo).
+        function buscarDestinoVenda(dig, minha) {
+            function jsonOu(url, vazio) {
+                return fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : vazio; }).catch(function() { return vazio; });
+            }
+            return Promise.all([
+                jsonOu('/produtor/gta-saida/destino-produtor-base?id_propriedade=' + encodeURIComponent(ID_PROP_ORIGEM) + '&documento=' + dig, { encontrado: false }),
+                jsonOu('/api/busca-parceiro?documento=' + dig, { encontrado: false })
+            ]).then(function(res) {
+                if (minha !== contadorDest) return null;
+                mostrarDestinoVenda(res[0] || {}, res[1] || {}, dig);
+                return null;
+            });
+        }
+
+        function mostrarDestinoVenda(base, parc, dig) {
+            var propsBase = (base.encontrado && base.propriedades) ? base.propriedades : [];
+            var oesasBase = propsBase.map(function(p) { return String(p.oesa || '').slice(0, 11); }).filter(Boolean);
+            var propsParc = (parc.encontrado && parc.propriedades) ? parc.propriedades : [];
+            var foraBase = propsParc.filter(function(p) {
+                var o = String(p.codigo_mapa || '').replace(/\D/g, '').slice(0, 11);
+                return !(o && oesasBase.indexOf(o) >= 0);   // a que ja esta na base aparece so como verde
+            });
+            var nome = base.encontrado ? base.produtor.nome : (parc.encontrado && parc.parceiro ? parc.parceiro.nome : '');
+            var linkCadastrar = '<div style="padding:10px 12px"><a href="/produtor/parceiro-manual?id_propriedade_interna=' + encodeURIComponent(ID_PROP_ORIGEM)
+                + '&origem=venda&documento=' + dig + '" style="display:inline-block;padding:8px 16px;border:1px solid #D4370A;border-radius:6px;color:#D4370A;font-size:13px;font-weight:bold;text-decoration:none">+ Cadastrar Propriedade parceira</a></div>';
+            if (propsBase.length === 0 && foraBase.length === 0) {
+                var aviso = base.encontrado
+                    ? 'O comprador ' + base.produtor.nome + ' está na nossa base, mas não tem outra Propriedade ativa e nenhuma em Parceiros.'
+                    : 'Este CPF/CNPJ não está em Parceiros nem na nossa base.';
+                boxDestRes.innerHTML = '<div class="msg-frigo">' + esc(aviso) + ' Use "Cadastrar Propriedade parceira" e busque de novo.</div>' + linkCadastrar;
+                return;
+            }
+            boxDestRes.innerHTML = '<div class="titulo-resultado-frigo">' + esc(nome) + ' &#8212; clique na Propriedade de destino</div>';
+            function item(p, naBase) {
+                var el = document.createElement('div');
+                el.className = 'item-frigo';
+                var local = (p.municipio_nome || '-') + ' / ' + (p.uf || '-');
+                var selo = naBase
+                    ? '<span style="display:inline-block;margin-left:8px;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:bold;background:#e8f5e9;color:#2e7d32">&#9679; Na nossa base</span>'
+                    : '<span style="display:inline-block;margin-left:8px;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:bold;background:#fff8e1;color:#8a6d00">&#9679; Fora da nossa base</span>';
+                el.innerHTML = '<div class="info"><div class="nome">' + esc(p.estabelecimento) + selo + '</div>'
+                    + '<div class="detalhe">Cód. Estabelecimento (OESA) ' + esc(p.codigo_mapa || '-') + ' &bull; IE ' + esc(p.insc_estadual || '-') + ' &bull; ' + esc(local) + '</div></div>';
+                el.addEventListener('click', function() {
+                    if (naBase) { escolherPropriedadeBase(p, dig); } else { conferirEscolherDestino(p); }
+                });
+                boxDestRes.appendChild(el);
+            }
+            propsBase.forEach(function(p) { item(p, true); });
+            foraBase.forEach(function(p) { item(p, false); });
+            boxDestRes.insertAdjacentHTML('beforeend', linkCadastrar);
+        }
+
+        // s118 - clicou numa Propriedade do comprador na nossa base: o servidor acha/cria o registro de destino e o check-list normal roda.
+        function escolherPropriedadeBase(p, dig) {
+            msgDest('Conferindo...');
+            var corpo = new URLSearchParams();
+            corpo.append('id_propriedade', ID_PROP_ORIGEM);
+            corpo.append('id_propriedade_destino', p.id_propriedade);
+            corpo.append('documento', dig);
+            fetch('/produtor/gta-saida/destino-base-escolher', { method: 'POST', credentials: 'same-origin', body: corpo })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.ok) { msgDest(res.erro || 'Não foi possível usar esta Propriedade como destino.'); return; }
+                    conferirEscolherDestino({ id: res.id });
+                })
+                .catch(function() { msgDest('Não foi possível conferir o destino. Tente de novo.'); });
+        }
+
+        // s115 - ALTERACAO DE POSSE: o destino e outro Produtor ja vinculado a MESMA Propriedade (lista, sem digitar CPF)
+        function carregarProdutoresPosse(docBuscado) {
+            // s118 - pede o CPF/CNPJ antes: achou entre os Produtores da Propriedade = escolhe; nao achou = Cadastrar Produtor novo (ja com o CPF/CNPJ)
+            docBuscado = docBuscado || '';
+            msgDest(docBuscado ? 'Buscando...' : 'Carregando os Produtores desta Propriedade...');
+            fetch('/produtor/gta-saida/posse-produtores?id_propriedade=' + encodeURIComponent(ID_PROP_ORIGEM), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.ok) { msgDest(res.erro || 'Não foi possível carregar os Produtores.'); return; }
+                    var lista = res.produtores || [];
+                    var achados = docBuscado ? lista.filter(function(p) { return String(p.cpf_cnpj || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase() === docBuscado; }) : [];
+                    var urlCad = res.url_cadastrar + (docBuscado ? '&documento=' + docBuscado : '');
+                    function botaoCadastrar() {
+                        if (res.pode_cadastrar) {
+                            return '<div style="padding:0 12px 12px"><a href="' + esc(urlCad) + '" style="display:inline-block;padding:9px 18px;background:#D4370A;color:#fff;border-radius:6px;font-size:13px;font-weight:bold;text-decoration:none">Cadastrar Produtor novo</a></div>';
+                        }
+                        return '<div style="padding:0 12px 12px"><span style="display:inline-block;padding:9px 18px;background:#eeeeee;border:1px solid #bbbbbb;color:#999999;border-radius:6px;font-size:13px;font-weight:bold;cursor:not-allowed">Cadastrar Produtor novo</span>'
+                             + '<div style="margin-top:8px;font-size:12.5px;color:#888888">' + esc(res.msg_sem_permissao || 'Só o Titular ou o Administrador pode cadastrar um Produtor novo. Peça a um deles.') + '</div></div>';
+                    }
+                    if (docBuscado && achados.length === 1) { escolherProdutorPosse(achados[0]); return; }
+                    if (docBuscado && achados.length === 0) {
+                        boxDestRes.innerHTML = '<div class="msg-frigo">Este CPF/CNPJ ainda não é Produtor desta Propriedade. Na Alteração de Posse o novo Produtor precisa estar vinculado à mesma Propriedade.</div>' + botaoCadastrar();
+                        return;
+                    }
+                    if (lista.length === 0) {
+                        boxDestRes.innerHTML = '<div class="msg-frigo">Digite o CPF ou o CNPJ do novo Produtor e clique em Buscar. Se ele ainda não estiver nesta Propriedade, você poderá cadastrá-lo.</div>';
+                        return;
+                    }
+                    if (false) {
+                        // s116: botao para Minha Propriedade; so Titular/Administrador (os outros veem o aviso)
+                        var html = '<div class="msg-frigo">Nenhum outro Produtor está vinculado a esta Propriedade. Na Alteração de Posse o novo Produtor precisa estar vinculado à mesma Propriedade.</div>';
+                        if (res.pode_cadastrar) {
+                            html += '<div style="padding:0 12px 12px"><a href="' + esc(res.url_cadastrar) + '" style="display:inline-block;padding:9px 18px;background:#D4370A;color:#fff;border-radius:6px;font-size:13px;font-weight:bold;text-decoration:none">Cadastrar Produtor novo</a></div>';
+                        } else {
+                            html += '<div style="padding:0 12px 12px"><span style="display:inline-block;padding:9px 18px;background:#eeeeee;border:1px solid #bbbbbb;color:#999999;border-radius:6px;font-size:13px;font-weight:bold;cursor:not-allowed">Cadastrar Produtor novo</span>'
+                                 + '<div style="margin-top:8px;font-size:12.5px;color:#888888">' + esc(res.msg_sem_permissao || 'Só o Titular ou o Administrador pode cadastrar um Produtor novo. Peça a um deles.') + '</div></div>';
+                        }
+                        boxDestRes.innerHTML = html;
+                        return;
+                    }
+                    boxDestRes.innerHTML = '<div class="titulo-resultado-frigo">Produtores desta Propriedade &#8212; clique no novo Produtor (destino)</div>';
+                    lista.forEach(function(p) {
+                        var item = document.createElement('div');
+                        item.className = 'item-frigo';
+                        item.innerHTML = '<div class="info"><div class="nome">' + esc(p.nome) + '</div>'
+                            + '<div class="detalhe">' + esc(p.cpf_cnpj || '-') + ' &bull; Cód. MAPA ' + esc(p.codigo_mapa || '-') + ' &bull; IE ' + esc(p.insc_estadual || '-') + '</div></div>';
+                        item.addEventListener('click', function() { escolherProdutorPosse(p); });
+                        boxDestRes.appendChild(item);
+                    });
+                })
+                .catch(function() { msgDest('Não foi possível carregar os Produtores. Tente de novo.'); });
+        }
+        function escolherProdutorPosse(p) {
+            msgDest('Conferindo...');
+            var corpo = new URLSearchParams();
+            corpo.append('id_propriedade', ID_PROP_ORIGEM);
+            corpo.append('id_produtor_destino', p.id_produtor);
+            fetch('/produtor/gta-saida/posse-produtor-escolher', { method: 'POST', credentials: 'same-origin', body: corpo })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.ok) { msgDest(res.erro || 'Não foi possível usar este Produtor como destino.'); return; }
+                    conferirEscolherDestino({ id: res.id });
+                })
+                .catch(function() { msgDest('Não foi possível conferir o destino. Tente de novo.'); });
+        }
+
+        function itensHtml(conf) {
+            if (conf.nivel !== 'bloqueio' && conf.nivel !== 'aviso') {
+                return '<div class="conf-itens info"><div class="conf-item">' + esc(conf.itens[conf.itens.length - 1].texto) + '</div></div>';
+            }
+            var h = '<div class="conf-itens ' + (conf.nivel === 'bloqueio' ? 'bloqueio' : 'aviso') + '"><div class="conf-titulo">' + esc(conf.titulo) + '</div>';
+            conf.itens.forEach(function(it) {
+                var marca = it.ok === true ? '<span class="ok">&#10003;</span>' : (it.ok === false ? '<span class="nao">&#10007;</span>' : '<span>&#8226;</span>');
+                h += '<div class="conf-item">' + marca + ' ' + esc(it.texto) + '</div>';
+            });
+            return h + '</div>';
+        }
+
+        function conferirEscolherDestino(p) {
+            boxDestConf.innerHTML = '';
+            fetch('/produtor/gta-saida/destino-checar?id_propriedade=' + encodeURIComponent(ID_PROP_ORIGEM) + '&tipo=' + encodeURIComponent(TIPO_GTA) + '&id_parceiro_propriedade=' + encodeURIComponent(p.id), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.ok) { msgDest(res.erro || 'Não foi possível conferir o destino.'); return; }
+                    var dest = res.destino, conf = dest.conferencia;
+                    var bloqueado = conf.nivel === 'bloqueio';
+                    function lin(r, v) { return '<div class="linha"><span class="rotulo">' + r + '</span><span class="valor">' + esc(v) + '</span></div>'; }
+                    var h = '<div class="titulo-resultado-frigo">' + (bloqueado ? 'Este destino não pode ser usado' : 'Confira os dados do destino') + '</div>'
+                        + '<div class="bloco-conferencia">'
+                        + lin('Produtor', dest.parceiro_nome) + lin('CPF/CNPJ', dest.cpf_cnpj) + lin('Propriedade', dest.estabelecimento)
+                        + lin('Cód. Estabelecimento (OESA)', dest.codigo_mapa || '-') + lin('Insc. Estadual', dest.insc_estadual || '-')
+                        + lin('Município/UF', (dest.municipio || '-') + ' / ' + (dest.uf || '-'))
+                        + '</div>' + itensHtml(conf)
+                        + '<div class="acoes-destino">' + (bloqueado ? '' : '<button type="button" class="btn-selecionar" id="btn-conf-dest">Confirmar</button>')
+                        + '<button type="button" class="btn-trocar" id="btn-troc-dest2">Trocar Destino</button></div>';
+                    boxDestRes.innerHTML = h;
+                    var bc = document.getElementById('btn-conf-dest');
+                    if (bc) { bc.addEventListener('click', function() { escolherDestino(dest); }); }
+                    document.getElementById('btn-troc-dest2').addEventListener('click', function() {
+                        if (TIPO_GTA === 'POSSE') { carregarProdutoresPosse(); return; }
+                        campoDestDoc.value = '';
+                        msgDest('Digite o CPF ou o CNPJ do destino e clique em Buscar.');
+                        campoDestDoc.focus();
+                    });
+                })
+                .catch(function() { msgDest('Não foi possível conferir o destino. Tente de novo.'); });
+        }
+
+        function escolherDestino(dest) {
+            campoIdDest.value = dest.id;
+            conferirGtaDuplicada();   // v1.11.1: comprador escolhido -> confere tambem no destino
+            document.getElementById('de-parceiro').textContent = dest.parceiro_nome;
+            document.getElementById('de-doc').textContent = dest.cpf_cnpj;
+            document.getElementById('de-estab').textContent = dest.estabelecimento;
+            document.getElementById('de-mapa').textContent = dest.codigo_mapa || '-';
+            document.getElementById('de-ie').textContent = dest.insc_estadual || '-';
+            document.getElementById('de-local').textContent = (dest.municipio || '-') + ' / ' + (dest.uf || '-');
+            boxDestConf.innerHTML = itensHtml(dest.conferencia);
+            boxDestEscolhido.style.display = '';
+            boxDestBusca.style.display = 'none';
+            bloquearRestante(false);
+            formularioAlterado = true;
+            atualizarBotaoSalvar();
+        }
+
+        document.getElementById('btn-trocar-dest').addEventListener('click', function() {
+            campoIdDest.value = '';
+            boxDestConf.innerHTML = '';
+            boxDestEscolhido.style.display = 'none';
+            boxDestBusca.style.display = '';
+            bloquearRestante(true);
+            if (TIPO_GTA === 'POSSE') { carregarProdutoresPosse(); atualizarBotaoSalvar(); return; }
+            campoDestDoc.value = '';
+            msgDest('Digite o CPF ou o CNPJ do destino e clique em Buscar.');
+            campoDestDoc.focus();
+            atualizarBotaoSalvar();
+        });
+
+        if (campoIdDest.value !== '') { bloquearRestante(false); }
+
+        // v1.8.3 - volta do cadastro de Parceiro com o CPF/CNPJ: ja busca
+        var DOC_INICIAL = {{ (documento_inicial or '')|tojson }};
+        if (TIPO_GTA === 'POSSE') { if (campoIdDest.value === '') { carregarProdutoresPosse(); } }
+        else if (DOC_INICIAL && campoIdDest.value === '') { campoDestDoc.value = DOC_INICIAL; buscarDestinoDoc(); }
+
+        {% endif %}
+
+        // v1.9.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return formularioAlterado; },
+                function() { formularioAlterado = false; }
+            );
+        });
+    </script>
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_saida_cadastro.html
+     ========================================================= -->

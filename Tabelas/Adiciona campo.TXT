@@ -1,0 +1,26 @@
+-- =========================================================
+-- PROJETO: Orion
+-- BANCO: orion (PostgreSQL porta 5433)
+-- SCRIPT: Adiciona coluna senha_provisoria na tabela usuarios
+-- AUTOR: Benedito Silva Filho
+-- DATA: 24/06/2026
+--
+-- DESCRICAO:
+--     Adiciona o campo senha_provisoria (Boolean).
+--     TRUE  = usuario com senha definitiva (situacao normal)
+--     FALSE = usuario com senha provisoria (deve trocar no proximo login)
+--     DEFAULT TRUE = todos os usuarios existentes ficam em situacao normal
+-- =========================================================
+
+ALTER TABLE usuarios
+ADD COLUMN senha_provisoria BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- Confirma o resultado
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'usuarios'
+AND column_name = 'senha_provisoria';
+
+-- =========================================================
+-- FIM DO SCRIPT
+-- =========================================================

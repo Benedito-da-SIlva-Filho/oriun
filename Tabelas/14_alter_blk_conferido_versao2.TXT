@@ -1,0 +1,53 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas
+-- MODULO: Tabelas\14_alter_blk_conferido_versao2.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-10 14:30 -03
+-- ATUALIZADO EM: 2026-10-10 14:30 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Sessao 093 - BLOCKCHAIN (Entrega 1). Em TODOS os schemas
+--   produtor_NNNNN:
+--     1) Cria a coluna conferido_em em tb_blk_8002_eventos (vazio = o
+--        validador ainda nao conferiu; o uso entra na Entrega 2).
+--     2) Sobe a versao do banco (tb_versao_schema) para 2 - sempre junto
+--        com VERSAO_SCHEMA_ATUAL = 2 do backup_helper.py v1.4.0.
+--   Pode rodar mais de uma vez sem estragar nada (ADD COLUMN IF NOT
+--   EXISTS; a versao so sobe, nunca desce). Schema que nao tiver as
+--   duas tabelas e PULADO com aviso (WARNING) - nada e alterado nele.
+--   Rodar ANTES de instalar os arquivos .py da Entrega 1.
+-- =========================================================
+
+DO $blk$
+DECLARE
+    esquema text;
+BEGIN
+    FOR esquema IN
+        SELECT schema_name FROM information_schema.schemata
+        WHERE schema_name LIKE 'produtor\_%'
+        ORDER BY schema_name
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema = esquema AND table_name = 'tb_blk_8002_eventos')
+           AND EXISTS (SELECT 1 FROM information_schema.tables
+                   WHERE table_schema = esquema AND table_name = 'tb_versao_schema') THEN
+
+            -- ---------- 1) coluna conferido_em ----------
+            EXECUTE format('ALTER TABLE %I.tb_blk_8002_eventos ADD COLUMN IF NOT EXISTS conferido_em TIMESTAMP', esquema);
+
+            -- ---------- 2) versao do banco = 2 ----------
+            EXECUTE format('UPDATE %I.tb_versao_schema SET versao = 2 WHERE versao < 2', esquema);
+            EXECUTE format('INSERT INTO %I.tb_versao_schema (versao) SELECT 2 WHERE NOT EXISTS (SELECT 1 FROM %I.tb_versao_schema)', esquema, esquema);
+
+            RAISE NOTICE '% -> conferido_em OK e versao 2 OK', esquema;
+        ELSE
+            RAISE WARNING '% -> PULADO (falta tb_blk_8002_eventos ou tb_versao_schema)', esquema;
+        END IF;
+    END LOOP;
+END $blk$;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\14_alter_blk_conferido_versao2.sql
+-- =========================================================

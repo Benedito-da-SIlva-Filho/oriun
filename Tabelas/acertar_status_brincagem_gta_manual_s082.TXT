@@ -1,0 +1,74 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\acertar_status_brincagem_gta_manual_s082.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-09-29 11:30 -03
+-- ATUALIZADO EM: 2026-09-29 11:30 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   A GTA Manual nunca definia status_brincagem ao gravar: toda
+--   GTA de Compra nascia 'NAO_APLICA' e ficava invisivel na
+--   Brincagem Sequencial e no Vincular GTA (caso real: GTA
+--   MGQ258741, Sessao 082). Codigo corrigido em gta_manual.py
+--   v1.6.1. Este script acerta as GTAs de Compra ja gravadas,
+--   em todos os schemas de Produtor:
+--     - com animal na tb_2001 ou no kardex -> 'BRINCADO'
+--     - sem animal                          -> 'PENDENTE'
+--   PASSO 1: correcao (bloco DO; resultado na aba Messages).
+--   PASSO 2: conferencia no Zopone (selecionar e F5).
+--
+--   v1.0.0: Criacao (Sessao 082).
+-- =========================================================
+
+-- PASSO 1 - Correcao em todos os schemas de Produtor
+DO $$
+DECLARE
+    r           RECORD;
+    v_brincado  INTEGER;
+    v_pendente  INTEGER;
+BEGIN
+    FOR r IN
+        SELECT t.table_schema AS esquema
+        FROM information_schema.tables t
+        WHERE t.table_schema LIKE 'produtor\_%'
+          AND t.table_name = 'tb_4001_gta'
+        ORDER BY t.table_schema
+    LOOP
+        EXECUTE format($sql$
+            UPDATE %1$I.tb_4001_gta g
+               SET status_brincagem = 'BRINCADO'
+             WHERE g.tipo_movimento = 'COMPRA'
+               AND COALESCE(g.status_brincagem, 'NAO_APLICA') = 'NAO_APLICA'
+               AND (
+                    EXISTS (SELECT 1 FROM %1$I.tb_2001 e
+                             WHERE e.id_gta_entrada = g.id)
+                 OR EXISTS (SELECT 1 FROM %1$I.tb_2017_movimentacoes m
+                             WHERE m.gta_entrada = g.numero_gta_completo)
+               )
+        $sql$, r.esquema);
+        GET DIAGNOSTICS v_brincado = ROW_COUNT;
+
+        EXECUTE format($sql$
+            UPDATE %1$I.tb_4001_gta g
+               SET status_brincagem = 'PENDENTE'
+             WHERE g.tipo_movimento = 'COMPRA'
+               AND COALESCE(g.status_brincagem, 'NAO_APLICA') = 'NAO_APLICA'
+        $sql$, r.esquema);
+        GET DIAGNOSTICS v_pendente = ROW_COUNT;
+
+        RAISE NOTICE '% : % BRINCADO, % PENDENTE', r.esquema, v_brincado, v_pendente;
+    END LOOP;
+END $$;
+
+-- PASSO 2 - Conferencia no Zopone
+SELECT id, numero_gta_completo, id_propriedade, tipo_movimento,
+       status_brincagem, data_entrega
+FROM produtor_00004.tb_4001_gta
+ORDER BY id DESC
+LIMIT 10;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\acertar_status_brincagem_gta_manual_s082.sql
+-- =========================================================

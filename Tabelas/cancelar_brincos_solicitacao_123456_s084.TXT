@@ -1,0 +1,205 @@
+-- =========================================================
+-- PROJETO: Orion
+-- PASTA: C:\orion\Tabelas\
+-- MODULO: Tabelas\cancelar_brincos_solicitacao_123456_s084.sql
+-- AUTOR: Benedito Silva Filho
+-- CRIADO EM: 2026-10-01 12:04 -03
+-- ATUALIZADO EM: 2026-10-01 12:04 -03
+-- VERSAO: 1.0.0
+--
+-- DESCRICAO:
+--   Cancela, com motivo INATIVADO, os 39 brincos que sobraram no
+--   saldo da Solicitacao 123456 (lote id 1 da tb_3007, Produtor
+--   produtor_00004, Propriedade 6). So para a BASE DE TESTES:
+--   existe para destravar o teste da leitura sequencial, porque
+--   estes brincos repetem SISBOV de outro lote e a tela de
+--   Cancelamento de Brincos PULARIA todos (todos tem reserva de
+--   GTA ou numero de Comunicado).
+--
+--   Mesmo padrao gravado pela tela (brincos_cancelamento.py):
+--     - tb_3008_brincos_saida: 1 linha por brinco, data_saida de
+--       hoje, gta vazia, origem = INATIVADO.
+--     - tb_7017_entrada_brincos_rfid: saida_origem = INATIVADO e
+--       status = CANCELADO.
+--     - tb_3007_brincos_entrada (lote 1): qtde_saida sobe pela
+--       quantidade cancelada e saldo = qtde_entrada - qtde_saida
+--       (qtde_entrada NAO muda).
+--
+--   QUAIS BRINCOS: os do lote 1 / Propriedade 6 com saida_data,
+--   saida_gta, saida_origem e status em branco. Isso inclui os 18
+--   que ja tem numero de Comunicado (viraram animal na base de
+--   teste): o brinco e cancelado, o animal continua no rebanho de
+--   teste (decisao de Benedito, Sessao 084).
+--
+--   TRAVAS (qualquer uma falhando, NADA e gravado):
+--     1. Lote 1 precisa estar como conferido em 01/10/2026
+--        (propriedade 6, solicitacao 123456, entrada 100, saida 61,
+--        saldo 39).
+--     2. Precisam existir EXATAMENTE 39 brincos nessas condicoes.
+--     3. Nenhum deles pode estar lido no brete e pendente
+--        (tb_5001_brincagem com sts = false).
+--     4. Ao final, lote com saldo 0 e saida 100, e 55 brincos
+--        cancelados no lote (16 de antes + 39 de agora) na 7017 e
+--        na 3008.
+--
+--   NAO grava no Log de Operacoes: o Desfazer nao alcanca este
+--   script. Aplicar so no produtor_00004. Uso unico.
+--
+--   COMO RODAR (pgAdmin, Query Tool, base de teste): abrir este
+--   arquivo, executar tudo (F5). Se aparecer erro, rodar
+--   ROLLBACK; e me mandar a mensagem. O resultado final (1 linha)
+--   aparece no fim.
+--
+--   v1.0.0: Criacao (Sessao 084, 01/10/2026, 12:04 -03).
+-- =========================================================
+
+BEGIN;
+
+-- ---------------------------------------------------------
+-- Bloco 1: separa os brincos a cancelar (tabela temporaria,
+-- some sozinha no COMMIT/ROLLBACK).
+-- ---------------------------------------------------------
+CREATE TEMP TABLE tmp_cancelar_sol_123456 ON COMMIT DROP AS
+SELECT b.id AS id_7017,
+       b.id_propriedade,
+       b.id_lote_entrada,
+       b.sisbov,
+       b.rfid
+FROM produtor_00004.tb_7017_entrada_brincos_rfid b
+WHERE b.id_lote_entrada = 1
+  AND b.id_propriedade  = 6
+  AND b.saida_data   IS NULL
+  AND b.saida_gta    IS NULL
+  AND b.saida_origem IS NULL
+  AND b.status       IS NULL;
+
+-- ---------------------------------------------------------
+-- Bloco 2: travas de seguranca ANTES de gravar qualquer coisa.
+-- ---------------------------------------------------------
+DO $$
+DECLARE
+    v_lote_ok    integer;
+    v_qtde       integer;
+    v_pendentes  integer;
+BEGIN
+    -- Trava 1: o lote e exatamente o que foi conferido.
+    SELECT COUNT(*) INTO v_lote_ok
+    FROM produtor_00004.tb_3007_brincos_entrada
+    WHERE id = 1
+      AND id_propriedade = 6
+      AND solicitacao_nro = 123456
+      AND qtde_entrada = 100
+      AND qtde_saida = 61
+      AND saldo = 39;
+    IF v_lote_ok <> 1 THEN
+        RAISE EXCEPTION 'TRAVA 1: o lote 1 nao esta como conferido (Propriedade 6, Solicitacao 123456, entrada 100, saida 61, saldo 39). Nada foi gravado.';
+    END IF;
+
+    -- Trava 2: exatamente 39 brincos.
+    SELECT COUNT(*) INTO v_qtde FROM tmp_cancelar_sol_123456;
+    IF v_qtde <> 39 THEN
+        RAISE EXCEPTION 'TRAVA 2: eram esperados 39 brincos e foram encontrados %. Nada foi gravado.', v_qtde;
+    END IF;
+
+    -- Trava 3: nenhum esta lido no brete aguardando Vincular.
+    SELECT COUNT(*) INTO v_pendentes
+    FROM produtor_00004.tb_5001_brincagem g
+    WHERE g.sts = false
+      AND g.sisbov IN (SELECT sisbov FROM tmp_cancelar_sol_123456);
+    IF v_pendentes <> 0 THEN
+        RAISE EXCEPTION 'TRAVA 3: % brinco(s) estao lidos no brete e pendentes (tb_5001 com sts = false). Nada foi gravado.', v_pendentes;
+    END IF;
+END $$;
+
+-- ---------------------------------------------------------
+-- Bloco 3: tb_3008 - uma saida por brinco, origem INATIVADO.
+-- ---------------------------------------------------------
+INSERT INTO produtor_00004.tb_3008_brincos_saida
+    (id_propriedade, id_lote_entrada, sisbov, rfid, data_saida, gta, origem, criado_em, atualizado_em)
+SELECT t.id_propriedade,
+       t.id_lote_entrada,
+       t.sisbov,
+       t.rfid,
+       CURRENT_DATE,
+       NULL,
+       'INATIVADO'::public.tipo_entrada_enum,
+       LOCALTIMESTAMP,
+       LOCALTIMESTAMP
+FROM tmp_cancelar_sol_123456 t
+ORDER BY t.sisbov;
+
+-- ---------------------------------------------------------
+-- Bloco 4: tb_7017 - marca como cancelado.
+-- ---------------------------------------------------------
+UPDATE produtor_00004.tb_7017_entrada_brincos_rfid
+SET saida_origem  = 'INATIVADO',
+    status        = 'CANCELADO',
+    atualizado_em = LOCALTIMESTAMP
+WHERE id IN (SELECT id_7017 FROM tmp_cancelar_sol_123456);
+
+-- ---------------------------------------------------------
+-- Bloco 5: tb_3007 - saida sobe, saldo recalcula (entrada nao muda).
+-- ---------------------------------------------------------
+UPDATE produtor_00004.tb_3007_brincos_entrada
+SET qtde_saida    = qtde_saida + (SELECT COUNT(*) FROM tmp_cancelar_sol_123456),
+    saldo         = qtde_entrada - (qtde_saida + (SELECT COUNT(*) FROM tmp_cancelar_sol_123456)),
+    atualizado_em = LOCALTIMESTAMP
+WHERE id = 1;
+
+-- ---------------------------------------------------------
+-- Bloco 6: trava final - o resultado precisa bater, senao desfaz tudo.
+-- ---------------------------------------------------------
+DO $$
+DECLARE
+    v_lote_ok   integer;
+    v_cancel_7017 integer;
+    v_cancel_3008 integer;
+BEGIN
+    SELECT COUNT(*) INTO v_lote_ok
+    FROM produtor_00004.tb_3007_brincos_entrada
+    WHERE id = 1 AND qtde_entrada = 100 AND qtde_saida = 100 AND saldo = 0;
+    IF v_lote_ok <> 1 THEN
+        RAISE EXCEPTION 'TRAVA 4: o lote 1 nao ficou com saida 100 e saldo 0. Nada foi gravado.';
+    END IF;
+
+    SELECT COUNT(*) INTO v_cancel_7017
+    FROM produtor_00004.tb_7017_entrada_brincos_rfid
+    WHERE id_lote_entrada = 1 AND status = 'CANCELADO';
+
+    SELECT COUNT(*) INTO v_cancel_3008
+    FROM produtor_00004.tb_3008_brincos_saida
+    WHERE id_lote_entrada = 1
+      AND origem IN ('INATIVADO', 'DANIFICADO', 'EXTRAVIADO', 'VENDIDO');
+
+    IF v_cancel_7017 <> 55 OR v_cancel_3008 <> 55 THEN
+        RAISE EXCEPTION 'TRAVA 4: esperados 55 cancelados no lote (7017 = %, 3008 = %). Nada foi gravado.', v_cancel_7017, v_cancel_3008;
+    END IF;
+END $$;
+
+COMMIT;
+
+-- ---------------------------------------------------------
+-- Resultado (1 linha): lote 1 depois do cancelamento.
+-- Esperado: qtde_entrada 100, qtde_saida 100, saldo 0,
+-- cancelados_7017 55, cancelados_3008 55, livres_na_7017 0.
+-- ---------------------------------------------------------
+SELECT l.id                AS lote,
+       l.solicitacao_nro,
+       l.qtde_entrada,
+       l.qtde_saida,
+       l.saldo,
+       (SELECT COUNT(*) FROM produtor_00004.tb_7017_entrada_brincos_rfid b
+         WHERE b.id_lote_entrada = l.id AND b.status = 'CANCELADO')            AS cancelados_7017,
+       (SELECT COUNT(*) FROM produtor_00004.tb_3008_brincos_saida s
+         WHERE s.id_lote_entrada = l.id
+           AND s.origem IN ('INATIVADO', 'DANIFICADO', 'EXTRAVIADO', 'VENDIDO')) AS cancelados_3008,
+       (SELECT COUNT(*) FROM produtor_00004.tb_7017_entrada_brincos_rfid b
+         WHERE b.id_lote_entrada = l.id
+           AND b.saida_data IS NULL AND b.saida_gta IS NULL AND b.saida_origem IS NULL
+           AND b.numero_comunicado IS NULL AND b.reservado_id_gta IS NULL)     AS livres_na_7017
+FROM produtor_00004.tb_3007_brincos_entrada l
+WHERE l.id = 1;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\cancelar_brincos_solicitacao_123456_s084.sql
+-- =========================================================

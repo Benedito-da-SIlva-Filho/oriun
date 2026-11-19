@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\gta_consulta_editar.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-21 19:05 -03
+     ATUALIZADO EM: 2026-10-04 18:20 -03
+     VERSAO: 1.8.0
+
+     DESCRICAO:
+         Formulario de Alteracao de uma GTA ja gravada (Sessao
+         037/038) - "mesmo com todos os controles eles vao errar"
+         (Benedito). Baseado quase integralmente em
+         gta_manual_cadastro.html (mesmos campos, mascaras e
+         validacoes), com 3 diferencas:
+           (1) Campos vem PRE-PREENCHIDOS com os dados atuais da
+               GTA (gta_consulta.editar());
+           (2) O POST vai para salvar_edicao(id_gta), nao para o
+               lancamento novo;
+           (3) Toda alteracao gera um log detalhado em
+               tb_log_alteracao_gta (1 linha por campo mudado,
+               incluindo cada categoria de Animal adicionada/
+               removida/alterada) - nao ha aviso disso na tela,
+               o registro e automatico no servidor.
+
+         Procedencia e Destino continuam SO PARA CONFERENCIA
+         (readonly) - nao sao editaveis por aqui (mesma regra da
+         GTA Manual original).
+
+     v1.0.0: Criacao do modulo (Sessao 037/038).
+     v1.1.0: Sessao 037/038 (19:40) - CORRECAO DE BUG real: o
+         simbolo de confirmacao (checkmark) do contador "Total
+         confere com a GTA" aparecia como "?" na tela (caractere
+         corrompido por encoding). Trocado de textContent com
+         caractere unicode bruto para innerHTML com entidade HTML
+         (checkmark numerico), que nao depende do encoding do
+         arquivo.
+     v1.2.0: Sessao 037/038 (20:05) - CORRECAO DE BUG real: o
+         titulo da tela (e a aba do navegador) mostrava so
+         numero_gta_sequencial (ex.: "123456"), nao o numero
+         completo da GTA (ex.: "MST123456") - o SimpleNamespace
+         montado em gta_consulta.editar() nao trazia o campo
+         numero_gta_completo. Corrigido nos dois arquivos: router
+         (gta_consulta.py) passa a incluir numero_gta_completo no
+         gta_form E no gta_tentativa (reexibicao por erro); este
+         template passa a exibir gta.numero_gta_completo no
+         cabecalho e na aba.
+     v1.3.0: Sessao 037/038 (20:12) - CORRECAO DE BUG real
+         apontada por Benedito: o botao "Voltar" do topo estava
+         fixo em /produtor/home, sempre levando para a Home
+         independente de onde o usuario tivesse vindo (Lista,
+         Opcoes, Visualizar). Trocado para javascript:history.back(),
+         que sempre volta para a tela anterior de verdade. Tambem
+         adicionado um link explicito "Voltar à Lista" no
+         cabecalho da pagina (mesmo padrao ja usado em
+         gta_consulta_detalhe.html), que faltava nesta tela.
+     v1.4.0: Sessao 048 (09/09/2026, 18:17 -03) - BUG REAL
+         encontrado por Benedito em teste: a v1.3.0 acima resolveu
+         o caso do botao fixo, mas history.back() trouxe um
+         problema novo - o caminho normal até aqui e Lista ->
+         Opções -> Alterar, entao "Voltar"/"Voltar à Lista" com
+         history.back() sempre caiam na tela de Opções, um passo
+         desnecessario (o usuario ja viu aquela tela, so quer
+         voltar para a Lista de verdade). Corrigido: os dois
+         botoes ("Voltar" do topo e "Voltar à Lista" do cabecalho)
+         agora usam um link DIRETO para
+         /produtor/gta-consulta/lista?id_propriedade=X (nova
+         variavel id_propriedade, passada pelo router desde
+         gta_consulta.py v1.6.0), pulando Opções. O botao
+         "Cancelar" (rodape do formulario) NAO foi alterado -
+         continua indo para /produtor/gta-consulta/opcoes/<id_gta>
+         de proposito: ali sim faz sentido, porque o Cancelar sai
+         de um formulario preenchido e a tela de Opções ainda e
+         relevante como "o que eu ia fazer com esta GTA".
+     v1.5.0: Sessao 076 (21/09/2026, 21:45 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar do topo
+         (antes escrito direto no HTML, fixo para
+         /produtor/gta-consulta/lista?id_propriedade=X) passado
+         via um comando de atribuicao antes do include - mesmo
+         destino de sempre, sem mudanca de comportamento. Link
+         "Voltar à Lista" do cabecalho e botao "Cancelar" do
+         rodape do formulario NAO mexidos - continuam com seus
+         proprios destinos e o proprio aviso de "alteracoes nao
+         salvas" via id="link-cancelar", tudo identico a antes.
+     v1.6.0: Sessao 082 (29/09/2026, 06:55 -03) - ESPECIE PELO
+         CATALOGO (regra de Benedito: banco com codigo, tela com a
+         palavra). A variavel especies passa a ser a lista do
+         catalogo tb_4002 (dicts com codigo e descricao, vinda de
+         gta_consulta.py v1.13.0): cada opcao do dropdown de
+         Especie (linhas existentes E modelo de linha nova) envia o
+         CODIGO ("BOV") e mostra a DESCRICAO ("Bovino"). Nenhuma
+         outra mudanca.
+     v1.7.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). Incluida a peca modal_confirmacao.html.
+     v1.8.0: Sessao 085 (04/10/2026, 18:20 -03) - SERIE POR UF (regra de
+         Benedito: Goias com 2 letras, demais UFs com 1 - regras_sisbov.py
+         v1.4.0 / gta_consulta.py v1.15.0). O campo Serie passa a aceitar 2
+         letras quando a UF escolhida e GO e 1 nas demais; o limite muda na
+         hora ao trocar a UF, e a tela reexibida apos erro ja nasce com o
+         limite certo. Nenhuma outra mudanca de HTML, CSS ou JavaScript.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Alterar GTA {{ gta.numero_gta_completo if gta else '' }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .aviso-alteracao { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; font-size: 13px; color: #7a1f04; display: flex; align-items: center; gap: 10px; max-width: 1100px; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 24px; max-width: 1100px; margin-bottom: 20px; }
+        .form-secao { font-size: 17px; font-weight: bold; color: #D4370A; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+        .col-1  { grid-column: span 1; }
+        .col-2  { grid-column: span 2; }
+        .col-3  { grid-column: span 3; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 9px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .upper { text-transform: uppercase; }
+        .centralizado { text-align: center; }
+        input[readonly] { background-color: #f0f0f0; color: #555555; cursor: not-allowed; }
+        .campo-destaque input { font-size: 17px; font-weight: bold; }
+        .campo-uf-negrito { font-size: 17px; font-weight: bold; }
+
+        .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; }
+        .divisor-vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+        .bloco-conferencia { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .bloco-conferencia .linha { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px solid #ececec; }
+        .bloco-conferencia .linha:last-child { border-bottom: none; }
+        .bloco-conferencia .rotulo { color: #888888; }
+        .bloco-conferencia .valor { color: #333333; font-weight: bold; text-align: right; }
+
+        .caixa-qtde-gta { background: #FBE9E4; border: 2px solid #D4370A; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .caixa-qtde-gta label { font-size: 17px; font-weight: bold; color: #7a1f04; }
+        .caixa-qtde-gta input { width: 120px; font-size: 26px; font-weight: bold; text-align: center; padding: 10px; border: 1px solid #D4370A; border-radius: 6px; }
+        .contador-restante { font-size: 20px; font-weight: bold; }
+        .contador-restante.ok { color: #2e7d32; }
+        .contador-restante.falta { color: #D4370A; }
+
+        .tabela-animais { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .tabela-animais th { text-align: left; font-size: 12px; color: #666666; padding: 8px 6px; border-bottom: 2px solid #e0e0e0; }
+        .tabela-animais th.col-acao { width: 10%; text-align: center; }
+        .tabela-animais td { padding: 6px; border-bottom: 1px solid #f0f0f0; }
+        .tabela-animais input, .tabela-animais select { padding: 8px 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; width: 100%; font-family: Arial, sans-serif; }
+        .btn-excluir-linha { background: #ffffff; border: 1px solid #c62828; color: #c62828; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+        .btn-excluir-linha:hover { background: #c62828; color: #ffffff; }
+        .btn-adicionar-linha { padding: 8px 18px; background: #ffffff; border: 1px dashed #D4370A; color: #D4370A; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .btn-adicionar-linha:hover { background: #FBE9E4; }
+
+        .painel-resumo { border: 2px solid #333333; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 20px; }
+        .painel-resumo > div { padding: 12px 16px; border-right: 1px solid #cccccc; }
+        .painel-resumo > div:last-child { border-right: none; }
+        .painel-resumo .rotulo { font-size: 11px; color: #666666; font-weight: bold; margin-bottom: 4px; }
+        .painel-resumo .valor { font-size: 19px; font-weight: bold; color: #333333; }
+        .painel-resumo .valor.total { color: #D4370A; }
+
+        .confirma-quadro { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 14px; background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; }
+        .confirma-quadro input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: #D4370A; }
+        .confirma-quadro label { font-size: 13px; font-weight: bold; color: #7a1f04; cursor: pointer; }
+
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 16px 20px; border-radius: 6px; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 16px; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+        .btn-salvar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        .btn-cancelar { padding: 10px 24px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn-cancelar:hover { background: #888888; color: #ffffff; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/gta-consulta/lista?id_propriedade=' + (id_propriedade | string) %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#9999;&#65039;</span> Alterar GTA {{ gta.numero_gta_completo if gta else '' }}</h2>
+                <a href="/produtor/gta-consulta/lista?id_propriedade={{ id_propriedade }}" class="btn-nav">&#8592; Voltar à Lista</a>
+            </div>
+
+            <div class="aviso-alteracao">&#128274; Toda alteração feita aqui fica registrada no histórico (quem alterou, quando, e os valores antes/depois).</div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('gta_consulta.salvar_edicao', id_gta=id_gta) }}" autocomplete="off" id="form-gta-editar">
+
+                    <div class="duas-colunas" style="margin-bottom: 24px;">
+                        <div class="divisor-vertical"></div>
+                        <div>
+                            <div class="form-secao">Procedência</div>
+                            <div class="bloco-conferencia">
+                                <div class="linha"><span class="rotulo">Nome</span><span class="valor">{{ procedencia.nome if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">CPF/CNPJ</span><span class="valor">{{ procedencia.cpf_cnpj if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Estabelecimento</span><span class="valor">{{ procedencia.estabelecimento if procedencia else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ procedencia.municipio_nome if procedencia else '-' }} / {{ procedencia.uf if procedencia else '-' }}</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-secao">Destino</div>
+                            <div class="bloco-conferencia">
+                                <div class="linha"><span class="rotulo">Produtor</span><span class="valor">{{ destino.produtor_nome if destino and destino.produtor_nome else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Propriedade</span><span class="valor">{{ destino.nome if destino else '-' }}</span></div>
+                                <div class="linha"><span class="rotulo">Município/UF</span><span class="valor">{{ destino.municipio_nome if destino else '-' }} / {{ destino.uf if destino else '-' }}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Dados do Documento (GTA)</div>
+                    <div class="form-grid">
+                        <div class="form-group col-1 campo-destaque">
+                            <label>UF *</label>
+                            <select name="uf_gta" id="uf_gta" required class="centralizado campo-uf-negrito">
+                                <option value="">--</option>
+                                {% set ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                                {% for sigla in ufs %}
+                                <option value="{{ sigla }}" {{ 'selected' if gta and gta.uf_gta == sigla else '' }}>{{ sigla }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-1 campo-destaque">
+                            <label>Série *</label>
+                            <input type="text" name="serie_gta" id="serie_gta" required maxlength="{{ 2 if gta and gta.uf_gta == 'GO' else 1 }}" class="upper centralizado" autocomplete="off"
+                                value="{{ gta.serie_gta if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Número *</label>
+                            <input type="text" name="numero_gta_sequencial" id="numero_gta_sequencial" required maxlength="6" class="centralizado" autocomplete="off" inputmode="numeric"
+                                value="{{ gta.numero_gta_sequencial if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Emissão *</label>
+                            <input type="text" name="data_emissao" id="data_emissao" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_emissao if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Validade *</label>
+                            <input type="text" name="data_validade" id="data_validade" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_validade if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2 campo-destaque">
+                            <label>Entrega *</label>
+                            <input type="text" name="data_entrega" id="data_entrega" required maxlength="10" class="centralizado" autocomplete="off"
+                                placeholder="dd/mm/aaaa" value="{{ gta.data_entrega if gta else '' }}">
+                        </div>
+                        <div class="form-group col-2">
+                            <label>Meio de Transporte *</label>
+                            <select name="meio_transporte" id="meio_transporte" required>
+                                <option value="">--</option>
+                                {% set meios = [('RODOVIARIO', 'Rodoviário'), ('COMITIVA', 'A Pé (Comitiva / Tocada)'), ('FLUVIAL_MARITIMO', 'Fluvial / Marítimo'), ('FERROVIARIO', 'Ferroviário'), ('AEREO', 'Aéreo')] %}
+                                {% for valor, rotulo in meios %}
+                                <option value="{{ valor }}" {{ 'selected' if gta and gta.meio_transporte == valor else '' }}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="caixa-qtde-gta" style="margin-top: 20px;">
+                        <label>Quantidade de Animais na GTA *</label>
+                        <input type="number" name="qtde_animais_gta" id="qtde_animais_gta" min="1" required
+                            value="{{ gta.qtde_animais_gta if gta else '' }}">
+                        <span class="contador-restante" id="contador-restante"></span>
+                    </div>
+
+                    <div class="form-secao">Animais (por categoria)</div>
+
+                    <table class="tabela-animais" id="tabela-animais">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Espécie</th>
+                                <th style="width: 20%;">Sexo</th>
+                                <th style="width: 30%;">Idade</th>
+                                <th style="width: 18%;">Quantidade</th>
+                                <th class="col-acao"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpo-tabela-animais">
+                            {% for animal in animais %}
+                            <tr class="linha-animal">
+                                <td>
+                                    <select name="especie[]" class="campo-especie">
+                                        <option value="">--</option>
+                                        {% for esp in especies %}
+                                        <option value="{{ esp.codigo }}" {{ 'selected' if animal.especie == esp.codigo else '' }}>{{ esp.descricao }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="sexo[]" class="campo-sexo">
+                                        <option value="">--</option>
+                                        {% for sx in sexos %}
+                                        <option value="{{ sx }}" {{ 'selected' if animal.sexo == sx else '' }}>{{ sx.capitalize() }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="idade_faixa[]" class="campo-idade">
+                                        <option value="">--</option>
+                                        {% for faixa in faixas_idade %}
+                                        <option value="{{ faixa }}" {{ 'selected' if animal.idade_meses == faixa else '' }}>{{ faixa }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="quantidade[]" min="1" class="campo-quantidade" value="{{ animal.quantidade }}"></td>
+                                <td style="text-align: center;"><button type="button" class="btn-excluir-linha" onclick="removerLinhaAnimal(this)">&#10005;</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <button type="button" class="btn-adicionar-linha" id="btn-adicionar-linha">+ Adicionar Categoria</button>
+
+                    <div class="painel-resumo">
+                        <div>
+                            <div class="rotulo">Fêmea</div>
+                            <div class="valor" id="resumo-femea">0</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Macho</div>
+                            <div class="valor" id="resumo-macho">0</div>
+                        </div>
+                        <div>
+                            <div class="rotulo">Total Incluído</div>
+                            <div class="valor total" id="resumo-total">0</div>
+                        </div>
+                    </div>
+
+                    <div class="confirma-quadro">
+                        <input type="checkbox" id="confirma_dados" name="confirma_dados">
+                        <label for="confirma_dados">Confirmo que revisei e as alterações estão corretas.</label>
+                    </div>
+
+                    <div class="form-botoes">
+                        <a href="/produtor/gta-consulta/opcoes/{{ id_gta }}" class="btn-cancelar" id="link-cancelar">Cancelar</a>
+                        <button type="submit" class="btn-salvar" id="btn-salvar" disabled>Salvar Alterações</button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <template id="template-linha-animal">
+        <tr class="linha-animal">
+            <td>
+                <select name="especie[]" class="campo-especie">
+                    <option value="">--</option>
+                    {% for esp in especies %}
+                    <option value="{{ esp.codigo }}">{{ esp.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="sexo[]" class="campo-sexo">
+                    <option value="">--</option>
+                    {% for sx in sexos %}
+                    <option value="{{ sx }}">{{ sx.capitalize() }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="idade_faixa[]" class="campo-idade">
+                    <option value="">--</option>
+                    {% for faixa in faixas_idade %}
+                    <option value="{{ faixa }}">{{ faixa }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="number" name="quantidade[]" min="1" class="campo-quantidade" value=""></td>
+            <td style="text-align: center;"><button type="button" class="btn-excluir-linha" onclick="removerLinhaAnimal(this)">&#10005;</button></td>
+        </tr>
+    </template>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        function aplicarUppercase(campo) {
+            campo.addEventListener('input', function() {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+        }
+        document.querySelectorAll('.upper').forEach(aplicarUppercase);
+
+        function aplicarMascaraData(campo) {
+            if (!campo) return;
+            campo.addEventListener('input', function() {
+                var digitos = this.value.replace(/\D/g, '').slice(0, 8);
+                var formatado = digitos;
+                if (digitos.length > 4) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+                } else if (digitos.length > 2) {
+                    formatado = digitos.slice(0, 2) + '/' + digitos.slice(2);
+                }
+                this.value = formatado;
+            });
+        }
+        aplicarMascaraData(document.getElementById('data_emissao'));
+        aplicarMascaraData(document.getElementById('data_validade'));
+        aplicarMascaraData(document.getElementById('data_entrega'));
+
+        // ---- Serie: 1 letra (2 em GO) - v1.8.0: o limite segue a UF escolhida ----
+        var campoUf = document.getElementById('uf_gta');
+        var campoSerie = document.getElementById('serie_gta');
+        function ajustarSerie() {
+            var limite = (campoUf.value === 'GO') ? 2 : 1;
+            campoSerie.maxLength = limite;
+            campoSerie.value = campoSerie.value.replace(/[^A-Za-z]/g, '').slice(0, limite).toUpperCase();
+        }
+        campoUf.addEventListener('change', ajustarSerie);
+        campoSerie.addEventListener('input', ajustarSerie);
+        ajustarSerie();
+
+        var campoNumero = document.getElementById('numero_gta_sequencial');
+        campoNumero.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+        campoNumero.addEventListener('blur', function() {
+            if (this.value.length > 0) {
+                this.value = this.value.padStart(6, '0');
+            }
+        });
+
+        var formularioGta = document.getElementById('form-gta-editar');
+        var corpoTabela = document.getElementById('corpo-tabela-animais');
+        var btnAdicionarLinha = document.getElementById('btn-adicionar-linha');
+        var templateLinha = document.getElementById('template-linha-animal');
+        var campoQtdeGta = document.getElementById('qtde_animais_gta');
+        var contadorRestante = document.getElementById('contador-restante');
+
+        function removerLinhaAnimal(botao) {
+            var linha = botao.closest('tr');
+            linha.remove();
+            atualizarResumoAnimais();
+        }
+
+        function adicionarLinhaAnimal() {
+            var fragmento = templateLinha.content.cloneNode(true);
+            corpoTabela.appendChild(fragmento);
+            ligarEventosLinha(corpoTabela.lastElementChild);
+        }
+
+        function ligarEventosLinha(linha) {
+            linha.querySelector('.campo-sexo').addEventListener('change', atualizarResumoAnimais);
+            linha.querySelector('.campo-quantidade').addEventListener('input', atualizarResumoAnimais);
+        }
+
+        document.querySelectorAll('.linha-animal').forEach(ligarEventosLinha);
+
+        if (btnAdicionarLinha) {
+            btnAdicionarLinha.addEventListener('click', adicionarLinhaAnimal);
+        }
+
+        function atualizarResumoAnimais() {
+            var femea = 0;
+            var macho = 0;
+
+            document.querySelectorAll('.linha-animal').forEach(function(linha) {
+                var sexo = linha.querySelector('.campo-sexo').value;
+                var qtd = parseInt(linha.querySelector('.campo-quantidade').value, 10);
+                if (isNaN(qtd)) qtd = 0;
+
+                if (sexo === 'FEMEA') {
+                    femea += qtd;
+                } else if (sexo === 'MACHO') {
+                    macho += qtd;
+                }
+            });
+
+            var total = femea + macho;
+            document.getElementById('resumo-femea').textContent = femea;
+            document.getElementById('resumo-macho').textContent = macho;
+            document.getElementById('resumo-total').textContent = total;
+
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            if (!isNaN(declarado) && declarado > 0) {
+                var diferenca = declarado - total;
+                if (diferenca === 0) {
+                    contadorRestante.className = 'contador-restante ok';
+                    contadorRestante.innerHTML = '&#10003; Total confere com a GTA';
+                } else if (diferenca > 0) {
+                    contadorRestante.className = 'contador-restante falta';
+                    contadorRestante.textContent = 'Falta incluir ' + diferenca + ' animal(is)';
+                } else {
+                    contadorRestante.className = 'contador-restante falta';
+                    contadorRestante.textContent = 'Excedeu em ' + Math.abs(diferenca) + ' animal(is)';
+                }
+            } else {
+                contadorRestante.textContent = '';
+            }
+
+            atualizarBotaoSalvar();
+        }
+
+        campoQtdeGta.addEventListener('input', atualizarResumoAnimais);
+
+        function atualizarBotaoSalvar() {
+            var confirma = document.getElementById('confirma_dados').checked;
+
+            var camposObrigatorios = document.querySelectorAll('#form-gta-editar [required]');
+            var todosPreenchidos = Array.prototype.every.call(camposObrigatorios, function(campo) {
+                return campo.value.trim() !== '';
+            });
+
+            var femeaEl = document.getElementById('resumo-femea');
+            var machoEl = document.getElementById('resumo-macho');
+            var total = (femeaEl ? parseInt(femeaEl.textContent, 10) : 0) + (machoEl ? parseInt(machoEl.textContent, 10) : 0);
+            var declarado = parseInt(campoQtdeGta.value, 10);
+            var totalBate = (!isNaN(declarado) && declarado === total && total > 0);
+
+            document.getElementById('btn-salvar').disabled = !(confirma && todosPreenchidos && totalBate);
+        }
+
+        document.getElementById('confirma_dados').addEventListener('change', atualizarBotaoSalvar);
+        document.querySelectorAll('#form-gta-editar [required]').forEach(function(campo) {
+            campo.addEventListener('input', atualizarBotaoSalvar);
+        });
+
+        atualizarResumoAnimais();
+
+        var formularioAlterado = false;
+        formularioGta.addEventListener('input', function() { formularioAlterado = true; });
+        window.addEventListener('beforeunload', function(evento) {
+            if (formularioAlterado) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+        formularioGta.addEventListener('submit', function() { formularioAlterado = false; });
+        // v1.7.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return formularioAlterado; },
+                function() { formularioAlterado = false; }
+            );
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\gta_consulta_editar.html
+     ========================================================= -->

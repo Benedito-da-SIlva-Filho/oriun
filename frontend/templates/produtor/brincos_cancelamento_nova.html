@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_cancelamento_nova.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 09:40 -03
+     ATUALIZADO EM: 2026-09-30 14:35 -03
+     VERSAO: 1.2.0
+
+     DESCRICAO:
+         Formulario do Cancelamento de Brincos - 1a tela do fluxo
+         (apos a resolucao de Propriedade/Produtor). Pede Brinco
+         Inicial (obrigatorio), Brinco Final (OPCIONAL - vazio
+         cancela so 1 brinco) e Motivo (dropdown com os 4 valores
+         do enum tipo_entrada_enum criados para cancelamento).
+
+         Estrutura (.topo/.layout/.sidebar via include
+         produtor/produtor_menu.html/.conteudo/.rodape) copiada do
+         PADRAO REUTILIZAVEL (brincos_fornecedor_lista.html /
+         brincos_disponiveis_confirmar.html) - Voltar dinamico via
+         url_voltar (Regra de Ouro No4), calculado no router.
+
+         Ao submeter, o formulario NAO grava nada ainda - vai para
+         a rota /confirmar (POST), que mostra a previa do que sera
+         cancelado antes de qualquer gravacao de verdade.
+
+         Aviso de alteracoes nao salvas: como esta e uma tela NOVA
+         com campos editaveis, o clique no botao "Voltar" so
+         navega direto se nenhum campo tiver sido preenchido -
+         caso contrario, pede confirmacao antes de sair (regra
+         padrao para toda tela nova com formulario).
+
+         Variaveis esperadas do router:
+           cabecalho       - SimpleNamespace(propriedade_nome,
+                             municipio, uf, produtor_nome)
+           id_propriedade  - string, repassado como campo oculto
+           motivos         - tupla com os 4 valores do dropdown
+           form            - SimpleNamespace(brinco_inicial,
+                             brinco_final, motivo) - vazio na 1a
+                             visita, preenchido com o que o
+                             Usuario digitou se houve erro de
+                             validacao
+           erro            - mensagem de erro (ou None)
+           url_voltar      - path do botao "Voltar" da tarja
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 09:40 -03).
+     v1.1.0: Sessao 045 (03/09/2026, 10:35 -03) - 2 ajustes visuais
+         pedidos por Benedito, em testes: (1) campos Brinco
+         Inicial/Final ganharam fonte bem maior (24px, negrito,
+         monoespaçada, com espaçamento entre dígitos) - o Usuario
+         precisa conferir visualmente os 15 dígitos do SISBOV antes
+         de enviar, e a fonte padrão de formulário era pequena
+         demais para isso com segurança; (2) cartão do formulário
+         alargado de 620px para 820px (mesmo padrão já aplicado em
+         brincos_disponiveis_confirmar.html v1.1.0, Sessão 044) -
+         nomes de Propriedade longos (ex.: acima de 50 caracteres)
+         quebravam em 2 linhas no bloco de conferência.
+     v1.2.0: Sessao 083 (30/09/2026, 14:35 -03) - pedido de Benedito: sem janelas do
+         navegador. Sair com dados nao salvos por QUALQUER link da
+         tela (Cancelar, Voltar, Home, menu) agora abre a janela do
+         Orion ("Ficar na tela" / "Sair sem salvar") - funcao
+         vigiarSaidaPorLinks() de modal_confirmacao.html v2.1.0. O
+         confirm() do navegador no Cancelar SAIU. Fechar a aba, F5
+         ou a seta do navegador continuam com o aviso do proprio
+         navegador (nenhum site consegue trocar). A funcao confirmarSaida() (window.confirm nos 2 Voltar) foi
+         trocada pelo vigia, que cobre tambem menu e Sair. Incluida a
+         peca modal_confirmacao.html.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Cancelamento de Brincos</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .cartao-form { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; max-width: 820px; }
+
+        .bloco-conferencia { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+        .bloco-conferencia strong { color: #D4370A; }
+
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 18px; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-bottom: 18px; }
+        .col-12 { grid-column: span 12; }
+        .col-6  { grid-column: span 6; }
+
+        label { display: block; font-size: 13px; font-weight: bold; color: #555555; margin-bottom: 6px; }
+        input[type="text"], select {
+            width: 100%; padding: 9px 10px; font-size: 14px; border: 1px solid #cccccc;
+            border-radius: 6px; font-family: Arial, sans-serif; color: #333333;
+        }
+        input[type="text"]:focus, select:focus { outline: none; border-color: #D4370A; }
+        .ajuda { font-size: 12px; color: #888888; margin-top: 4px; }
+
+        /* Campos de SISBOV (Brinco Inicial/Final) - fonte bem maior e
+           espacada, para o Usuario conferir os 15 digitos com
+           seguranca antes de enviar (evita erro de digitacao passar
+           despercebido - pedido explicito de Benedito). */
+        .campo-sisbov {
+            font-size: 24px !important;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 12px 10px !important;
+            text-align: center;
+        }
+
+        .acoes { display: flex; gap: 12px; margin-top: 8px; }
+        .btn-salvar {
+            background: #D4370A; color: #ffffff; border: none; border-radius: 6px;
+            padding: 12px 28px; font-size: 15px; font-weight: bold; cursor: pointer;
+        }
+        .btn-salvar:hover { opacity: 0.9; }
+        .btn-cancelar {
+            background: #f0f0f0; color: #555555; border: 1px solid #cccccc; border-radius: 6px;
+            padding: 12px 28px; font-size: 15px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+        }
+        .btn-cancelar:hover { background: #e5e5e5; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <div class="topo-esquerda">
+            <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+            <h1>{{ nome_sistema }}</h1>
+        </div>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            {% if usuario_perfil != 'PRODUTOR' %}
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            {% endif %}
+            <a href="#" id="linkVoltarTopo" class="btn-voltar-topo">&#8592; Voltar</a>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#10060;</span> Cancelamento de Brincos</h2>
+            </div>
+
+            <div class="cartao-form">
+
+                <div class="bloco-conferencia">
+                    <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}<br>
+                    <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}
+                </div>
+
+                {% if erro %}
+                <div class="erro">&#10060; {{ erro }}</div>
+                {% endif %}
+
+                <form id="formCancelamento" method="POST" action="/produtor/brincos-cancelamento/confirmar" autocomplete="off">
+                    <input type="hidden" name="id_propriedade" value="{{ id_propriedade }}">
+
+                    <div class="form-grid">
+                        <div class="col-6">
+                            <label for="brinco_inicial">Brinco Inicial *</label>
+                            <input type="text" id="brinco_inicial" name="brinco_inicial" class="campo-sisbov"
+                                   value="{{ form.brinco_inicial }}" maxlength="15"
+                                   inputmode="numeric" placeholder="15 dígitos (SISBOV)" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="brinco_final">Brinco Final</label>
+                            <input type="text" id="brinco_final" name="brinco_final" class="campo-sisbov"
+                                   value="{{ form.brinco_final }}" maxlength="15"
+                                   inputmode="numeric" placeholder="Deixe em branco para 1 só">
+                            <div class="ajuda">Vazio = cancela só o Brinco Inicial. Preenchido = cancela a faixa toda.</div>
+                        </div>
+
+                        <div class="col-6">
+                            <label for="motivo">Motivo *</label>
+                            <select id="motivo" name="motivo" required>
+                                <option value="" {% if not form.motivo %}selected{% endif %} disabled>Selecione...</option>
+                                {% for opcao in motivos %}
+                                <option value="{{ opcao }}" {% if form.motivo == opcao %}selected{% endif %}>{{ opcao }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="acoes">
+                        <button type="submit" class="btn-salvar">Continuar</button>
+                        <a href="{{ url_voltar }}" class="btn-cancelar" id="linkVoltarRodape">Voltar</a>
+                    </div>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informática</div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        // -------------------------------------------------------
+        // Mantem apenas digitos nos campos de SISBOV
+        // -------------------------------------------------------
+        ['brinco_inicial', 'brinco_final'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        });
+
+        // -------------------------------------------------------
+        // Aviso de alteracoes nao salvas ao clicar em Voltar (topo
+        // ou rodape) - so pergunta se algum campo foi preenchido.
+        // -------------------------------------------------------
+        var urlVoltar = '{{ url_voltar }}';
+        document.getElementById('linkVoltarTopo').setAttribute('href', urlVoltar);
+
+        function formTemAlteracoes() {
+            var f = document.getElementById('formCancelamento');
+            return f.brinco_inicial.value.trim() !== '' ||
+                   f.brinco_final.value.trim()   !== '' ||
+                   f.motivo.value.trim()         !== '';
+        }
+
+        // v1.2.0 - VIGIA DE SAIDA (modal_confirmacao.html v2.1.0, Padrao
+        // 4): com dados nao salvos, qualquer link da tela (Cancelar,
+        // Voltar, Home, menu) abre a janela do Orion em vez da do
+        // navegador. Chamado no DOMContentLoaded porque a peca do
+        // modal e incluida depois deste script.
+        document.addEventListener('DOMContentLoaded', function() {
+            vigiarSaidaPorLinks(
+                function() { return !enviandoFormulario && formTemAlteracoes(); },
+                function() { enviandoFormulario = true; }
+            );
+        });
+
+        // Flag para nao disparar o aviso de beforeunload quando a
+        // saida da pagina e o proprio submit do formulario (fluxo
+        // normal, nao "abandono" de dados preenchidos).
+        var enviandoFormulario = false;
+        document.getElementById('formCancelamento').addEventListener('submit', function () {
+            enviandoFormulario = true;
+        });
+
+        window.addEventListener('beforeunload', function (evento) {
+            if (!enviandoFormulario && formTemAlteracoes()) {
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        });
+    </script>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_cancelamento_nova.html
+     ========================================================= -->

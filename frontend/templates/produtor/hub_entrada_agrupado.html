@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\hub_entrada_agrupado.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-06 11:25 -03
+     ATUALIZADO EM: 2026-11-11 21:05 -03
+     VERSAO: 1.11.0
+     v1.11.0: Sessao 121 (2026-11-11 21:05 -03) - Aba lembrada por Hub (chave inclui o caminho): Entrada e Saida nao misturam mais a ultima aba. Reversao: .bak_antes_s121_hub_abas.
+     v1.10.0: Sessao 120 (2026-11-10 12:43 -03) - Aviso de espera (data-aguarde nos cards) e card bloqueado com texto de saida (ex.: Vincular sem nada a vincular). REVERSAO: .bak_antes_s120_hub_html.
+     v1.9.1: Sessao 115 - Abas: cards quadrados com texto curto, passos sempre na mesma linha (celular empilha). REVERSAO: .bak_antes_s115_abas2.
+     v1.9.0: Sessao 115 (05/11/2026) - Abas (Hub de Saidas): cards compactos por passo; sem 'abas' o layout em grupos continua igual. REVERSAO: .bak_antes_s115_abas.
+
+     DESCRICAO:
+         Template do Hub de Entrada NOVO (layout agrupado), usado
+         pelo router backend/routers/hub_entrada_agrupado.py em
+         rota paralela ao Hub atual. Mostra o titulo do Hub e,
+         abaixo, blocos de cards agrupados por intencao (Chegada
+         dos animais, Consultas e correcoes, Comunicacao). Cada card e um link com icone de linha,
+         titulo e uma frase - texto real, sem imagem.
+
+         Topo, menu lateral e rodape: copiados literalmente do
+         hub_generico.html v1.3.0 (mesmas pecas-mestras
+         produtor_topo, produtor_menu e produtor_rodape, mesmo
+         CSS de sidebar e layout) - Regra de Ouro #5. So a area
+         de conteudo (grade de cards) e nova.
+
+         A cor de destaque dos titulos de grupo e dos icones vem
+         da cor_primaria da sessao, repassada ao CSS pela
+         variavel --cor na area de conteudo.
+
+         v1.0.0: Criacao do modulo (Sessao 088, 06/10/2026, 11:25 -03).
+         v1.7.0: Sessao 107 (28/10/2026, 09:58 -03) - Grupo pode ter cor_icone (opcional): os icones do grupo usam essa cor e o resto segue a cor da marca. Sem cor_icone nada muda. REVERSAO: .bak_antes_s107b.
+         v1.8.0: Sessao 108 (29/10/2026, 15:45 -03) - Grupo pode ter cor_icone: os cards do grupo ganham borda de topo grossa nessa cor (Transferencia = azul, como nos cards da GTA). Sem cor_icone nada muda. REVERSAO: .bak_antes_s108_borda.
+         v1.0.1: Sessao 088 (06/10/2026, 12:10 -03) - Corrigido o
+             carimbo de sessao do v1.0.0 (era "087 cont.", o certo e
+             088) e o texto da descricao (agora 3 grupos). Nenhuma
+             mudanca de codigo nem de visual.
+         v1.1.0: Sessao 088 (06/10/2026, 13:00 -03) - Quatro icones novos no
+             desenho dos cards: documento (documento com sinal de mais),
+             impressora, copiar (dois documentos sobrepostos) e planilha
+             (tabela). Usados pela tela dos Comunicados de Entrada e pelo
+             card Planilha de Nascimento [PIA]. Nenhuma outra mudanca.
+         v1.2.0: Sessao 089 (07/10/2026, 10:20 -03) - Dois icones novos no
+             desenho dos cards: leitor (moldura de leitura com uma linha no
+             meio) e bastao (haste com ondas de leitura). Usados pelos cards
+             Brincagem com Leitor e Brincagem com Bastao da tela do Hub de
+             Brincagem. Nenhuma outra mudanca.
+         v1.3.0: Sessao 091 (08/10/2026, 18:20 -03) - Dois icones novos no
+             desenho dos cards: fornecedor (galpao de fabrica) e cancelar
+             (circulo com X). Usados pelos cards Fornecedor de Brincos e
+             Cancelamento de Brincos do Hub de Brincos. Nenhuma outra
+             mudanca.
+         v1.4.0: Sessao 091 (08/10/2026, 19:45 -03) - Quatro icones novos: relogio
+             (Operacoes Recentes), backup (pilha de dados), lista (marcacoes
+             das racas) e inventario (caixa). Usados nos Hubs de
+             Utilitarios e de Inventario. Nenhuma outra mudanca.
+         v1.5.0: Sessao 092 (09/10/2026, 16:10 -03) - Um icone novo: troca (duas
+             setas em sentido contrario). Usado pelo card Troca de RFID do
+             Hub de Brincagem. Nenhuma outra mudanca.
+         v1.6.0: Sessao 098 (16/10/2026, 18:40 -03) - Card sem endereco (Hub de Saidas, ainda sem telas)
+             aparece como "Em breve": nao e link, sem efeito ao passar o mouse.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ titulo_hub }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        /* ---- Layout ---- */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ---- Sidebar ---- */
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        /* ---- Conteudo ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+
+        /* ---- Cabecalho do Hub (so o titulo) ---- */
+        .cabecalho-hub { margin-bottom: 24px; }
+        .titulo-hub { font-size: 20px; font-weight: bold; color: #333333; }
+
+        /* ---- Grupos e cards (NOVO nesta tela) ---- */
+        .grupo { margin-bottom: 28px; }
+        .titulo-grupo { font-size: 14px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; color: var(--cor); padding-bottom: 6px; border-bottom: 1px solid #d9dde2; margin-bottom: 14px; }
+        .cards-grupo { display: flex; flex-wrap: wrap; gap: 16px; }
+        .card-novo { flex: 1 1 240px; max-width: 320px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: #333333; transition: border-color 0.15s, box-shadow 0.15s; }
+        .card-novo:hover { border-color: var(--cor); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .card-novo:focus-visible { outline: 3px solid var(--cor); outline-offset: 2px; }
+        .card-novo svg { width: 32px; height: 32px; fill: none; stroke: var(--cor-icone, var(--cor)); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .card-titulo { font-size: 16px; font-weight: bold; }
+        .card-desc { font-size: 13px; line-height: 1.45; color: #5b6470; }
+        .cards-grupo[style*="--cor-icone"] .card-novo { border-top: 6px solid var(--cor-icone); }
+        .card-novo.em-breve { cursor: default; opacity: 0.7; }
+        .card-novo.em-breve:hover { border-color: #e0e0e0; box-shadow: none; }
+        .tag-breve { align-self: flex-start; font-size: 11px; font-weight: bold; color: #777777; background: #eceff1; border-radius: 10px; padding: 2px 9px; }
+
+        /* ---- Abas (Hub de Saidas, s115) ---- */
+        .abas { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid var(--cor); margin-bottom: 16px; }
+        .aba { border: 1px solid #d0d7de; border-bottom: none; border-radius: 8px 8px 0 0; padding: 10px 18px; font-size: 14px; font-weight: bold; cursor: pointer; background: #ffffff; color: #333333; font-family: inherit; }
+        .aba:hover { background: #fbe9e4; }
+        .aba.ativa { background: var(--cor-aba); border-color: var(--cor-aba); color: #ffffff; }
+        .aba:focus-visible { outline: 3px solid var(--cor-aba); outline-offset: 2px; }
+        .painel-aba { display: none; }
+        .painel-aba.ativo { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 18px; align-items: start; }
+        .painel-aba.uma .passo-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+        .painel-aba.uma.ativo { display: block; }
+        @media (max-width: 900px) { .painel-aba.ativo { grid-template-columns: 1fr; } }
+        .passo-titulo { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; color: #333333; }
+        .passo-num { width: 24px; height: 24px; border-radius: 12px; background: #333333; color: #ffffff; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .passo-cards { display: flex; flex-direction: column; gap: 8px; }
+        .card-compacto { display: flex; flex-direction: column; gap: 8px; background: #ffffff; border: 1px solid #e0e0e0; border-top: 6px solid var(--cor-aba); border-radius: 12px; padding: 16px; min-height: 128px; text-decoration: none; color: #333333; transition: border-color 0.15s, box-shadow 0.15s; }
+        .card-compacto .card-texto { font-size: 12.5px; line-height: 1.4; color: #5b6470; }
+        .card-compacto:hover { border-color: var(--cor-aba); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .card-compacto:focus-visible { outline: 3px solid var(--cor-aba); outline-offset: 2px; }
+        .card-compacto svg { width: 34px; height: 34px; flex-shrink: 0; fill: none; stroke: var(--cor-aba); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .card-compacto .card-titulo { font-size: 15px; line-height: 1.25; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+        /* s120 - card bloqueado (ex.: Vincular quando nao ha nada a vincular) */
+        .card-compacto.bloqueado { opacity: 0.55; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    {% macro icone(nome) -%}
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+        {% if nome == 'nascimento' %}<path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"></path>
+        {% elif nome == 'compras' %}<rect x="1" y="6" width="13" height="10" rx="1"></rect><path d="M14 9h4l3 3v4h-7"></path><circle cx="6" cy="18" r="2"></circle><circle cx="17" cy="18" r="2"></circle>
+        {% elif nome == 'brinco' %}<path d="M3 12V4h8l10 10-8 8L3 12z"></path><circle cx="7.5" cy="8.5" r="1.5"></circle>
+        {% elif nome == 'calendario' %}<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path>
+        {% elif nome == 'vincular' %}<path d="M6 3h8l4 4v14H6z"></path><path d="M9 14l2 2 4-4"></path>
+        {% elif nome == 'lupa' %}<circle cx="11" cy="11" r="6"></circle><path d="M16 16l5 5"></path>
+        {% elif nome == 'relatorio' %}<path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-8"></path><path d="M2 20h20"></path>
+        {% elif nome == 'lapis' %}<path d="M4 20h4L19 9l-4-4L4 16v4z"></path>
+        {% elif nome == 'enviar' %}<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+        {% elif nome == 'documento' %}<path d="M6 3h8l4 4v14H6z"></path><path d="M12 11v6"></path><path d="M9 14h6"></path>
+        {% elif nome == 'impressora' %}<path d="M6 9V3h12v6"></path><rect x="3" y="9" width="18" height="8" rx="2"></rect><path d="M6 14h12v7H6z"></path>
+        {% elif nome == 'copiar' %}<rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h8"></path>
+        {% elif nome == 'planilha' %}<rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M3 15h18"></path><path d="M9 4v16"></path>
+        {% elif nome == 'leitor' %}<path d="M3 8V5a2 2 0 0 1 2-2h3"></path><path d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M21 16v3a2 2 0 0 1-2 2h-3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"></path><path d="M7 12h10"></path>
+        {% elif nome == 'bastao' %}<path d="M4 20l8-8"></path><path d="M12 12l3-3"></path><path d="M15 6a5 5 0 0 1 3 3"></path><path d="M14 2a9 9 0 0 1 8 8"></path>
+        {% elif nome == 'fornecedor' %}<path d="M3 21V10l6 4v-4l6 4V4h6v17z"></path><path d="M8 18h2"></path><path d="M14 18h2"></path>
+        {% elif nome == 'cancelar' %}<circle cx="12" cy="12" r="9"></circle><path d="M9 9l6 6"></path><path d="M15 9l-6 6"></path>
+        {% elif nome == 'relogio' %}<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>
+        {% elif nome == 'backup' %}<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"></path>
+        {% elif nome == 'lista' %}<path d="M9 6h12"></path><path d="M9 12h12"></path><path d="M9 18h12"></path><path d="M3 6l1 1 2-2"></path><path d="M3 12l1 1 2-2"></path><path d="M3 18l1 1 2-2"></path>
+        {% elif nome == 'inventario' %}<path d="M12 3l9 4.5v9L12 21l-9-4.5v-9z"></path><path d="M3 7.5l9 4.5 9-4.5"></path><path d="M12 12v9"></path>
+        {% elif nome == 'troca' %}<path d="M4 8h13"></path><path d="M13 4l4 4-4 4"></path><path d="M20 16H7"></path><path d="M11 12l-4 4 4 4"></path>
+        {% endif %}
+    </svg>
+    {%- endmacro %}
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        <!-- MENU LATERAL -->
+        {% include 'produtor/produtor_menu.html' %}
+
+        <!-- CONTEUDO -->
+        <div class="conteudo" style="--cor: {{ cor_primaria }};">
+
+            <div class="cabecalho-hub">
+                <div class="titulo-hub">{{ titulo_hub }}</div>
+            </div>
+
+            {% if abas %}
+            <div class="abas" role="tablist">
+                {% for aba in abas %}
+                <button type="button" class="aba" role="tab" id="aba-{{ aba.id }}" data-aba="{{ aba.id }}" style="--cor-aba: {{ aba.cor }};" onclick="abrirAba('{{ aba.id }}')">{{ aba.titulo }}</button>
+                {% endfor %}
+            </div>
+            {% for aba in abas %}
+            <div class="painel-aba{% if aba.passos|length == 1 %} uma{% endif %}" id="painel-{{ aba.id }}" role="tabpanel" style="--cor-aba: {{ aba.cor }}; --n: {{ aba.passos|length }};">
+                {% for passo in aba.passos %}
+                <div>
+                    <div class="passo-titulo">{% if passo.n %}<span class="passo-num">{{ passo.n }}</span>{% endif %}<span>{{ passo.titulo }}</span></div>
+                    <div class="passo-cards">
+                        {% for card in passo.cards %}
+                        {% if card.bloqueado %}
+                        <div class="card-compacto bloqueado" title="{{ card.texto_bloqueio }}">
+                            {{ icone(card.icone) }}
+                            <span class="card-titulo">{{ card.titulo }}</span>
+                            <span class="card-texto">{{ card.texto_bloqueio }}</span>
+                        </div>
+                        {% elif card.url %}
+                        <a href="{{ card.url }}" class="card-compacto" title="{{ card.descricao }}"{% if card.aguarde %} data-aguarde="{{ card.aguarde }}"{% endif %}>
+                            {{ icone(card.icone) }}
+                            <span class="card-titulo">{{ card.titulo }}</span>
+                            <span class="card-texto">{{ card.texto }}</span>
+                        </a>
+                        {% else %}
+                        <div class="card-compacto" title="Em breve" style="opacity: 0.6;">
+                            {{ icone(card.icone) }}
+                            <span class="card-titulo">{{ card.titulo }} (em breve)</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            {% else %}
+            {% for grupo in grupos %}
+            <div class="grupo">
+                <div class="titulo-grupo">{{ grupo.titulo }}</div>
+                <div class="cards-grupo"{% if grupo.cor_icone %} style="--cor-icone: {{ grupo.cor_icone }};"{% endif %}>
+                    {% for card in grupo.cards %}
+                    {% if card.url %}
+                    <a href="{{ card.url }}" class="card-novo"{% if card.aguarde %} data-aguarde="{{ card.aguarde }}"{% endif %}>
+                        {{ icone(card.icone) }}
+                        <span class="card-titulo">{{ card.titulo }}</span>
+                        <span class="card-desc">{{ card.descricao }}</span>
+                    </a>
+                    {% else %}
+                    <div class="card-novo em-breve" title="Em breve">
+                        {{ icone(card.icone) }}
+                        <span class="card-titulo">{{ card.titulo }}</span>
+                        <span class="card-desc">{{ card.descricao }}</span>
+                        <span class="tag-breve">Em breve</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    {% include 'produtor/aviso_aguarde.html' %}
+
+    <script>
+        /* s115 - abas do Hub de Saidas: troca sem recarregar; lembra a ultima aba (se o navegador deixar) */
+        function abrirAba(id) {
+            var achou = false;
+            document.querySelectorAll('.aba').forEach(function (b) {
+                var ativa = b.getAttribute('data-aba') === id;
+                b.classList.toggle('ativa', ativa);
+                b.setAttribute('aria-selected', ativa ? 'true' : 'false');
+                if (ativa) { achou = true; }
+            });
+            document.querySelectorAll('.painel-aba').forEach(function (p) {
+                p.classList.toggle('ativo', p.id === 'painel-' + id);
+            });
+            if (achou) { try { localStorage.setItem('orion_hub_aba:' + location.pathname, id); } catch (e) {} }
+            return achou;
+        }
+        (function () {
+            if (!document.querySelector('.aba')) { return; }
+            var id = null;
+            try { id = localStorage.getItem('orion_hub_aba:' + location.pathname); } catch (e) {}
+            if (!id || !abrirAba(id)) { abrirAba(document.querySelector('.aba').getAttribute('data-aba')); }
+        })();
+
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\hub_entrada_agrupado.html
+     ========================================================= -->

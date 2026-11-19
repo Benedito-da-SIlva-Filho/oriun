@@ -1,0 +1,88 @@
+-- =====================================================================
+-- PROJETO:        Orion SISBOV
+-- PASTA:          docs/sql
+-- MODULO:         Modulo Animais (P-012) - Brincagem
+-- AUTOR:          Benedito Silva Filho
+-- CRIADO EM:      14/07/2026 (sessao 16)
+-- ATUALIZADO EM:  14/07/2026 (sessao 16)
+-- VERSAO:         1.0
+-- DESCRICAO:      Criacao da tb_5001_brincagem - nasce pre-populada
+--                 por categoria a partir da tb_4001_gta_animais;
+--                 Peao "ocupa" a primeira linha vazia da categoria ao
+--                 ler o brinco (Sisbov/RFID/Manejo ficam NULL ate la).
+--
+-- CHANGELOG:
+--   v1.0 - 14/07/2026 - Criacao inicial, trigger dedicado de
+--                       atualizado_em, indices de apoio.
+--
+-- ATENCAO (Regra de Ouro): FKs para propriedades(id), produtores(id)
+-- e tb_4001_gta(id) - ja confirmadas nas imagens do pgAdmin (Sessao 16).
+-- id_comunicado fica NULL ate a tb_2012 (Com. Entrada) existir; a FK
+-- sera ligada em sessao futura, quando essa tabela for criada.
+--
+-- AMBIENTE DE EXECUCAO: pgAdmin Query Tool (banco orion, porta 5433).
+-- =====================================================================
+
+CREATE TABLE tb_5001_brincagem (
+    id              SERIAL PRIMARY KEY,
+
+    id_gta          INTEGER NOT NULL,
+    id_propriedade  INTEGER NOT NULL,
+    id_produtor     INTEGER NOT NULL,
+
+    sexo            VARCHAR(10) NOT NULL,      -- MACHO / FEMEA
+    raca            VARCHAR(50) NULL,
+    idade_meses     VARCHAR(20) NOT NULL,       -- faixa texto, ex: "13 A 24 MESES"
+
+    sisbov          VARCHAR(15) NULL,           -- em branco ate o Peao ler o brinco
+    rfid            VARCHAR(30) NULL,
+    manejo          VARCHAR(6) NULL,            -- calculado automaticamente (regra 105/076)
+
+    lote            VARCHAR(100) NULL,          -- piquete/pasto, texto livre
+    saida_brincos   VARCHAR(3) NULL,            -- 'COM' / 'SEM'
+
+    sts             BOOLEAN NOT NULL DEFAULT FALSE,  -- False = pendente de Comunicado
+    id_comunicado   INTEGER NULL,               -- carimbado no "Gerar Comunicado"
+
+    criado_em       TIMESTAMP NOT NULL DEFAULT NOW(),
+    atualizado_em   TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_tb_5001_brincagem_gta
+        FOREIGN KEY (id_gta) REFERENCES tb_4001_gta(id),
+    CONSTRAINT fk_tb_5001_brincagem_propriedade
+        FOREIGN KEY (id_propriedade) REFERENCES propriedades(id),
+    CONSTRAINT fk_tb_5001_brincagem_produtor
+        FOREIGN KEY (id_produtor) REFERENCES produtores(id),
+
+    CONSTRAINT chk_tb_5001_brincagem_saida_brincos
+        CHECK (saida_brincos IS NULL OR saida_brincos IN ('COM', 'SEM'))
+);
+
+-- Sisbov so pode se repetir se for NULL (varias linhas vazias da mesma
+-- categoria) - uma vez preenchido, deve ser unico no sistema.
+CREATE UNIQUE INDEX idx_tb_5001_brincagem_sisbov ON tb_5001_brincagem (sisbov)
+    WHERE sisbov IS NOT NULL;
+
+CREATE INDEX idx_tb_5001_brincagem_id_gta ON tb_5001_brincagem (id_gta);
+CREATE INDEX idx_tb_5001_brincagem_id_propriedade ON tb_5001_brincagem (id_propriedade);
+CREATE INDEX idx_tb_5001_brincagem_id_produtor ON tb_5001_brincagem (id_produtor);
+CREATE INDEX idx_tb_5001_brincagem_sts ON tb_5001_brincagem (sts);
+-- Apoio direto para o "Quadro" do Brete: contagem de linhas vazias por categoria
+CREATE INDEX idx_tb_5001_brincagem_categoria_pendente
+    ON tb_5001_brincagem (id_gta, sexo, idade_meses)
+    WHERE sisbov IS NULL;
+
+CREATE OR REPLACE FUNCTION trg_tb_5001_brincagem_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_tb_5001_brincagem_atualizado_em
+BEFORE UPDATE ON tb_5001_brincagem
+FOR EACH ROW
+EXECUTE FUNCTION trg_tb_5001_brincagem_atualizado_em();
+
+-- FIM DE ARQUIVO

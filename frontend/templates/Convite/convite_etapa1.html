@@ -1,0 +1,242 @@
+<!--
+=========================================================
+PROJETO: Orion
+PASTA: C:\orion\frontend\templates\convite
+MODULO: templates\convite\convite_etapa1.html
+AUTOR: Benedito Silva Filho.
+CRIADO EM: 2026-08-04 11:10 -03
+ATUALIZADO EM: 2026-11-12 19:20 -03
+VERSAO: 1.2.0
+
+DESCRICAO:
+    Tela da Etapa 1 do fluxo de Convite Publico (/convite).
+    Formulario: CPF/CNPJ + Nome + E-mail + Telefone.
+    Inclui campo honeypot escondido (anti-spam) e exibe
+    mensagens de erro/sucesso vindas do router convite.py.
+
+    v1.0.0: Criacao do template. Segue o padrao visual ja
+            confirmado no projeto (propriedade_cadastro.html):
+            HTML autocontido, grid 12 colunas, .form-secao,
+            .erro com icone, botoes padrao, mascara em campos.
+    v1.1.0: Sessao 032 - Teste real revelou que o campo Telefone
+         v1.2.0: Sessao 122 (2026-11-12 19:20 -03) - CNPJ alfanumerico (Receita, jul/2026): campo aceita letras no CNPJ (mascara e conferencia). CPF continua so numeros. REVERSAO: .bak_antes_s122_etapa2.
+            nao dava nenhuma pista de que o DDD e obrigatorio -
+            o usuario so descobria isso ao errar e ler a mensagem
+            de erro. Adicionado placeholder "(34) 99999-8888" no
+            campo, visivel antes de qualquer digitacao. Nenhuma
+            mudanca de validacao - so orientacao visual.
+=========================================================
+-->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV — Cadastro de Produtor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f4f4;
+            color: #333;
+        }
+        .topo {
+            background: #D4370A;
+            color: #fff;
+            padding: 18px 32px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 640px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 32px;
+        }
+        .form-secao {
+            border-bottom: 2px solid #D4370A;
+            margin-bottom: 20px;
+            padding-bottom: 6px;
+        }
+        .form-secao h2 {
+            font-size: 1.1rem;
+            color: #D4370A;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+        .col-12 { grid-column: span 12; }
+        .col-6  { grid-column: span 6; }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #555;
+        }
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        input[type="text"]:focus, input[type="email"]:focus {
+            outline: none;
+            border-color: #D4370A;
+        }
+        /* Honeypot: escondido do usuario humano, mas presente no
+           HTML para que bots (que preenchem tudo) caiam nele. */
+        .campo-oculto {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            opacity: 0;
+            height: 0;
+            width: 0;
+            overflow: hidden;
+        }
+        .erro {
+            background: #fdecea;
+            border: 1px solid #f5aca4;
+            color: #a33;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .sucesso {
+            background: #eafaf0;
+            border: 1px solid #a8e6bf;
+            color: #217a45;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .btn-salvar {
+            grid-column: span 12;
+            background: #D4370A;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-salvar:hover { background: #b52e08; }
+        .rodape {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 30px;
+        }
+        .info-etapa {
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topo">Orion SISBOV — Cadastro de Produtor</div>
+
+    <div class="container">
+        <div class="form-secao">
+            <h2>Etapa 1 de 2 — Seus dados</h2>
+        </div>
+        <p class="info-etapa">Informe seus dados para iniciar o cadastro. Na próxima etapa você informará os dados da Propriedade.</p>
+
+        {% if erro %}
+        <div class="erro">❌ {{ erro }}</div>
+        {% endif %}
+
+        {% if sucesso %}
+        <div class="sucesso">✅ {{ sucesso }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('convite.convite_etapa1') }}" autocomplete="off">
+            <div class="form-grid">
+
+                <!-- Honeypot anti-spam: campo invisivel ao usuario humano -->
+                <div class="col-12 campo-oculto" aria-hidden="true">
+                    <label for="apelido_contato">Apelido</label>
+                    <input type="text" id="apelido_contato" name="apelido_contato" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="col-6">
+                    <label for="cpf_cnpj">CPF ou CNPJ</label>
+                    <input type="text" id="cpf_cnpj" name="cpf_cnpj" maxlength="18"
+                           value="{{ dados.cpf_cnpj if dados else '' }}" required>
+                </div>
+
+                <div class="col-6">
+                    <label for="telefone">Telefone</label>
+                    <input type="text" id="telefone" name="telefone" maxlength="15"
+                           placeholder="(34) 99999-8888"
+                           value="{{ dados.telefone if dados else '' }}" required>
+                </div>
+
+                <div class="col-12">
+                    <label for="nome" class="upper">Nome completo</label>
+                    <input type="text" id="nome" name="nome" class="upper" maxlength="120"
+                           value="{{ dados.nome if dados else '' }}" required>
+                </div>
+
+                <div class="col-12">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" maxlength="120"
+                           value="{{ dados.email if dados else '' }}" required>
+                </div>
+
+                <button type="submit" class="btn-salvar">Continuar</button>
+
+            </div>
+        </form>
+    </div>
+
+    <div class="rodape">Orion SISBOV © 2026 — Consiste Informática</div>
+
+    <script>
+        // Uppercase automatico nos campos marcados com .upper
+        document.querySelectorAll('.upper').forEach(function (campo) {
+            campo.addEventListener('input', function () {
+                this.value = this.value.toUpperCase();
+            });
+        });
+
+        // Mascara simples de CPF/CNPJ - so digitos, limite dinamico
+        document.getElementById('cpf_cnpj').addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 14);   // CNPJ alfanumerico
+        });
+
+        // Mascara simples de telefone - so digitos
+        document.getElementById('telefone').addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+
+        // Safety net no submit - garante limpeza mesmo se o
+        // usuario colar texto com mascara sem disparar o 'input'
+        document.querySelector('form').addEventListener('submit', function () {
+            document.getElementById('cpf_cnpj').value =
+                document.getElementById('cpf_cnpj').value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            document.getElementById('telefone').value =
+                document.getElementById('telefone').value.replace(/\D/g, '');
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+=========================================================
+FIM DE ARQUIVO: templates\convite\convite_etapa1.html
+=========================================================
+-->

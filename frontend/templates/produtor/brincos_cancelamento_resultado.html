@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\brincos_cancelamento_resultado.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-03 09:40 -03
+     ATUALIZADO EM: 2026-09-21 17:25 -03
+     VERSAO: 1.6.0
+
+     DESCRICAO:
+         Tela final do Cancelamento de Brincos - exibida DEPOIS da
+         gravacao de verdade (rota /salvar), confirmando quantos
+         brincos foram cancelados com sucesso e listando os que
+         foram pulados (se houver), com o motivo de cada pulo.
+
+         Botao principal ("Cancelar mais Brincos") volta para o
+         proprio formulario (/nova), ja com a mesma Propriedade/
+         Produtor preenchidos - e comum o Produtor ter varios
+         brincos/faixas diferentes para cancelar na mesma visita
+         (situacao real, Benedito, Sessao 045 v1.2.0 do router).
+         Link secundario ("Voltar ao Hub de Brincos") fica para
+         quem ja terminou de cancelar.
+
+         Botao "Desfazer" (NOVO v1.2.0) - so aparece se id_operacao
+         existir (ou seja, pelo menos 1 brinco foi de fato
+         cancelado). Pede confirmacao (window.confirm) antes de
+         enviar o POST para /produtor/brincos-cancelamento/desfazer
+         - o router confere permissao/janela de 24h/conflito e
+         redireciona para a tela de resultado do desfazer
+         (brincos_cancelamento_desfeito.html).
+
+         Variaveis esperadas do router:
+           cabecalho              - SimpleNamespace(propriedade_nome,
+                                    municipio, uf, produtor_nome)
+           motivo                  - motivo usado no cancelamento
+           cancelados              - lista de SISBOVs (string)
+                                    efetivamente cancelados
+           total_cancelados        - len(cancelados)
+           pulados                 - lista de SimpleNamespace(sisbov,
+                                    motivo) que foram pulados
+           total_pulados           - len(pulados)
+           id_operacao             - NOVO v1.2.0. id do LogOperacao
+                                    criado, ou None se nada foi
+                                    cancelado (nesse caso o botao
+                                    Desfazer nao aparece)
+           url_novo_cancelamento   - botao principal, volta pra /nova
+           url_hub                 - link secundario, volta pro Hub
+
+     v1.0.0: Criacao (Sessao 045, 03/09/2026, 09:40 -03).
+     v1.1.0: Sessao 045 (03/09/2026, 11:05 -03) - Ajuste de fluxo
+         pedido por Benedito, em teste real: botao principal deixa
+         de voltar direto pro Hub e passa a voltar pro formulario
+         de Cancelamento (mesma Propriedade/Produtor), permitindo
+         cancelar mais brincos sem sair da tela. Link secundario
+         "Voltar ao Hub de Brincos" mantido para quem ja terminou.
+         Variavel url_voltar removida, substituida por
+         url_novo_cancelamento + url_hub.
+     v1.2.0: Sessao 045 (03/09/2026, 15:30 -03) - Adicionado botao
+         "Desfazer este Cancelamento" (mecanismo Log de Operacoes,
+         piloto deste modulo) - so aparece quando id_operacao existe.
+     v1.3.0: Sessao 045 (03/09/2026, 15:30 -03) - Gap de UX corrigido
+         (ver brincos_cancelamento.py v1.4.0): o botao Desfazer agora
+         aponta para a rota GENERICA /produtor/operacoes-recentes/
+         desfazer (modulo novo, Hub de Utilitarios) em vez de uma
+         rota propria deste modulo - mesmo botao, mesmo lugar, so a
+         rota por tras mudou. Campo oculto url_origem adicionado
+         (aponta para url_hub) para a tela de resultado do Desfazer
+         saber para onde voltar.
+     v1.4.0: Sessao 045 (03/09/2026, 16:40 -03) - Trocado
+         window.confirm() (popup feio/generico do navegador) pelo
+         novo componente produtor/modal_confirmacao.html - modal com
+         a cara do Orion, pedido por Benedito em teste real.
+     v1.5.0: Sessao 045 (03/09/2026, 17:00 -03) - Ajuste pedido por
+         Benedito, em teste real: apos desfazer um cancelamento pelo
+         botao desta tela, o "Voltar" da tela de resultado do
+         Desfazer levava para o Hub de Brincos - deveria levar direto
+         para o formulario de Cancelamento (mesma logica ja aplicada
+         ao botao "Cancelar mais Brincos"), para o Usuario poder
+         corrigir e tentar de novo sem passar pelo Hub. Campo oculto
+         url_origem trocado da variavel url_hub para a variavel
+         url_novo_cancelamento (ja existente neste template, so
+         precisava ser usada aqui tambem).
+     v1.6.0: Sessao 076 (21/09/2026, 17:25 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. Voltar (antes
+         escrito direto no HTML, apontando fixo para
+         url_novo_cancelamento) agora e definido via um comando de
+         atribuicao antes do include - mesmo destino de sempre,
+         sem mudanca de comportamento, sem precisar alterar o
+         router.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Cancelamento Concluído</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .cartao-resultado { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; max-width: 820px; }
+
+        .bloco-conferencia { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px; font-size: 14px; line-height: 1.8; }
+        .bloco-conferencia strong { color: #D4370A; }
+
+        .sucesso-banner {
+            background: #e8f5e9; border: 1px solid #2e7d32; border-radius: 8px;
+            padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+        }
+        .sucesso-banner .icone { font-size: 26px; }
+        .sucesso-banner .texto { font-size: 15px; color: #2e7d32; font-weight: bold; }
+
+        .lista-titulo { font-size: 14px; font-weight: bold; color: #333333; margin: 18px 0 8px; }
+        .lista-sisbov { max-height: 220px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; }
+        .lista-sisbov table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .lista-sisbov th { text-align: left; background: #f5f5f5; padding: 8px 12px; position: sticky; top: 0; }
+        .lista-sisbov td { padding: 6px 12px; border-top: 1px solid #f0f0f0; }
+        .lista-sisbov td.motivo-pulo { color: #e65100; }
+
+        .acoes-finais { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 22px; }
+        .btn-principal {
+            background: #D4370A; color: #ffffff; border: none; border-radius: 6px;
+            padding: 12px 28px; font-size: 15px; font-weight: bold; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center;
+        }
+        .btn-principal:hover { opacity: 0.9; }
+        .link-secundario { font-size: 13px; color: #777777; text-decoration: none; }
+        .link-secundario:hover { text-decoration: underline; color: #D4370A; }
+
+        .btn-desfazer {
+            background: #ffffff; color: #c62828; border: 1px solid #c62828; border-radius: 6px;
+            padding: 10px 22px; font-size: 14px; font-weight: bold; cursor: pointer;
+        }
+        .btn-desfazer:hover { background: #ffebee; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = url_novo_cancelamento %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#9989;</span> Cancelamento Concluído</h2>
+            </div>
+
+            <div class="cartao-resultado">
+                <div class="bloco-conferencia">
+                    <strong>Propriedade:</strong> {{ cabecalho.propriedade_nome }} — {{ cabecalho.municipio }}/{{ cabecalho.uf }}<br>
+                    <strong>Produtor:</strong> {{ cabecalho.produtor_nome }}<br>
+                    <strong>Motivo:</strong> {{ motivo }}
+                </div>
+
+                <div class="sucesso-banner">
+                    <span class="icone">&#9989;</span>
+                    <span class="texto">{{ total_cancelados }} brinco(s) cancelado(s) com sucesso.</span>
+                </div>
+
+                {% if pulados %}
+                <div class="lista-titulo">{{ total_pulados }} brinco(s) pulado(s) — não foram alterados</div>
+                <div class="lista-sisbov">
+                    <table>
+                        <thead><tr><th>SISBOV</th><th>Motivo do pulo</th></tr></thead>
+                        <tbody>
+                            {% for item in pulados %}
+                            <tr><td>{{ item.sisbov }}</td><td class="motivo-pulo">{{ item.motivo }}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                <div class="acoes-finais">
+                    <a href="{{ url_novo_cancelamento }}" class="btn-principal">&#10060; Cancelar mais Brincos</a>
+                    {% if id_operacao %}
+                    <form method="POST" action="/produtor/operacoes-recentes/desfazer"
+                          onsubmit="return confirmarAcao(this, 'Tem certeza que deseja desfazer este cancelamento? Os brincos voltarão a ficar disponíveis.');">
+                        <input type="hidden" name="id_operacao" value="{{ id_operacao }}">
+                        <input type="hidden" name="url_origem" value="{{ url_novo_cancelamento }}">
+                        <button type="submit" class="btn-desfazer">&#8630; Desfazer este Cancelamento</button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ url_hub }}" class="link-secundario">&#8592; Voltar ao Hub de Brincos</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    {% include 'produtor/modal_confirmacao.html' %}
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\brincos_cancelamento_resultado.html
+     ========================================================= -->

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\selecionar_propriedade_produtor.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-26 15:23 -03
+     ATUALIZADO EM: 2026-09-21 17:17
+     VERSAO: 1.4.0
+
+     DESCRICAO:
+         Tela UNICA e compartilhada de selecao Propriedade+Produtor
+         (P-036, Sessao 26/08/2026) - substitui os dois templates
+         antigos e quase identicos:
+           - gta_manual_selecionar_propriedade.html
+           - gta_consulta_selecionar_propriedade.html
+         (ambos podem ser apagados apos esta tela entrar em uso).
+
+         So aparece quando o usuario logado tem mais de 1 par
+         Propriedade+Produtor disponivel (auth.
+         buscar_pares_propriedade_produtor()) - ou porque tem mais
+         de uma Propriedade vinculada ao mesmo Produtor (caso
+         Claudenor, 8-9 fazendas), ou porque tem vinculo ativo com
+         mais de um Produtor ao mesmo tempo (caso Fazenda Olho
+         D'Agua - Maria Angelica E Sebastiao).
+
+         Espelha o padrao real do GERAS (tela mostrada por
+         Benedito): tabela Propriedade | Produtor, clique na LINHA
+         INTEIRA resolve os dois de uma vez - sem botao separado
+         (decisao de Benedito, 26/08/2026: "é só clicar em cima da
+         linha").
+
+         O clique navega para /produtor/selecionar-vinculo
+         (auth.py), passando id_produtor + id_propriedade + para
+         onde seguir (proximo/campo_propriedade) - essa rota
+         confere a escolha no servidor, grava id_produtor e
+         usuario_cargo na sessao (Cargo pode variar por Produtor) e
+         so entao redireciona para o destino real.
+
+         IMPORTANTE (Sessao 076, Regra de Ouro #9): esta e a
+         PROPRIA tela cujo bug de navegacao (Voltar fixo, em vez de
+         calculado) motivou a criacao da Regra de Ouro #9 - a
+         Consulta Brincagem so descobriu o problema porque o
+         Voltar dela nao levava de volta pra ca quando deveria.
+         Este template em si sempre esteve certo (usa a variavel
+         'voltar' vinda do router, nunca um destino fixo) - o bug
+         estava em routers CHAMADORES que esqueciam de passar
+         'voltar' (ver v1.1.0/v1.2.0/v1.3.0 abaixo).
+
+         Variaveis esperadas do router:
+           pares              - lista de SimpleNamespace
+                                (id_produtor, produtor_nome, cargo,
+                                id_propriedade, propriedade_nome,
+                                municipio, uf)
+           titulo             - texto do cabecalho da pagina.
+                                REGRA DE OURO (Sessao 051,
+                                13/09/2026, FUNDAMENTAL - Benedito):
+                                SEMPRE no formato '{Nome do Modulo}
+                                — Selecionar Propriedade', NUNCA so
+                                'Selecionar Propriedade' generico.
+                                Bug real: usuario clicava em
+                                "Operações Recentes" no Hub de
+                                Utilitarios e caia numa tela sem
+                                nenhuma referencia ao modulo de
+                                origem - ficava sem confirmacao de
+                                que o clique funcionou, se perdia.
+                                Exemplo ja correto (GTA Consulta):
+                                'Consulta de GTAs — Selecionar
+                                Propriedade'. TODO modulo NOVO que
+                                usar esta tela deve seguir este
+                                formato desde a primeira versao.
+           proximo            - path de destino apos a escolha
+                                (ex.: '/produtor/parceiro-manual')
+           campo_propriedade  - nome do parametro que o destino
+                                espera para o id_propriedade (ex.:
+                                'id_propriedade_interna')
+           voltar             - path do botao "Voltar" da tarja
+                                vermelha (ex.: '/produtor/hub/
+                                brincos'). REGRA DE OURO (Sessao
+                                051, 13/09/2026, FUNDAMENTAL -
+                                Benedito): SEMPRE informar
+                                explicitamente - NUNCA depender do
+                                default '/produtor/home' abaixo.
+                                Bug real ja corrigido 3x (Sessao
+                                044: brincos_cancelamento e outros;
+                                Sessao 051: backup_restore.py e
+                                racas.py nasceram DEPOIS da correcao
+                                da Sessao 044 e mesmo assim nao
+                                passaram 'voltar' - o problema
+                                voltou a acontecer por falta desta
+                                nota clara no cabecalho; Sessao 056:
+                                gta_manual.py tambem nasceu sem
+                                passar 'voltar' - ver changelog
+                                v1.3.0 abaixo). O default abaixo
+                                existe SO por compatibilidade com
+                                chamadores antigos ja corrigidos -
+                                nao e uma opcao valida para modulo
+                                novo. PENDENCIA (Sessao 056):
+                                varredura em todos os demais
+                                routers que usam este template, para
+                                confirmar quem mais esqueceu de
+                                passar 'voltar'.
+           erro               - mensagem de erro (ou None)
+
+     v1.0.0: Criacao do modulo (Sessao 26/08/2026, 15:23 -03).
+     v1.1.0: Sessao 044 (02/09/2026, 16:00 -03) - Bug real de
+         navegacao reportado por Benedito, testado em producao: o
+         botao "Voltar" desta tela (compartilhada por TODOS os
+         modulos que usam o fluxo de selecao Propriedade/Produtor
+         - Entrada, Relatorio Resumo, Relatorio N.Fiscais, Brincos
+         Disponiveis, GTA Manual, etc.) estava hardcoded para
+         '/produtor/home', levando sempre para a Home ao inves de
+         voltar para o Hub/tela de onde o fluxo partiu. Corrigido
+         com a nova variavel opcional 'voltar', que cada router
+         chamador agora informa explicitamente (o Hub do seu
+         proprio modulo) - Regra de Ouro: como este template e
+         compartilhado, TODOS os routers que o chamam precisam ser
+         atualizados para passar 'voltar', nao so um.
+     v1.2.0: Sessao 051 (13/09/2026, 12:30 -03) - Nenhuma mudanca
+         de HTML/CSS/logica neste arquivo. Mudanca e SO
+         documental: bug real reportado por Benedito (Operacoes
+         Recentes levava a esta tela sem nenhuma referencia ao
+         modulo de origem, e Backup/Restore + Racas da Fazenda
+         tinham o MESMO problema do botao Voltar ja corrigido na
+         v1.1.0, porque nasceram depois mas nao repassaram o
+         padrao) revelou que as 2 regras acima (titulo com prefixo
+         do modulo, voltar sempre informado) precisavam estar
+         registradas de forma explicita e destacada no bloco
+         "Variaveis esperadas do router", nao so implicitas no
+         changelog de versoes antigas. Routers corrigidos nesta
+         sessao: operacoes_recentes.py v1.1.0, backup_restore.py
+         v1.5.0, racas.py v1.1.0.
+     v1.3.0: Sessao 056 (18/09/2026, 11:40 -03) - Ponta solta da
+         varredura Voltar/Home (Checklist Pre-Codigo): esta tela
+         so tinha o botao Voltar - adicionado o botao Home (fixo em
+         /produtor/home, igual ao Padrao Reutilizavel Nº4), seguindo
+         a regra fixa fechada nesta sessao ("toda tela, exceto a
+         propria Home, tem Voltar e Home juntos"). Motivado pelo
+         bug real encontrado no fluxo de GTA Manual: gta_manual.py
+         (iniciar()) nunca passava a variavel 'voltar', caindo no
+         default '/produtor/home' - corrigido no router (v1.5.0),
+         nao neste template. Nenhuma outra mudanca de HTML/CSS/
+         logica neste arquivo alem do botao Home.
+     v1.4.0: Sessao 076 (21/09/2026, 16:40 -03) - TOPO e RODAPE
+         substituidos por comandos de INCLUDE das pecas-mestras
+         produtor_topo.html / produtor_rodape.html. O destino do
+         Voltar continua vindo do router com o mesmo fallback de
+         sempre (usa 'voltar' se informado, ou vai para
+         /produtor/home se nao) - preserva exatamente o
+         comportamento historico desta tela, incluindo o caso de
+         um router antigo que ainda nao passe 'voltar'. Home
+         continua aparecendo normalmente. Sem mudanca de
+         comportamento.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; {{ titulo }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 0; max-width: 900px; margin-bottom: 20px; overflow: hidden; }
+
+        .tabela-pares { width: 100%; border-collapse: collapse; }
+        .tabela-pares thead { background: #D4370A; color: #ffffff; }
+        .tabela-pares th { text-align: left; padding: 10px 16px; font-size: 13px; font-weight: bold; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f0f0f0; color: #333333; vertical-align: middle; }
+        .linha-clicavel:nth-child(even) { background: #f9f9f9; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .nome-propriedade { font-weight: bold; }
+
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = voltar or '/produtor/home' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+
+            <div class="pagina-header">
+                <h2><span class="icone-titulo">&#128100;</span> {{ titulo }}</h2>
+            </div>
+
+            {% if erro %}
+            <div class="erro">&#10060; {{ erro }}</div>
+            {% endif %}
+
+            {% if pares %}
+            <div class="form-container">
+                <table class="tabela-pares">
+                    <thead>
+                        <tr>
+                            <th>Propriedade</th>
+                            <th>Produtor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for par in pares %}
+                        <tr class="linha-clicavel" onclick="window.location.href='/produtor/selecionar-vinculo?id_produtor={{ par.id_produtor }}&id_propriedade={{ par.id_propriedade }}&proximo={{ proximo }}&campo_propriedade={{ campo_propriedade }}'">
+                            <td class="nome-propriedade">{{ par.propriedade_nome }}</td>
+                            <td>{{ par.produtor_nome }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\selecionar_propriedade_produtor.html
+     ========================================================= -->

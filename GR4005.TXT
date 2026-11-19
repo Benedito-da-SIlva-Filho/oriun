@@ -1,0 +1,108 @@
+AA                                                    False
+AF Africander                                         False
+AN Aberdeen Angus                                     False
+AR Red Angus                                          False
+AU Aubrac                                             False
+AY Ayrshire                                           False
+BA Barzona                                            False
+BB Belgian Blue                                       False
+BD Blonde D'Aquitaine                                 False
+BE Beefalo                                            False
+BH Brahmental                                         False
+BL Braler                                             False
+BM Beefmaster                                         False
+BN Brangus                                            False
+BO Braford                                            False
+BR Brahman                                            False
+BS Pardo Suiço Leite Brown Swuiss                     False
+BT Belmont Red                                        False
+CA Chianina                                           False
+CB Charbray                                           False
+CC Canchim                                            False
+CG Kangaian                                           False
+CH Charolês                                           False
+CL Curraleiro                                         False
+CN Canadiense                                         False
+CO Carabao                                            False
+CP Campino Red Pied                                   False
+CR Caracu                                             False
+CZ Guzerá                                             False
+DB Danish Black & White                               False
+DE Devon                                              False
+DR Dexter                                             False
+DS South Devon                                        False
+ER Eringer                                            False
+FA Flamenga                                           False
+FP East Fleming Red Pied                              False
+FR Fribourg                                           False
+GA Galloway                                           False
+GD Guzolando                                          False
+GH Gir Leiteiro Mocho                                 False
+GI Grauvieh                                           False
+GL Gir Leiteiro                                       False
+GM Gir Mocho                                          False
+GO Gyrolando                                          False
+GR Gronninger                                         False
+GS Gascone                                            False
+GT Guzerá Leiteiro                                    False
+GU Guernsev                                           False
+GV Gelbvieh                                           False
+GY Gir                                                False
+HC Hays Converter                                     False
+HH Hereford                                           False
+HI Highland                                           False
+HO Holandês                                           False
+HP Hereford Mocho                                     False
+IB Indubrasil                                         False
+JA Jafarabadi                                         False
+JE Jersey                                             False
+KB Kobe (Wagyu)                                       False
+LA Lavinia                                            False
+LM Limousin                                           False
+LR Lincoln Red                                        False
+LU Luing                                              False
+MA Maine-Anjou                                        False
+MD Mediterrâneo                                       False
+ME Maremmana                                          False
+MG Murray Gray                                        False
+MI Mueserhineissel                                    False
+MR Marchigiana                                        False
+NE Nelore                                             True
+NM Nelore Mocho                                       False
+NO Normando                                           False
+NR Norwegian Red                                      False
+NS Bonsmara                                           False
+PA Pathenais                                          False
+PI Piemontês                                          False
+PN Pantaneiro                                         False
+PR Pirenaico                                          False
+PT Pitangueiras                                       False
+PZ Pinzgauer                                          False
+RA Ranger                                             False
+RB Red Brangus                                        False
+RD Red Dane                                           False
+RG Rubia Galega                                       False
+RN Romagnola                                          False
+RW Dinamarquês Vermelho                               False
+SB Pardo Suíço (Brown Swiss Beef)                     False
+SD Sindi                                              False
+SE Senepol                                            False
+SG Santa Gertrudis                                    False
+SI Simbrasil                                          False
+SL Salers                                             False
+SM Simental                                           False
+SN Senangus                                           False
+SO Siboney                                            False
+SS Shorton (Beef)                                     False
+SW Sahiwal                                            False
+SX Sussex                                             False
+TA Tarentaise                                         False
+TB Tabapuã                                            False
+TG Tasmanian Grey                                     False
+TI Tuli                                               False
+TX Texas Longhorn                                     False
+UM Murrah                                             False
+WB Welsh Black                                        False
+WF West Flemish Rer                                   False
+WW Holandes Vermelho                                  False
+XX Composto                                           True

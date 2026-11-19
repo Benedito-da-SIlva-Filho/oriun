@@ -1,0 +1,89 @@
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\produtor_topo.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-09-21 10:00 -03
+     ATUALIZADO EM: 2026-09-25 20:50 -03
+     VERSAO: 1.2.1
+
+     DESCRICAO:
+         Peca-mestra do TOPO (cabecalho), reaproveitada via
+         comando de include - mesmo espirito ja usado para o
+         menu lateral (produtor_menu.html). Antes, esse bloco de
+         HTML estava COLADO, identico, em 38 telas diferentes -
+         toda mudanca (cor, botao, texto) precisava ser repetida
+         38 vezes. Agora e 1 peca so; as 38 telas so "chamam" ela.
+
+         NAO muda a regra de "arquivo completo e autocontido, sem
+         heranca de template" (Regras.txt secao 7) - o CSS do
+         topo continua duplicado dentro de cada tela (igual ja
+         acontece com o CSS do menu lateral hoje). So o HTML/
+         marcacao foi extraido pra 1 lugar so.
+
+         VARIAVEIS que o template que INCLUI este arquivo precisa
+         fornecer no render_template():
+           - cor_primaria (obrigatoria)
+           - nome_sistema (obrigatoria)
+           - usuario_nome (obrigatoria)
+           - usuario_perfil (obrigatoria)
+           - mostrar_navegacao (OPCIONAL, default True) - False
+             SO na tela Home, que nao tem Voltar/Home (ja esta
+             na Home). Todas as outras telas usam o padrao.
+           - mostrar_home (OPCIONAL, default True - v1.2.1) -
+             False esconde SO o botao Home, mantendo o Voltar
+             (hoje usado so por brincos_entrada_sucesso.html, que
+             no design original nunca teve Home).
+           - url_voltar (OPCIONAL) - destino do botao Voltar.
+             Se nao informado, usa o comportamento padrao do
+             navegador de "voltar uma pagina" - correto para
+             Hubs/telas genericas (Regras.txt secao 12:
+             "history.back() vs. destino calculado"). Telas de
+             FLUXO sequencial devem informar url_voltar com o
+             destino calculado (Regra de Ouro #4).
+
+         O botao Voltar expoe id="link-voltar-topo" (v1.2.1) para
+         telas que precisem anexar comportamento a ele (ex.:
+         aviso de "dados nao salvos").
+
+         v1.0.0: Criacao do modulo (Sessao 076, 21/09/2026,
+             10:00 -03) - extraido de produtor_home.html e
+             brincagem_consulta_lista.html (2 arquivos reais ja
+             confirmados em producao, copiados literalmente,
+             Checklist Pre-Codigo item 1).
+         v1.2.1: Sessao 080 (25/09/2026, 20:50 -03) - PROMESSAS
+             SEM CODIGO restauradas (achado de Benedito: o botao
+             Home aparecia na tela de sucesso de brincos, que pede
+             para esconde-lo). Os changelogs de outras telas citavam
+             uma v1.1.0 (id="link-voltar-topo" no Voltar) e uma
+             v1.2.0 (opcao mostrar_home) desta peca que NUNCA
+             chegaram a este arquivo - o que estava em uso era a
+             v1.0.0. Varredura de todos os templates do Produtor
+             (Sessao 080) confirmou: nenhum JavaScript dependia do
+             id (so comentario) e so brincos_entrada_sucesso.html
+             usa mostrar_home - nenhuma outra tela muda de
+             comportamento. Numerada 1.2.1 para ficar acima das
+             versoes citadas nos outros arquivos.
+     ========================================================= -->
+<div class="topo" style="background-color: {{ cor_primaria }};">
+    <div class="topo-esquerda">
+        <button class="btn-menu" onclick="toggleMenu()">&#9776;</button>
+        <h1>{{ nome_sistema }}</h1>
+    </div>
+    <div class="topo-direita">
+        <span>{{ usuario_nome }}</span>
+        {% if usuario_perfil != 'PRODUTOR' %}
+        <span class="badge-perfil">{{ usuario_perfil }}</span>
+        {% endif %}
+        {% if mostrar_navegacao | default(true) %}
+        <a href="{{ url_voltar | default('javascript:history.back()') }}" class="btn-voltar-topo" id="link-voltar-topo">&#8592; Voltar</a>
+        {% if mostrar_home | default(true) %}
+        <a href="/produtor/home" class="btn-voltar-topo">&#127968; Home</a>
+        {% endif %}
+        {% endif %}
+        <a href="/logout" class="btn-sair">Sair</a>
+    </div>
+</div>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\produtor_topo.html
+     ========================================================= -->

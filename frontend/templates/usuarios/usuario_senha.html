@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\usuarios
+     MODULO: templates\usuarios\usuario_senha.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-06-21 16:50 -03
+     ATUALIZADO EM: 2026-10-15 08:20 -03
+     VERSAO: 1.5.0
+
+     DESCRICAO:
+         Tela de troca de senha obrigatoria.
+         Exibida apos login com senha provisoria (esqueci-senha
+         ou primeiro acesso). Nao possui menu lateral — usuario
+         ainda nao chegou ao home. Unica saida: salvar nova senha
+         ou clicar em Sair.
+         v1.0.0: Criacao do modulo.
+         v1.1.0: Comportamento duplo para senha provisoria.
+         v1.2.0: Removido campo Senha Atual em todos os fluxos.
+         v1.3.0: Removido menu lateral, botao hamburguer,
+                 botao Cancelar e CSS orfao da sidebar.
+                 Tela agora e exclusiva para troca obrigatoria.
+         v1.4.0: Sessao 032 - Adicionado campo opcional "Novo
+                 Login". Motivado pelo fluxo de Convite Publico
+                 (/convite): o login nasce igual ao CPF/CNPJ, dado
+                 de facil acesso a qualquer pessoa (nota fiscal,
+                 boleto, contrato) - Benedito identificou o risco
+                 de seguranca e definiu que devia ser resolvido
+                 na hora, nao adiado. Exibe o login atual e permite
+                 trocar por qualquer texto de escolha do usuario,
+                 sem formato exigido (decisao com Benedito). Campo
+                 opcional - se deixado em branco, login permanece
+                 como esta.
+         v1.5.0: Sessao 097 (15/10/2026, 08:20 -03) - ACESSO FACIL:
+                 (1) saudacao com o nome da pessoa acima do login
+                 atual. (2) campos de login e senha com autocapitalize
+                 e autocorrect desligados (teclado do celular).
+                 Login e senha passam a nao diferenciar maiuscula de
+                 minuscula (regra no servidor). Nenhum outro campo,
+                 estilo ou comportamento foi alterado.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Trocar Senha</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        /* ---- Topo ---- */
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+
+        /* ---- Conteudo centralizado ---- */
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; }
+        .form-box { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 32px; width: 100%; max-width: 480px; margin-top: 20px; }
+        .form-box h2 { font-size: 20px; color: #333333; margin-bottom: 24px; }
+
+        /* ---- Aviso senha provisoria ---- */
+        .aviso-provisoria { background-color: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #6d4c00; margin-bottom: 24px; }
+
+        /* ---- Secao de login (destaque visual proprio) ---- */
+        .secao-login { background-color: #f7f9fc; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
+        .login-atual { font-size: 13px; color: #555555; margin-bottom: 12px; }
+        .login-atual strong { color: #333333; }
+        .aviso-login { font-size: 12px; color: #777777; margin-top: 6px; line-height: 1.5; }
+
+        /* ---- Campos ---- */
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .form-group label { font-size: 13px; font-weight: bold; color: #333333; }
+        .form-group input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; }
+        .form-group input[type="text"]:focus { outline: none; border-color: #D4370A; }
+        .campo-senha { position: relative; }
+        .campo-senha input { width: 100%; padding: 10px 40px 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; color: #333333; }
+        .campo-senha input:focus { outline: none; border-color: #D4370A; }
+        .olhinho { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none; }
+
+        /* ---- Mensagens ---- */
+        .erro { background: #ffebee; border-left: 4px solid #D4370A; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #c62828; margin-bottom: 16px; }
+        .sucesso { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #2e7d32; margin-bottom: 16px; }
+
+        /* ---- Botoes ---- */
+        .form-botoes { display: flex; justify-content: flex-end; margin-top: 24px; }
+        .btn-salvar { padding: 10px 24px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-salvar:hover { background: #C0392B; }
+
+        /* ---- Rodape ---- */
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- TOPO — sem botao hamburguer pois nao ha menu lateral -->
+    <div class="topo" style="background-color: {{ cor_primaria }};">
+        <h1>{{ nome_sistema }}</h1>
+        <div class="topo-direita">
+            <span>{{ usuario_nome }}</span>
+            <span class="badge-perfil">{{ usuario_perfil }}</span>
+            <a href="/logout" class="btn-sair">Sair</a>
+        </div>
+    </div>
+
+    <!-- CONTEUDO — formulario centralizado sem sidebar -->
+    <div class="conteudo">
+        <div class="form-box">
+            <h2>&#128273; Trocar Senha</h2>
+
+            <!-- Aviso exibido quando senha e provisoria -->
+            {% if eh_provisoria %}
+            <div class="aviso-provisoria">
+                &#9888;&#65039; Voce esta acessando com uma senha provisoria.
+                Defina sua nova senha para continuar.
+            </div>
+            {% endif %}
+
+            <!-- Mensagem de erro -->
+            {% if erro %}
+            <div class="erro">{{ erro }}</div>
+            {% endif %}
+
+            <!-- Mensagem de sucesso -->
+            {% if sucesso %}
+            <div class="sucesso">{{ sucesso }}</div>
+            {% endif %}
+
+            <!-- Formulario de troca de senha -->
+            <form method="POST" action="/trocar-senha">
+
+                <!-- Secao de login - opcional, qualquer usuario pode trocar -->
+                <div class="secao-login">
+                    <div class="login-atual">{% if usuario_nome %}Ol&aacute;, <strong>{{ usuario_nome }}</strong> &#128075;<br>{% endif %}Login atual: <strong>{{ login_atual }}</strong></div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Novo Login (opcional)</label>
+                        <input type="text" name="novo_login" id="novo_login"
+                               placeholder="Deixe em branco para manter o login atual" autocomplete="off"
+                               autocapitalize="off" autocorrect="off" spellcheck="false">
+                        <div class="aviso-login">
+                            &#128274; Por seguranca, recomendamos trocar o login se ele for
+                            igual ao seu CPF/CNPJ — esse dado e de facil acesso a qualquer pessoa.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Nova Senha *</label>
+                    <div class="campo-senha">
+                        <input type="password" name="senha_nova" autocapitalize="off" autocorrect="off" spellcheck="false" id="senha_nova"
+                               required placeholder="Minimo 6 caracteres" autocomplete="new-password">
+                        <span class="olhinho" onclick="toggle('senha_nova')">&#128065;&#65039;</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Confirmar Nova Senha *</label>
+                    <div class="campo-senha">
+                        <input type="password" name="senha_confirmacao" autocapitalize="off" autocorrect="off" spellcheck="false" id="senha_conf"
+                               required placeholder="Repita a nova senha" autocomplete="new-password">
+                        <span class="olhinho" onclick="toggle('senha_conf')">&#128065;&#65039;</span>
+                    </div>
+                </div>
+
+                <!-- Apenas botao Salvar — sem Cancelar -->
+                <div class="form-botoes">
+                    <button type="submit" class="btn-salvar">Salvar Nova Senha</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="rodape">Orion SISBOV &copy; 2026 &#8212; Consiste Informatica</div>
+
+    <!-- toggle do olhinho de senha — toggleMenu removido junto com a sidebar -->
+    <script>
+        function toggle(id) {
+            var campo = document.getElementById(id);
+            campo.type = campo.type === 'password' ? 'text' : 'password';
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\usuarios\usuario_senha.html
+     ========================================================= -->

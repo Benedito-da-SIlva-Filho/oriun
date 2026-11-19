@@ -1,0 +1,44 @@
+# TRECHO 3 DE 3 — PREVIA PARA REVISAO (nao e o arquivo final)
+
+# -------------------------------------------------------
+# Rota: /produtor/home — painel da plataforma Produtor
+# Busca totais da propriedade do usuario logado.
+# Requer login e perfil PRODUTOR.
+#
+# ALTERADO: removida a bifurcacao de template por perfil
+# FAZENDA (aposentado). Sempre usa produtor_home.html agora.
+# -------------------------------------------------------
+@auth.route('/produtor/home')
+def produtor_home():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+    if session.get('usuario_perfil') != 'PRODUTOR':
+        return redirecionar_home(session.get('usuario_perfil'))
+
+    # Modulos de animais, entradas e saidas ainda nao implementados
+    total_animais  = 0
+    total_entradas = 0
+    total_saidas   = 0
+
+    return render_template('produtor/produtor_home.html',
+        usuario_nome   = session.get('usuario_nome'),
+        usuario_perfil = session.get('usuario_perfil'),
+        cor_primaria   = session.get('cor_primaria', '#D4370A'),
+        nome_sistema   = session.get('nome_sistema', 'Orion SISBOV'),
+        menu_ativo     = 'home',
+        total_animais  = total_animais,
+        total_entradas = total_entradas,
+        total_saidas   = total_saidas
+    )
+
+# -------------------------------------------------------
+# NAO MUDAM (mantidos exatamente como estao no arquivo
+# original v1.8.0):
+#   - Rota: / (index)
+#   - Rota: /logout
+#   - Rota: /consiste/home
+#   - Rota: /certificadora/home
+#   - Rota: /esqueci-senha
+# -------------------------------------------------------
+
+# FIM DO TRECHO 3 DE 3

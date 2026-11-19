@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\transferencia_leitor_leitura.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-10-28 09:28 -03
+     ATUALIZADO EM: 2026-11-10 13:40 -03
+     v1.0.0: Sessao 107 (28/10/2026) - Leitura da Transferencia no brete (Leitor). Copia da leitura do Abate sem Sexo, Peso, Diarias, Liberacao e avisos; com Origem e Destino no topo.
+         Molde: saida_leitor_leitura.html. Router: backend/routers/transferencia_leitura.py.
+     v1.1.0: Sessao 107 (28/10/2026, 19:50) - Campo Peso (opcional) na leitura: vem com o ultimo peso do animal (tb_4003); o digitado vira o peso de saida.  REVERSAO: 1.5.0
+     v1.1.0: Sessao 107 (28/10/2026, 19:50) - Campo Peso (opcional) na leitura: vem com o ultimo peso do animal (tb_4003); o digitado vira o peso de saida.  REv1.5.0: Sessao 120 (2026-11-10 13:40 -03) - Animal ja vinculado mostra a etiqueta da GTA na lista da direita (Regra de Ouro #67). REVERSAO: .bak_antes_s120_livres_lei.
+     v1.2.0: Sessao 108 (29/10/2026, 10:40 -03) - GTA escolhida na Selecao: cartao com numero, destino (check-list), o que a GTA pede por categoria x lidos (atualiza a cada gravacao) e botao 'Concluir e vincular esta GTA'. A leitura continua sem gravar a GTA nos animais.  REVERSAO: .bak_antes_s108_gta_leitura.
+     v1.3.0: Sessao 108 (29/10/2026, 20:40 -03) - Cartao da GTA maior (fontes), tabela + total + botao na mesma linha, e aviso verde 'GTA completa' quando todos os animais pedidos foram lidos. REVERSAO: .bak_antes_s108_gta_card.
+     v1.3.1: Sessao 108 (29/10/2026, 20:50 -03) - Aviso 'GTA completa' em duas linhas alinhadas e quadro menor. REVERSAO: .bak_antes_s108_aviso2.
+     v1.4.0: Sessao 108 (29/10/2026, 21:00 -03) - Botao X em cada leitura da lista Geral (exclui a leitura; so enquanto nao vinculada a GTA). REVERSAO: .bak_antes_s108_excluir_leitura.
+     v1.4.1: Sessao 108 (29/10/2026, 21:10 -03) - Excluir leitura usa o modal padrao do Orion (confirmarAcaoAssincrona), nao o confirm() do navegador. REVERSAO: .bak_antes_s108_modal_excluir.
+     v1.4.2: Sessao 108 (29/10/2026, 21:20 -03) - Texto do modal de exclusao sem tags HTML. REVERSAO: .bak_antes_s108_modal_texto.
+     v1.4.3: Sessao 108 (29/10/2026, 21:30 -03) - Botao 'Concluir e vincular esta GTA' so aparece com a GTA completa (ao excluir uma leitura ele some de novo). REVERSAO: .bak_antes_s108_btn_vincular.
+     v1.4.4: Sessao 108 (29/10/2026, 21:35 -03) - Numero do brinco sem corte (detalhe desce para a 2a linha, X ao lado). Card da GTA sem a frase do destino na base. REVERSAO: .bak_antes_s108_item_lido.
+     v1.4.5: Sessao 108 (29/10/2026, 21:40 -03) - Card da GTA: linha 'Fora da GTA' (animais lidos que nao servem) e mensagem clara mandando excluir com o X. REVERSAO: .bak_antes_s108_fora_gta.
+     v1.4.6: Sessao 108 (29/10/2026, 21:50 -03) - Envia a GTA escolhida na conferencia do brinco (animal fora da GTA e barrado na hora). REVERSAO: .bak_antes_s108_gta_categoria.
+     v1.4.7: Sessao 108 (29/10/2026, 22:05 -03) - GTA completa trava a leitura (campos de brinco/RFID/Manejo desabilitados, placeholder 'GTA completa - vincule a GTA'); excluir uma leitura destrava. REVERSAO: .bak_antes_s108_trava_leitura.
+     v1.4.8: Sessao 108 (29/10/2026, 22:15 -03) - Placeholder 'GTA completa - vincule a GTA' em fonte menor (legivel). REVERSAO: .bak_antes_s108_placeholder.
+     v1.4.9: Sessao 108 (29/10/2026, 22:20 -03) - Mensagem 'GTA completa - vincule a GTA' vai no campo principal (RFID no Bastao, Brinco no Leitor). REVERSAO: .bak_antes_s108_msg_rfid.
+     v1.4.10: Sessao 113 (03/11/2026, 13:10 -03) - Mensagem de peso simplificada: "Peso incorreto, verifique."  REVERSAO: .bak_antes_s113_peso.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Leitor da Transfer&#234;ncia</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 16px 24px; overflow-y: auto; display: flex; gap: 20px; }
+        .coluna-form { flex: 1; min-width: 0; }
+        .coluna-lidos { width: 340px; flex-shrink: 0; }
+
+        .pagina-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .pagina-header h2 { font-size: 20px; color: #333333; display: flex; align-items: center; gap: 12px; }
+        .icone-titulo { font-size: 32px; line-height: 1; }
+
+        .info-contexto { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 5px 16px; margin-bottom: 8px; font-size: 15px; color: #7a1f04; font-weight: bold; display: flex; flex-wrap: wrap; gap: 6px 22px; }
+        /* v1.12.0 - tarja grande do Tipo de Entrada */
+        .tarja-tipo { border-radius: 8px; padding: 5px 16px; margin-bottom: 8px; font-size: 19px; font-weight: bold; letter-spacing: 1px; text-align: center; border: 2px solid; }
+        .tarja-tipo.compra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .tarja-tipo.nascimento { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+        /* v1.11.0 - Numero de Controle (Nascimento) */
+        .controle-reservar { font-weight: normal; font-style: italic; }
+        /* v1.13.0 - painel do que o escritorio lancou */
+        .painel-lancado { background: #fff8e1; border: 2px solid #f9a825; border-radius: 8px; padding: 6px 14px; margin-bottom: 8px; }
+        .painel-lancado .titulo-lancado { font-size: 14px; font-weight: bold; color: #8a6d00; margin-bottom: 4px; }
+        .painel-lancado .linha-lancado { display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 16px; color: #333333; padding: 2px 0; }
+        .painel-lancado .linha-lancado .num { font-weight: bold; color: #7a1f04; }
+        .painel-lancado .linha-lancado.completo { color: #1b5e20; }
+        /* v1.11.0 - aviso da Cota Hilton (so Nascimento) */
+        .aviso-cth { display: none; margin-top: 8px; padding: 5px 14px; border-radius: 6px; font-size: 14px; border-left: 5px solid; }
+        .aviso-cth.elegivel { display: block; background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+        .aviso-cth.acima { display: block; background: #fff8e1; border-color: #f9a825; color: #8a6d00; font-weight: bold; }
+        .aviso-cth.incoerente { display: block; background: #ffebee; border-color: #c62828; color: #c62828; font-weight: bold; }
+
+        .contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .contador-caixa { border: 2px solid #333333; border-radius: 6px; padding: 3px 16px; text-align: center; background: #ffffff; }
+        .contador-caixa .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .contador-caixa .valor { font-size: 20px; font-weight: bold; color: #D4370A; }
+
+        .form-container { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px 20px; }
+        .form-secao { font-size: 16px; font-weight: bold; color: #D4370A; margin: 12px 0 8px; padding-bottom: 6px; border-bottom: 2px solid #D4370A; }
+        .form-secao:first-child { margin-top: 0; }
+        .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+        .col-3  { grid-column: span 3; }
+        .col-4  { grid-column: span 4; }
+        .col-6  { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #333333; }
+        .form-group input, .form-group select { padding: 6px 12px; border: 2px solid #cccccc; border-radius: 6px; font-size: 19px; color: #333333; width: 100%; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #D4370A; }
+        .form-group input:disabled, .form-group select:disabled { background-color: #f0f0f0; color: #aaaaaa; cursor: not-allowed; }
+
+        .campo-sisbov { position: relative; }
+        .campo-sisbov input { font-size: 32px; font-weight: bold; padding: 9px 16px; letter-spacing: 1px; }
+        .campo-sisbov input.sisbov-ok { border-color: #1565C0; color: #1565C0; background: #E3F2FD; }
+        .badge-ok-sisbov { display: none; position: absolute; right: 18px; top: 50%; transform: translateY(-2px); font-size: 24px; font-weight: bold; color: #1565C0; pointer-events: none; }
+        .badge-ok-sisbov.visivel { display: block; }
+
+        .alerta-duplicado { background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 15px; font-weight: bold; color: #c62828; margin-bottom: 10px; display: none; align-items: center; justify-content: space-between; gap: 14px; }
+        .btn-fechar-alerta { padding: 7px 16px; background: #c62828; color: #ffffff; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+        .btn-fechar-alerta:hover { background: #a41f1f; }
+        .erro { background: #ffebee; border-left: 6px solid #c62828; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; color: #c62828; margin-bottom: 10px; display: none; }
+
+        .form-botoes { display: flex; gap: 12px; margin-top: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: #ffffff; padding: 6px 0 2px; }   /* v1.15.0 - grudado no fim da area visivel */
+        .btn-gravar { padding: 10px 28px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-gravar:hover { background: #C0392B; }
+        .btn-gravar:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        /* v1.10.0 - Gravar com foco: contorno azul (pronto para Enter) */
+        .btn-gravar:focus { outline: 3px solid #1565C0; outline-offset: 3px; }
+        .btn-limpar { padding: 12px 20px; background: #ffffff; border: 1px solid #888888; color: #888888; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-limpar:hover { background: #888888; color: #ffffff; }
+
+        .painel-lidos { background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 18px; height: 100%; display: flex; flex-direction: column; }
+        .painel-lidos h3 { font-size: 15px; color: #333333; margin-bottom: 12px; }
+        .lista-lidos { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .item-lido { border: 1px solid #e0e0e0; border-radius: 6px; padding: 7px 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .item-lido .sisbov { font-weight: bold; color: #333333; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-lido .detalhe { color: #888888; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+        /* v1.14.0 - brincos do lancamento do escritorio */
+        .painel-lidos h3.sub { margin: 12px 0 8px; }
+        .lista-lancados { flex: 2; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+        .item-lancado { border: 1px solid #dddddd; background: #f7f7f7; border-radius: 6px; padding: 7px 10px; display: flex; align-items: baseline; gap: 8px; color: #777777; }
+        .item-lancado .marca { width: 18px; font-weight: bold; flex-shrink: 0; text-align: center; }
+        .item-lancado .sisbov { font-weight: bold; font-size: 15px; white-space: nowrap; }
+        .item-lancado .detalhe { font-size: 12px; margin-left: auto; white-space: nowrap; }
+        .item-lancado.atual { background: #fff8e1; border: 2px solid #f9a825; color: #5d4600; }
+        .item-lancado.conferido { background: #e8f5e9; border-color: #66bb6a; color: #1b5e20; }
+        .lista-lidos.compacta { flex: 1; min-height: 60px; }
+        /* v1.15.0 - barra de Lidos (sessao) no rodape + modo compacto */
+        .barra-lidos { flex-shrink: 0; background: #ffffff; border-top: 1px solid #e0e0e0; padding: 4px 24px; display: flex; align-items: center; gap: 14px; }
+        .barra-lidos .titulo { font-size: 13px; font-weight: bold; color: #333333; white-space: nowrap; }
+        .barra-lidos .lista-lidos { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 8px; align-items: center; }
+        .barra-lidos .item-lido { flex-shrink: 0; padding: 3px 10px; }
+        .barra-lidos .lista-vazia { padding: 0; text-align: left; font-size: 12px; }
+        .lista-lancados { overflow-x: hidden; }
+        .item-lancado .sisbov { font-size: 14px; }
+        .item-lancado .detalhe { font-size: 11px; }
+        .compacto { padding: 10px 24px; }
+        .compacto .coluna-lidos { width: 350px; }
+        .compacto .painel-lidos { padding: 16px; }
+        .compacto .lista-lancados { flex: 1; gap: 6px; }
+        .compacto .item-lancado { padding: 8px 10px; }
+        .compacto .pagina-header { margin-bottom: 5px; }
+        .compacto .pagina-header h2 { font-size: 19px; gap: 10px; }
+        .compacto .icone-titulo { font-size: 28px; }
+        .compacto .tarja-tipo { font-size: 18px; padding: 3px 16px; margin-bottom: 7px; }
+        .compacto .info-contexto { padding: 3px 16px; margin-bottom: 7px; font-size: 15px; }
+        .compacto .painel-lancado { padding: 5px 14px; margin-bottom: 7px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 20px; }
+        .compacto .painel-lancado .titulo-lancado { font-size: 14px; margin: 0; }
+        .compacto .painel-lancado .linha-lancado { font-size: 17px; padding: 0; }
+        .compacto .contadores { gap: 12px; margin-bottom: 9px; }
+        .compacto .contador-caixa { padding: 2px 16px; }
+        .compacto .contador-caixa .valor { font-size: 20px; }
+        .compacto .form-container { padding: 11px 20px; }
+        .compacto .form-secao { margin: 12px 0 9px; }
+        .compacto .form-grid { gap: 9px; }
+        .compacto .form-group { gap: 4px; }
+        .compacto .form-group input, .compacto .form-group select { font-size: 19px; padding: 6px 12px; }
+        .compacto .campo-sisbov input { font-size: 31px; padding: 8px 16px; }
+        .compacto .aviso-cth { margin-top: 7px; padding: 4px 14px; }
+        .compacto .form-botoes { margin-top: 8px; bottom: 14px; }
+        .compacto .btn-gravar { font-size: 17px; padding: 11px 32px; }
+        .compacto .btn-limpar { padding: 11px 20px; }
+        /* v1.15.5 - conferencia: dados do animal bem legiveis */
+        .compacto .em-conferencia .form-group input:disabled,
+        .compacto .em-conferencia .form-group select:disabled { color: #111111; font-weight: bold; background-color: #fffdf0; border-color: #f9a825; -webkit-text-fill-color: #111111; opacity: 1; }
+        /* v1.16.0 - brincos lidos fora do lancamento do escritorio */
+        .sub-extras { font-size: 12px; font-weight: bold; color: #1565C0; margin: 8px 0 2px; }
+        #lista-extras { display: flex; flex-direction: column; gap: 6px; }
+        .item-lancado.extra { background: #E3F2FD; border-color: #1565C0; color: #0D47A1; }
+        .lista-vazia { color: #aaaaaa; font-size: 13px; text-align: center; padding: 20px 0; }
+
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+
+        .modal-fundo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 999; }
+        .modal-fundo.aberto { display: flex; }
+        .modal-caixa { background: #ffffff; border-radius: 10px; padding: 32px; max-width: 380px; text-align: center; }
+        .modal-caixa .icone-sucesso { font-size: 46px; margin-bottom: 12px; }
+        .modal-caixa h3 { font-size: 18px; color: #2e7d32; margin-bottom: 8px; }
+        .modal-caixa .sisbov-gravado { font-size: 15px; color: #333333; margin-bottom: 20px; }
+        .btn-modal-sair { padding: 10px 32px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-modal-sair:hover { background: #C0392B; }
+        /* ---- Leitor do Abate (Sessao 098) ---- */
+        .col-2 { grid-column: span 2; }
+        .col-5 { grid-column: span 5; }
+        .col-8 { grid-column: span 8; }
+        .tarja-tipo.saida { background: #FBE9E4; border-color: #D4370A; color: #7a1f04; }
+        .form-group input.dado { background-color: #fffdf0; border-color: #f9a825; color: #111111; font-weight: bold; }
+        .form-group input.dado:read-only { cursor: default; }
+        .campo-sisbov input.sisbov-manejo { border-color: #6a1b9a; color: #4a148c; background: #f3e5f5; }
+        .linha-peso { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .caixa-peso { border: 2px solid #333333; border-radius: 6px; background: #ffffff; text-align: center; padding: 3px 8px; }
+        .caixa-peso .rotulo { font-size: 11px; color: #666666; font-weight: bold; }
+        .caixa-peso .valor { font-size: 20px; font-weight: bold; color: #1565C0; min-height: 26px; }
+        .btn-manejo { padding: 10px 22px; background: #ffffff; border: 2px solid #1a237e; color: #1a237e; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-right: auto; }
+        .btn-manejo:hover { background: #1a237e; color: #ffffff; }
+        .total-geral { margin-top: 10px; background: #8e7cf0; color: #ffffff; text-align: center; font-size: 22px; font-weight: bold; border-radius: 4px; padding: 4px; }
+        .item-lido .detalhe { white-space: nowrap; }
+        .item-lido .btn-x { margin-left: 8px; flex-shrink: 0; border: 1px solid #d4370a; background: #ffffff; color: #d4370a; border-radius: 4px; width: 22px; height: 22px; line-height: 18px; font-size: 14px; font-weight: bold; cursor: pointer; padding: 0; }
+        .item-lido .btn-x:hover { background: #d4370a; color: #ffffff; }
+        /* v-s108: brinco inteiro (sem cortar): linha 1 = brinco + X, linha 2 = detalhe */
+        .item-lido { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; row-gap: 0; align-items: center; }
+        .item-lido .sisbov { grid-column: 1; grid-row: 1; overflow: visible; text-overflow: clip; }
+        .item-lido .detalhe { grid-column: 1; grid-row: 2; }
+        .item-lido .btn-x { grid-column: 2; grid-row: 1 / 3; margin-left: 0; }
+        .barra-lidos .item-lido { display: flex; }
+        .modal-caixa.larga { max-width: 460px; width: 92%; }
+        .modal-caixa .campo-modal { display: flex; gap: 10px; justify-content: center; align-items: flex-end; margin: 14px 0; }
+        .modal-caixa .campo-modal label { display: block; font-size: 12px; font-weight: bold; color: #333333; text-align: left; margin-bottom: 4px; }
+        .modal-caixa .campo-modal input { padding: 8px 10px; border: 2px solid #cccccc; border-radius: 6px; font-size: 24px; font-weight: bold; text-align: center; font-family: Arial, sans-serif; }
+        .modal-caixa .campo-modal input:focus { outline: none; border-color: #1a237e; }
+        .modal-caixa .campo-modal #manejo-numero { width: 170px; }
+        .modal-caixa .campo-modal #manejo-dv { width: 64px; }
+        .modal-caixa .msg-manejo { color: #c62828; font-weight: bold; font-size: 14px; min-height: 20px; margin-bottom: 10px; }
+        .modal-caixa .botoes-modal { display: flex; gap: 10px; justify-content: center; }
+        .btn-modal-sec { padding: 10px 22px; background: #ffffff; border: 1px solid #888888; color: #555555; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-modal-sec:hover { background: #888888; color: #ffffff; }
+        .btn-modal-sair:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
+        /* aviso vermelho: fora da Liberacao / ERAS 0 a 12 */
+        .modal-aviso-caixa { background: #ffffff; border: 4px solid #c62828; border-radius: 10px; padding: 24px 28px; max-width: 560px; width: 94%; text-align: left; }
+        .modal-aviso-caixa h3 { color: #c62828; font-size: 20px; margin-bottom: 4px; text-align: center; }
+        .modal-aviso-caixa .animal-aviso { text-align: center; font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 12px; }
+        .modal-aviso-caixa .item-aviso { border: 2px solid #c62828; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; color: #c62828; font-weight: bold; font-size: 16px; }
+        .modal-aviso-caixa .item-aviso label { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 15px; color: #222222; cursor: pointer; }
+        .modal-aviso-caixa .item-aviso input[type=checkbox] { width: 20px; height: 20px; }
+        .modal-aviso-caixa .botoes-modal { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
+        /* ---- v1.1.0 (Sessao 099): tela compacta, tudo visivel sem rolagem ---- */
+        .compacto { padding: 8px 20px; gap: 14px; }
+        .compacto .coluna-lidos { width: 300px; }
+        .compacto .painel-lidos { padding: 12px; }
+        .faixa-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+        .faixa-topo h2 { font-size: 17px; color: #333333; display: flex; align-items: center; gap: 8px; }
+        .faixa-topo .icone-titulo { font-size: 24px; }
+        .faixa-info { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+        .faixa-info span { background: #FBE9E4; border: 1px solid #D4370A; border-radius: 6px; padding: 3px 12px; font-size: 14px; font-weight: bold; color: #7a1f04; white-space: nowrap; }
+        .faixa-contadores { display: flex; gap: 8px; margin-left: auto; }
+        .faixa-contadores .contador-caixa { display: flex; align-items: baseline; gap: 8px; padding: 2px 12px; }
+        .faixa-contadores .contador-caixa .rotulo { font-size: 11px; }
+        .faixa-contadores .contador-caixa .valor { font-size: 18px; }
+        .compacto .form-container { padding: 8px 16px 10px; }
+        .compacto .form-secao { font-size: 13px; margin: 8px 0 6px; padding-bottom: 3px; border-bottom-width: 1px; }
+        .compacto .form-secao:first-child { margin-top: 0; }
+        .compacto .form-group { gap: 2px; }
+        .compacto .form-group label { font-size: 12px; }
+        .compacto .form-group input, .compacto .form-group select { font-size: 17px; padding: 4px 10px; }
+        .compacto .campo-sisbov input { font-size: 28px; padding: 5px 14px; }
+        .compacto .badge-ok-sisbov { top: auto; bottom: 10px; transform: none; font-size: 20px; }
+        .grade-id { display: grid; grid-template-columns: 2.9fr 1fr 1.7fr; gap: 8px; }
+        .grade-animal { display: grid; grid-template-columns: 1fr 1fr 1.4fr 2fr; gap: 8px; }
+        .grade-saida { display: grid; grid-template-columns: 1fr 3fr 1.5fr; gap: 8px; }
+        .dica-peso { font-size: 11px; color: #666666; margin-top: 2px; min-height: 13px; }
+        .compacto .linha-peso { margin-top: 8px; gap: 8px; }
+        .compacto .caixa-peso { padding: 1px 8px; }
+        .compacto .caixa-peso .valor { font-size: 18px; min-height: 22px; }
+        .compacto .form-botoes { margin-top: 8px; padding: 4px 0 0; bottom: 0; }
+        .compacto .btn-gravar { padding: 9px 30px; }
+        .compacto .btn-limpar { padding: 9px 18px; }
+        /* v1.1.0 - botao Manejo em destaque: rosa, borda laranja, icone */
+        .compacto .btn-manejo { display: flex; align-items: center; gap: 8px; padding: 8px 24px; background: #FBE9E4; border: 3px solid #D4370A; color: #7a1f04; border-radius: 8px; font-size: 17px; font-weight: bold; cursor: pointer; margin-right: auto; }
+        .compacto .btn-manejo:hover { background: #D4370A; color: #ffffff; }
+        .compacto .btn-manejo:focus { outline: 3px solid #1565C0; outline-offset: 2px; }
+        /* v1.1.0 - aviso de brinco ja lido (leitura em aberto) */
+        .modal-aviso-caixa.repetido { border-color: #f9a825; }
+        .modal-aviso-caixa.repetido h3, .modal-aviso-caixa.repetido .animal-aviso { color: #8a6d00; }
+        .modal-aviso-caixa.repetido .item-aviso { border-color: #f9a825; color: #5d4600; background: #fff8e1; }
+        .modal-aviso-caixa.repetido .botoes-modal { flex-wrap: wrap; }
+        /* v1.1.1 - linha Identificacao: SISBOV, Manejo e RFID com a mesma altura */
+        .compacto .grade-id input { height: 50px; }
+        .compacto .grade-id #manejo { font-size: 28px; padding: 5px 14px; letter-spacing: 1px; }
+        .compacto .badge-ok-sisbov { bottom: 13px; }
+        /* v1.1.4 / v1.0.1 (Sessao 099) - faixas de bloqueio e de erro em vermelho vivo, texto branco */
+        .alerta-duplicado { background: #D32F2F; border-left: 8px solid #7f0000; color: #ffffff; font-size: 17px; padding: 12px 18px; box-shadow: 0 2px 8px rgba(211,47,47,0.45); }
+        .alerta-duplicado .btn-fechar-alerta, .btn-fechar-alerta { background: #ffffff; color: #B71C1C; }
+        #alerta-duplicado-texto { display: flex; align-items: center; gap: 14px; }
+        #alerta-duplicado-texto .alerta-icone { font-size: 34px; line-height: 1; flex-shrink: 0; }
+        #alerta-duplicado-texto .alerta-msg { white-space: pre-line; }   /* v1.1.5 - frases em linhas separadas */
+        .btn-fechar-alerta:hover { background: #ffe5e5; }
+        .erro { background: #D32F2F; border-left: 8px solid #7f0000; color: #ffffff; font-size: 16px; padding: 12px 18px; box-shadow: 0 2px 8px rgba(211,47,47,0.45); }
+        /* v1.2.0 (Sessao 108) - cartao da GTA escolhida na Selecao */
+        .gta-card { background: #ffffff; border: 1px solid #1565c0; border-left: 8px solid #1565c0; border-radius: 8px; padding: 14px 20px 16px; margin: 8px 0; }
+        .gta-card-topo { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+        .gta-card-titulo { font-size: 20px; font-weight: bold; color: #1565c0; }
+        .gta-card-destino { font-size: 19px; font-weight: bold; color: #333333; }
+        .gta-card-conf { font-size: 15px; color: #5b6470; margin: 4px 0 10px; }
+        .gta-card-corpo { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 32px; }   /* v-s108: tabela, total e botao na mesma linha */
+        .gta-completa { display: none; background: #e8f5e9; border: 2px solid #2e7d32; border-radius: 8px; color: #1b5e20; font-size: 16px; font-weight: bold; line-height: 1.45; padding: 6px 14px; margin: 2px 0 8px; }
+        .gta-completa.visivel { display: block; }
+        .gta-tab { border-collapse: collapse; font-size: 17px; }
+        .gta-tab th { text-align: left; font-weight: normal; color: #888888; padding: 2px 18px 2px 0; }
+        .gta-tab td { padding: 2px 18px 2px 0; }
+        .gta-tab tr.ok td { color: #1b7a2b; font-weight: bold; }
+        .gta-tab tr.falta td { color: #8a6d00; }
+        .gta-tab tr.sobra td { color: #B71C1C; font-weight: bold; }
+        .gta-card-rodape { font-size: 16px; flex: 1 1 260px; color: #555555; }
+        .gta-card-rodape.completo { color: #1b7a2b; font-weight: bold; }
+        .gta-btn-vincular { display: inline-block; margin-top: 0; padding: 14px 26px; background: #1565c0; color: #ffffff; border-radius: 8px; font-size: 17px; font-weight: bold; text-decoration: none; }
+        .gta-btn-vincular:hover { background: #0d47a1; }
+        /* s120 - Regra de Ouro #67: etiqueta da GTA no animal ja vinculado */
+        .item-lido .tag-gta { margin-left: auto; font-size: 11px; font-weight: bold; color: #1565C0; background: #E3F2FD; border-radius: 4px; padding: 2px 6px; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo compacto">
+
+            <div class="coluna-form">
+                <div class="faixa-topo">
+                    <h2><span class="icone-titulo">&#128002;</span> Leitor da Transfer&#234;ncia &#8212; Leitura</h2>
+                    <div class="faixa-info">
+                        <span>&#128197; Data Leitura: {{ data_leitura }}</span>
+                        <span>&#127968; Origem: {{ propriedade.nome if propriedade else '-' }}</span>
+                    </div>
+                    <div class="faixa-contadores">
+                        <div class="contador-caixa">
+                            <div class="rotulo">LIDOS (sessão)</div>
+                            <div class="valor" id="contador-lidos">0</div>
+                        </div>
+                        <div class="contador-caixa">
+                            <div class="rotulo">GRAVADOS (nesta data)</div>
+                            <div class="valor" id="contador-gravados">{{ total_gravados }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if gta_info %}
+                <div class="gta-card" id="gta-card">
+                    <div class="gta-card-topo">
+                        <span class="gta-card-titulo">&#128196; GTA de Transfer&#234;ncia {{ gta_info.numero }}</span>
+                        <span class="gta-card-destino">&#8594; {{ gta_info.destino_nome }}</span>
+                    </div>
+                    {% if gta_info.destino_texto %}<div class="gta-card-conf">{{ gta_info.destino_texto }}</div>{% endif %}
+                    <div class="gta-completa" id="gta-completa"></div>
+                    <div class="gta-card-corpo">
+                        <table class="gta-tab">
+                            <thead><tr><th>Categoria</th><th>GTA pede</th><th>Lidos</th></tr></thead>
+                            <tbody id="gta-linhas"></tbody>
+                        </table>
+                        <div class="gta-card-rodape" id="gta-rodape"></div>
+                        <a class="gta-btn-vincular" href="{{ gta_info.url_vincular }}">Concluir e vincular esta GTA &#8594;</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="alerta-duplicado" id="alerta-duplicado">
+                    <span id="alerta-duplicado-texto"></span>
+                    <button type="button" class="btn-fechar-alerta" id="btn-fechar-alerta">Fechar e Limpar</button>
+                </div>
+                <div class="erro" id="erro-gravar"></div>
+
+                <div class="form-container">
+
+                    <div class="form-secao">Identificação</div>
+                    <div class="grade-id">
+                        <div class="form-group campo-sisbov">
+                            <label>Código de Barras (SISBOV) *</label>
+                            <input type="text" id="sisbov" autocomplete="off" autofocus maxlength="15" placeholder="Leia o brinco...">
+                            <span class="badge-ok-sisbov" id="badge-ok-sisbov">&#10003; OK</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Manejo</label>
+                            <input type="text" id="manejo" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>RFID</label>
+                            <input type="text" id="rfid" class="dado" readonly tabindex="-1">
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Dados do Animal</div>
+                    <div class="grade-animal">
+                        <div class="form-group">
+                            <label>Sexo</label>
+                            <input type="text" id="f-sexo" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Raça</label>
+                            <input type="text" id="f-raca" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Nascimento</label>
+                            <input type="text" id="f-nascimento" class="dado" readonly tabindex="-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Idade em Meses</label>
+                            <input type="text" id="f-idade" class="dado" readonly tabindex="-1">
+                        </div>
+                    </div>
+
+                    <div class="form-secao">Saída</div>
+                    <div class="grade-saida">
+                        <div class="form-group">
+                            <label>Elemento</label>
+                            <select id="elemento" disabled>
+                                <option value=""></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Lote</label>
+                            <input type="text" id="lote_saida" class="upper" maxlength="30" autocomplete="off" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Peso (kg)</label>
+                            <input type="text" id="peso" maxlength="7" autocomplete="off" disabled>
+                            <div class="dica-peso" id="peso-dica"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-botoes">
+                        <button type="button" class="btn-manejo" id="btn-manejo"><span aria-hidden="true">&#9000;</span> Manejo</button>
+                        <button type="button" class="btn-limpar" id="btn-limpar">Limpar Tela</button>
+                        <button type="button" class="btn-gravar" id="btn-gravar" disabled>Gravar</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="coluna-lidos">
+                <div class="painel-lidos">
+                    <h3>Geral &#8212; lidos nesta data</h3>
+                    <div class="lista-lidos" id="lista-lidos">
+                        {% for l in lidos %}
+                        <div class="item-lido" data-sisbov="{{ l.sisbov }}">
+                            <div class="sisbov">{{ l.sisbov }}</div>
+                            <div class="detalhe">{{ 'M' if l.sexo == 'MACHO' else 'F' }}{% if l.peso %} &#183; {{ l.peso }} kg{% endif %}{% if l.hora %} &#183; {{ l.hora }}{% endif %}</div>
+                            {% if l.vinculado %}<span class="tag-gta" title="Animal ja vinculado a esta GTA">GTA {{ l.gta }}</span>{% else %}<button type="button" class="btn-x" title="Excluir esta leitura">&#10005;</button>{% endif %}
+                        </div>
+                        {% endfor %}
+                        <div class="lista-vazia" id="lista-vazia"{% if lidos %} style="display:none"{% endif %}>Nenhuma leitura ainda.</div>
+                    </div>
+                    <div class="total-geral" id="total-geral">{{ total_gravados }}</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {% include 'produtor/modal_confirmacao.html' %}
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <!-- Modal de sucesso apos Gravar -->
+    <div class="modal-fundo" id="modal-sucesso">
+        <div class="modal-caixa">
+            <div class="icone-sucesso">&#9989;</div>
+            <h3>Gravação Efetuada com Sucesso</h3>
+            <div class="sisbov-gravado" id="modal-sisbov"></div>
+            <button type="button" class="btn-modal-sair" id="btn-modal-sair">Sair</button>
+        </div>
+    </div>
+
+    <!-- Modal do Manejo -->
+    <div class="modal-fundo" id="modal-manejo">
+        <div class="modal-caixa larga">
+            <h3 style="color:#1a237e;">Identificar pelo Manejo</h3>
+            <div class="campo-modal">
+                <div>
+                    <label for="manejo-numero">Digite o Manejo (6 números)</label>
+                    <input type="text" id="manejo-numero" maxlength="6" inputmode="numeric" autocomplete="off">
+                </div>
+                <div id="manejo-dv-box" style="display:none">
+                    <label for="manejo-dv">DV (brinco 105)</label>
+                    <input type="text" id="manejo-dv" maxlength="1" inputmode="numeric" autocomplete="off">
+                </div>
+            </div>
+            <div class="msg-manejo" id="msg-manejo"></div>
+            <div class="botoes-modal">
+                <button type="button" class="btn-modal-sec" id="btn-manejo-cancelar">Cancelar</button>
+                <button type="button" class="btn-modal-sair" id="btn-manejo-buscar">Buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal amarelo: brinco que ja tem leitura em aberto (excluir a antiga e usar a nova, ou manter a antiga) -->
+    <div class="modal-fundo" id="modal-repetido">
+        <div class="modal-aviso-caixa repetido">
+            <h3>&#9888;&#65039; BRINCO JÁ LIDO</h3>
+            <div class="animal-aviso" id="repetido-animal"></div>
+            <div class="item-aviso" id="repetido-texto"></div>
+            <div class="botoes-modal">
+                <button type="button" class="btn-modal-sec" id="btn-repetido-manter">Manter a antiga e desistir da atual</button>
+                <button type="button" class="btn-modal-sair" id="btn-repetido-excluir">Excluir a antiga e usar a nova</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) { sidebar.classList.toggle('recolhido'); }
+        }
+
+        var idPropriedade = '{{ id_propriedade }}';
+        var dataLeitura   = '{{ data_leitura }}';     // dd/mm/aaaa, vinda da Selecao
+
+        // ---- v1.2.0 (Sessao 108) - GTA escolhida na Selecao: andamento por categoria ----
+        var idGta = '{{ id_gta or "" }}';
+        var GTA_PROGRESSO_INICIAL = {{ gta_info.progresso|tojson if gta_info else 'null' }};
+        function escGta(t) { return String(t).replace(/[&<>"]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+        function renderGta(p) {
+            var corpo = document.getElementById('gta-linhas');
+            var rodape = document.getElementById('gta-rodape');
+            if (!p || !corpo || !rodape) return;
+            var h = '';
+            p.linhas.forEach(function(l) {
+                var cls = l.lidos === l.pede ? 'ok' : (l.lidos > l.pede ? 'sobra' : 'falta');
+                h += '<tr class="' + cls + '"><td>' + escGta(l.rotulo) + '</td><td>' + l.pede + '</td><td>' + l.lidos + '</td></tr>';
+            });
+            if (p.sobra > 0) { h += '<tr class="sobra"><td>Fora da GTA</td><td>0</td><td>' + p.sobra + '</td></tr>'; }
+            corpo.innerHTML = h;
+            var txt = 'Total: ' + p.total_lidos + ' lido(s) de ' + p.total_pede + ' pedidos pela GTA.';
+            if (p.sobra > 0) { txt = 'Lidos: ' + p.total_lidos + '. Destes, ' + p.sobra + ' não serve(m) para esta GTA (outro sexo/idade ou além do pedido). Exclua com o ✕ da lista ao lado.'; }
+            if (p.completo) { txt += ' Tudo certo: pode vincular.'; }
+            rodape.textContent = txt;
+            rodape.className = 'gta-card-rodape' + (p.completo ? ' completo' : '');
+            // GTA completa: acabou a leitura (trava o brinco/RFID/Manejo); se excluir uma leitura, destrava
+            var travado = !!p.completo;
+            var principal = document.getElementById('rfid') ? 'rfid' : 'sisbov';   // Bastao: o campo principal e o RFID
+            ['sisbov', 'rfid', 'btn-manejo'].forEach(function(idEl) {
+                var el = document.getElementById(idEl);
+                if (!el) return;
+                el.disabled = travado;
+                if (idEl === principal) {
+                    if (!el.getAttribute('data-ph')) { el.setAttribute('data-ph', el.placeholder || ''); }
+                    el.placeholder = travado ? 'GTA completa \u2014 vincule a GTA' : el.getAttribute('data-ph');
+                    el.style.fontSize = travado ? '15px' : '';
+                    el.style.letterSpacing = travado ? '0' : '';
+                }
+            });
+            var btnVincular = document.querySelector('.gta-btn-vincular');   // so aparece com a GTA completa
+            if (btnVincular) { btnVincular.style.display = p.completo ? 'inline-block' : 'none'; }
+            var aviso = document.getElementById('gta-completa');
+            if (aviso) {
+                if (p.completo) {
+                    aviso.innerHTML = '<div>\u2714 GTA completa: todos os ' + p.total_pede + ' animais da GTA foram lidos.</div><div>Agora clique em \u201cConcluir e vincular esta GTA\u201d para seguir.</div>';
+                    aviso.className = 'gta-completa visivel';
+                } else {
+                    aviso.className = 'gta-completa';
+                }
+            }
+        }
+        renderGta(GTA_PROGRESSO_INICIAL);
+        var URL_CHECAR = '{{ url_for("transferencia.checar") }}';
+        var URL_GRAVAR = '{{ url_for("transferencia.gravar") }}';
+        var URL_EXCLUIR_LEITURA = '{{ url_for("transferencia.excluir_leitura") }}';
+        var URL_EXCLUIR_ANTIGA = '{{ url_for("saida_leitor.excluir_antiga") }}';
+
+
+        var campoSisbov  = document.getElementById('sisbov');
+        var badgeOk      = document.getElementById('badge-ok-sisbov');
+        var campoElemento = document.getElementById('elemento');
+        var campoLote    = document.getElementById('lote_saida');
+        var campoPeso    = document.getElementById('peso');
+        var dicaPeso     = document.getElementById('peso-dica');
+        function numero(texto) { return parseFloat(String(texto || '').replace(',', '.')); }
+        var btnGravar    = document.getElementById('btn-gravar');
+        var alerta       = document.getElementById('alerta-duplicado');
+        var alertaTexto  = document.getElementById('alerta-duplicado-texto');
+        var erroGravar   = document.getElementById('erro-gravar');
+        var contadorLidos    = document.getElementById('contador-lidos');
+        var contadorGravados = document.getElementById('contador-gravados');
+        var totalGeral   = document.getElementById('total-geral');
+        var listaLidos   = document.getElementById('lista-lidos');
+        var listaVazia   = document.getElementById('lista-vazia');
+        var modalSucesso = document.getElementById('modal-sucesso');
+        var modalManejo  = document.getElementById('modal-manejo');
+
+        var CAMPOS_FICHA = {
+            manejo: 'manejo', rfid: 'rfid', sexo: 'f-sexo', raca: 'f-raca', nascimento: 'f-nascimento',
+            idade_meses: 'f-idade'
+        };
+
+        var totalLidos = 0;
+        var gravando = false;
+        var estado = { liberado: false, via: 'LEITOR', animal: null };
+        var ultimoSisbovChecado = null;
+        var TEMPO_TRAVA_ENTER_MS = 500;      // o leitor USB manda um Enter logo apos o numero
+        var bloqueioEnterAte = 0;
+
+        // ---------- mensagens ----------
+        // v1.1.5 / v1.0.2 - duas frases na mesma faixa: cada frase em uma linha (ponto + espaco + maiuscula ou abre-parenteses)
+        function quebrarFrases(texto) {
+            return String(texto).replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ(])/g, '$1\n');
+        }
+
+        function mostrarAlerta(mensagem) {
+            alertaTexto.textContent = '';
+            var icone = document.createElement('span'); icone.className = 'alerta-icone'; icone.textContent = '⚠️';
+            var msg = document.createElement('span'); msg.className = 'alerta-msg'; msg.textContent = quebrarFrases(mensagem);
+            alertaTexto.appendChild(icone); alertaTexto.appendChild(msg);
+            alerta.style.display = 'flex';
+        }
+        function esconderMensagens() {
+            alerta.style.display = 'none';
+            erroGravar.style.display = 'none';
+        }
+        function mostrarErro(mensagem) {
+            erroGravar.textContent = mensagem;
+            erroGravar.style.display = 'block';
+        }
+
+        // ---------- ficha do animal ----------
+        function limparFicha() {
+            Object.keys(CAMPOS_FICHA).forEach(function(chave) { document.getElementById(CAMPOS_FICHA[chave]).value = ''; });
+            campoLote.value = '';
+            campoPeso.value = '';
+            dicaPeso.textContent = '';
+            campoElemento.innerHTML = '<option value=""></option>';
+        }
+        function travarDigitacao(travar) {
+            campoElemento.disabled = travar;
+            campoLote.disabled = travar;
+            campoPeso.disabled = travar;
+            btnGravar.disabled = travar;
+        }
+        function reiniciarEstado() {
+            estado = { liberado: false, via: 'LEITOR', animal: null };
+            ultimoSisbovChecado = null;
+            campoSisbov.classList.remove('sisbov-ok', 'sisbov-manejo');
+            badgeOk.classList.remove('visivel');
+            limparFicha();
+            travarDigitacao(true);
+        }
+        function configurarElemento(via) {
+            // Leitor oferece so Botton; Manejo oferece so Brinco. Em branco = tem os dois.
+            var opcao = (via === 'MANEJO') ? ['BRINCO', 'Brinco'] : ['BOTTON', 'Botton'];
+            campoElemento.innerHTML = '<option value=""></option><option value="' + opcao[0] + '">' + opcao[1] + '</option>';
+            campoElemento.value = '';
+        }
+        function preencherFicha(animal) {
+            Object.keys(CAMPOS_FICHA).forEach(function(chave) {
+                var valor = animal[chave];
+                document.getElementById(CAMPOS_FICHA[chave]).value = (valor === null || valor === undefined) ? '' : valor;
+            });
+            campoLote.value = animal.lote_entrada || '';
+            // peso: ja vem o ultimo peso do animal; se o brete digitar outro, o digitado vale
+            campoPeso.value = animal.peso_anterior || '';
+            dicaPeso.textContent = animal.peso_anterior ? ('Último peso em ' + animal.data_peso) : 'Sem pesagem anterior';
+        }
+        campoPeso.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9.,]/g, '');
+        });
+        // ---------- depois que o servidor aceitou o animal ----------
+        function liberarDigitacao() {
+            estado.liberado = true;
+            travarDigitacao(false);
+            bloqueioEnterAte = Date.now() + TEMPO_TRAVA_ENTER_MS;
+            campoPeso.focus();
+            campoPeso.select();
+        }
+        function aplicarAnimal(dados, via) {
+            estado.via = via;
+            estado.animal = dados.animal;
+            preencherFicha(dados.animal);
+            configurarElemento(via);
+            campoSisbov.value = dados.animal.sisbov;
+            campoSisbov.classList.add('sisbov-ok');
+            if (via === 'MANEJO') campoSisbov.classList.add('sisbov-manejo');
+            badgeOk.classList.add('visivel');
+            ultimoSisbovChecado = dados.animal.sisbov;
+            liberarDigitacao();
+        }
+
+        // ---------- brinco que ja tem leitura em aberto: excluir a antiga ou manter ----------
+        var modalRepetido = document.getElementById('modal-repetido');
+        var btnRepetidoExcluir = document.getElementById('btn-repetido-excluir');
+        var btnRepetidoManter  = document.getElementById('btn-repetido-manter');
+        var repetidoPendente = null;      // { via, manejo, dv, sisbov (da leitura antiga) }
+        function abrirRepetido(dados, origem) {
+            var antiga = dados.leitura_antiga;
+            origem.sisbov = antiga.sisbov;
+            repetidoPendente = origem;
+            document.getElementById('repetido-animal').textContent = 'SISBOV ' + antiga.sisbov;
+            document.getElementById('repetido-texto').textContent =
+                'Já existe uma leitura em aberto deste animal: ' + antiga.data +
+                (antiga.hora ? ' às ' + antiga.hora : '') +
+                (antiga.peso ? ' — ' + antiga.peso + ' kg' : '') + '.';
+            btnRepetidoExcluir.disabled = true;
+            btnRepetidoManter.disabled = true;
+            modalRepetido.classList.add('aberto');
+            // pequena trava: o Enter que o leitor manda depois do numero nao pode escolher sozinho
+            setTimeout(function() {
+                btnRepetidoExcluir.disabled = false;
+                btnRepetidoManter.disabled = false;
+                btnRepetidoManter.focus();
+            }, 600);
+        }
+        btnRepetidoManter.addEventListener('click', function() {
+            modalRepetido.classList.remove('aberto');
+            repetidoPendente = null;
+            limparTudo();
+        });
+        btnRepetidoExcluir.addEventListener('click', function() {
+            if (!repetidoPendente) return;
+            var origem = repetidoPendente;
+            btnRepetidoExcluir.disabled = true;
+            btnRepetidoManter.disabled = true;
+            fetch(URL_EXCLUIR_ANTIGA, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: idPropriedade, sisbov: origem.sisbov })
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                modalRepetido.classList.remove('aberto');
+                repetidoPendente = null;
+                if (resultado.status !== 200 || resultado.dados.erro) {
+                    ultimoSisbovChecado = null;
+                    mostrarErro(resultado.dados.erro || 'Não foi possível excluir a leitura antiga.');
+                    return;
+                }
+                // antiga apagada: confere o animal de novo e segue o fluxo normal (avisos, peso, Gravar)
+                if (origem.via === 'MANEJO') {
+                    campoManejo.value = origem.manejo;
+                    mostrarDv(!!origem.dv);
+                    campoDv.value = origem.dv || '';
+                    msgManejo.textContent = '';
+                    modalManejo.classList.add('aberto');
+                    buscarManejo();
+                } else {
+                    ultimoSisbovChecado = null;
+                    verificarSisbov();
+                }
+            })
+            .catch(function() {
+                modalRepetido.classList.remove('aberto');
+                repetidoPendente = null;
+                ultimoSisbovChecado = null;
+                mostrarErro('Não foi possível excluir a leitura antiga. Verifique sua conexão.');
+            });
+        });
+
+        // ---------- checagem do SISBOV (Leitor) ----------
+        function verificarSisbov() {
+            var sisbov = campoSisbov.value.trim();
+            if (!sisbov || sisbov === ultimoSisbovChecado) return;
+            ultimoSisbovChecado = sisbov;
+            esconderMensagens();
+            fetch(URL_CHECAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sisbov: sisbov, id_propriedade: idPropriedade, data_leitura: dataLeitura, id_gta: idGta })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.bloqueio) {
+                    mostrarAlerta(dados.mensagem);
+                    estado.liberado = false;
+                    travarDigitacao(true);
+                } else if (dados.repetido) {
+                    estado.liberado = false;
+                    travarDigitacao(true);
+                    abrirRepetido(dados, { via: 'LEITOR' });
+                } else if (dados.ok) {
+                    aplicarAnimal(dados, 'LEITOR');
+                } else {
+                    mostrarErro(dados.erro || 'Não foi possível checar o animal.');
+                }
+            })
+            .catch(function() { mostrarErro('Não foi possível checar o SISBOV. Verifique sua conexão.'); });
+        }
+        campoSisbov.addEventListener('input', function() {
+            if (this.value.length > 15) this.value = this.value.slice(0, 15);
+            // qualquer edicao exige checar de novo
+            var texto = this.value;
+            reiniciarEstado();
+            this.value = texto;
+            alerta.style.display = 'none';
+            if (texto.length === 15) verificarSisbov();
+        });
+        campoSisbov.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter' && evento.key !== 'Tab') return;
+            evento.preventDefault();
+            verificarSisbov();
+        });
+        campoSisbov.addEventListener('blur', verificarSisbov);
+
+        // ---------- botao Fechar e Limpar do alerta ----------
+        document.getElementById('btn-fechar-alerta').addEventListener('click', function() { limparTudo(); });
+
+        // ---------- Manejo ----------
+        var campoManejo = document.getElementById('manejo-numero');
+        var campoDv = document.getElementById('manejo-dv');
+        var boxDv = document.getElementById('manejo-dv-box');
+        var msgManejo = document.getElementById('msg-manejo');
+        // DV so aparece quando o servidor pede (Manejo repetido com brinco 105)
+        function mostrarDv(mostrar) {
+            boxDv.style.display = mostrar ? '' : 'none';
+            if (!mostrar) campoDv.value = '';
+        }
+        function abrirManejo() {
+            campoManejo.value = ''; mostrarDv(false); msgManejo.textContent = '';
+            modalManejo.classList.add('aberto');
+            campoManejo.focus();
+        }
+        function fecharManejo() { modalManejo.classList.remove('aberto'); campoSisbov.focus(); }
+        function buscarManejo() {
+            var manejo = campoManejo.value.trim();
+            var dv = campoDv.value.trim();
+            msgManejo.textContent = '';
+            if (manejo.length !== 6) { msgManejo.textContent = 'Digite os 6 números do Manejo.'; campoManejo.focus(); return; }
+            fetch(URL_CHECAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ manejo: manejo, dv: dv, id_propriedade: idPropriedade, data_leitura: dataLeitura, id_gta: idGta })
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(dados) {
+                if (dados.bloqueio) {
+                    msgManejo.textContent = dados.mensagem;
+                    if (dados.pede_dv) { mostrarDv(true); campoDv.focus(); }
+                    return;
+                }
+                if (dados.repetido) {
+                    modalManejo.classList.remove('aberto');
+                    abrirRepetido(dados, { via: 'MANEJO', manejo: manejo, dv: dv });
+                    return;
+                }
+                if (!dados.ok) { msgManejo.textContent = dados.erro || 'Não foi possível buscar o animal.'; return; }
+                modalManejo.classList.remove('aberto');
+                esconderMensagens();
+                aplicarAnimal(dados, 'MANEJO');
+            })
+            .catch(function() { msgManejo.textContent = 'Não foi possível buscar. Verifique sua conexão.'; });
+        }
+        document.getElementById('btn-manejo').addEventListener('click', abrirManejo);
+        document.getElementById('btn-manejo-cancelar').addEventListener('click', fecharManejo);
+        document.getElementById('btn-manejo-buscar').addEventListener('click', buscarManejo);
+        [campoManejo, campoDv].forEach(function(campo) {
+            campo.addEventListener('input', function() { this.value = this.value.replace(/\D/g, ''); });
+            campo.addEventListener('keydown', function(evento) {
+                if (evento.key === 'Enter') { evento.preventDefault(); buscarManejo(); }
+                if (evento.key === 'Escape') { evento.preventDefault(); fecharManejo(); }
+            });
+        });
+        campoManejo.addEventListener('input', function() {
+            mostrarDv(false);          // numero mudou: e uma busca nova, o DV some de novo
+            if (this.value.length === 6) document.getElementById('btn-manejo-buscar').focus();
+        });
+
+        // ---------- Gravar ----------
+        btnGravar.addEventListener('click', function() {
+            if (gravando || !estado.liberado || !estado.animal) return;
+            erroGravar.style.display = 'none';
+            if (campoPeso.value.trim() !== '' && !(numero(campoPeso.value) > 0)) { mostrarErro('Peso incorreto, verifique.'); campoPeso.focus(); return; }
+            gravando = true;
+            btnGravar.disabled = true;
+            var corpo = {
+                id_propriedade: idPropriedade,
+                data_leitura: dataLeitura,
+                id_gta: idGta,
+                sisbov: estado.animal.sisbov,
+                via: estado.via,
+                elemento: campoElemento.value,
+                lote_saida: campoLote.value,
+                peso: campoPeso.value
+            };
+            fetch(URL_GRAVAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            })
+            .then(function(resp) { return resp.json().then(function(dados) { return { status: resp.status, dados: dados }; }); })
+            .then(function(resultado) {
+                gravando = false;
+                var dados = resultado.dados;
+                if (resultado.status !== 200) {
+                    if (dados.bloqueio) {
+                        mostrarAlerta(dados.mensagem || dados.erro);
+                        estado.liberado = false;
+                        travarDigitacao(true);
+                    } else {
+                        mostrarErro(dados.erro || 'Não foi possível gravar.');
+                        btnGravar.disabled = false;
+                    }
+                    return;
+                }
+                totalLidos += 1;
+                contadorLidos.textContent = totalLidos;
+                contadorGravados.textContent = dados.total_gravados;
+                totalGeral.textContent = dados.total_gravados;
+                if (dados.gta_progresso) { renderGta(dados.gta_progresso); }
+                adicionarNaLista(dados);
+                document.getElementById('modal-sisbov').textContent = 'SISBOV: ' + dados.sisbov + (dados.peso ? ' — ' + dados.peso + ' kg' : '');
+                modalSucesso.classList.add('aberto');
+                var texto = '';
+                campoSisbov.value = texto;
+                reiniciarEstado();
+            })
+            .catch(function() {
+                gravando = false;
+                btnGravar.disabled = false;
+                mostrarErro('Não foi possível gravar. Verifique sua conexão.');
+            });
+        });
+        function enterPodeGravar() {
+            return estado.liberado && !gravando && !btnGravar.disabled && Date.now() >= bloqueioEnterAte;
+        }
+        [campoPeso, campoLote].forEach(function(campo) {
+            campo.addEventListener('keydown', function(evento) {
+                if (evento.key !== 'Enter') return;
+                evento.preventDefault();
+                if (enterPodeGravar()) btnGravar.click();
+            });
+        });
+        btnGravar.addEventListener('keydown', function(evento) {
+            if (evento.key !== 'Enter') return;
+            evento.preventDefault();
+            if (enterPodeGravar()) btnGravar.click();
+        });
+        campoLote.addEventListener('input', function() {
+            var pos = this.selectionStart;
+            this.value = this.value.toUpperCase();
+            this.setSelectionRange(pos, pos);
+        });
+
+        // ---------- lista "Geral" ----------
+        function adicionarNaLista(dados) {
+            if (listaVazia) listaVazia.style.display = 'none';
+            var item = document.createElement('div');
+            item.className = 'item-lido';
+            item.setAttribute('data-sisbov', dados.sisbov);
+            var s = document.createElement('div');
+            s.className = 'sisbov';
+            s.textContent = dados.sisbov;
+            var d = document.createElement('div');
+            d.className = 'detalhe';
+            d.textContent = (dados.sexo === 'MACHO' ? 'M' : 'F') + (dados.peso ? ' · ' + dados.peso + ' kg' : '') + ' · ' + dados.hora;
+            item.appendChild(s);
+            item.appendChild(d);
+            var bx = document.createElement('button');
+            bx.type = 'button'; bx.className = 'btn-x'; bx.title = 'Excluir esta leitura'; bx.innerHTML = '&#10005;';
+            item.appendChild(bx);
+            listaLidos.insertBefore(item, listaLidos.firstChild);
+        }
+
+        // ---------- sucesso ----------
+        function fecharSucesso() {
+            modalSucesso.classList.remove('aberto');
+            campoSisbov.focus();
+        }
+        document.getElementById('btn-modal-sair').addEventListener('click', fecharSucesso);
+        document.addEventListener('keydown', function(evento) {
+            if (evento.key === 'Enter' && modalSucesso.classList.contains('aberto')) {
+                evento.preventDefault();
+                fecharSucesso();
+            }
+        });
+
+        // ---------- Limpar Tela (so os campos desta tela, nunca a lista) ----------
+        function limparTudo() {
+            campoSisbov.value = '';
+            reiniciarEstado();
+            esconderMensagens();
+            campoSisbov.focus();
+        }
+        document.getElementById('btn-limpar').addEventListener('click', limparTudo);
+
+        reiniciarEstado();
+        campoSisbov.focus();
+    </script>
+
+    <!-- Mensagem de gravacao fecha sozinha em 3 segundos (peca unica: static/js/auto_fechar_gravacao.js) -->
+    <script src="/static/js/auto_fechar_gravacao.js"></script>
+    <script>AutoFecharGravacao.iniciar({ modal: 'modal-sucesso', botao: 'btn-modal-sair', segundos: 3 });        // ---------- EXCLUIR LEITURA (botao X da lista Geral) - Sessao 108 ----------
+        listaLidos.addEventListener('click', function(ev) {
+            var b = ev.target.closest ? ev.target.closest('.btn-x') : null;
+            if (!b) return;
+            var item = b.closest('.item-lido');
+            var sisbovExcluir = item.getAttribute('data-sisbov');
+            confirmarAcaoAssincrona(function() { excluirLeitura(b, item, sisbovExcluir); },
+                'Excluir a leitura do brinco ' + sisbovExcluir + '? O animal fica livre para ser lido de novo.', 'Excluir');
+        });
+
+        function excluirLeitura(b, item, sisbovExcluir) {
+            b.disabled = true;
+            fetch(URL_EXCLUIR_LEITURA, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_propriedade: idPropriedade, data_leitura: dataLeitura, sisbov: sisbovExcluir,
+                                       id_gta: (typeof idGta !== 'undefined') ? idGta : '' })
+            }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+            .then(function(x) {
+                if (!x.ok) { b.disabled = false; mostrarErro(x.d.erro || 'Não foi possível excluir a leitura.'); return; }
+                item.parentNode.removeChild(item);
+                if (listaVazia && !listaLidos.querySelector('.item-lido')) listaVazia.style.display = '';
+                totalGeral.textContent = x.d.total_gravados;
+                if (typeof contadorGravados !== 'undefined' && contadorGravados) contadorGravados.textContent = x.d.total_gravados;
+                if (x.d.gta_progresso && typeof renderGta === 'function') renderGta(x.d.gta_progresso);
+                campoSisbov.focus();
+            }).catch(function() { b.disabled = false; mostrarErro('Falha de comunicação. Tente de novo.'); });
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\transferencia_leitor_leitura.html
+     ========================================================= -->

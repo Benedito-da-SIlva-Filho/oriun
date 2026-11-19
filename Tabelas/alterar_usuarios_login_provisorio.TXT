@@ -1,0 +1,36 @@
+-- =========================================================
+-- PROJETO:      Orion
+-- ARQUIVO:      Tabelas\alterar_usuarios_login_provisorio.sql
+-- AUTOR:        Benedito Silva Filho
+-- CRIADO EM:    2026-08-13 11:17 -03
+--
+-- DESCRICAO:
+--     Adiciona a coluna login_provisorio na tabela usuarios,
+--     espelhando o padrao ja existente de senha_provisoria.
+--
+--     Contexto (Sessao 034, continuacao 9): decisao de Benedito
+--     de que, no primeiro acesso ao sistema, o usuario devera
+--     poder escolher seu proprio login (nao so trocar a senha) -
+--     feature ainda NAO implementada (fica como pendencia formal
+--     para uma proxima sessao, com os arquivos de usuarios.py/
+--     tela de troca de senha em maos). Esta coluna e criada AGORA
+--     para que o Cenario 1 (botao "Criar Acesso" em produtores.py)
+--     ja nasca compativel com essa feature futura, sem exigir
+--     migracao/retrabalho depois em Usuarios ja criados hoje.
+--
+--     TRUE  = login ainda e o provisorio (CPF/CNPJ), usuario
+--             ainda nao escolheu um login proprio.
+--     FALSE = usuario ja escolheu seu proprio login (feature
+--             futura, ainda sem tela).
+--
+--     Default TRUE: todo Usuario criado a partir de hoje (Convite
+--     Publico, Cenario 1 em produtores.py) nasce com login
+--     provisorio = CPF/CNPJ, ate a tela de escolha ser construida.
+-- =========================================================
+
+ALTER TABLE public.usuarios
+    ADD COLUMN login_provisorio BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- =========================================================
+-- FIM DE ARQUIVO: Tabelas\alterar_usuarios_login_provisorio.sql
+-- =========================================================

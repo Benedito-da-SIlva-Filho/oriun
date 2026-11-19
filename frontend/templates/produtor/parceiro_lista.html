@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!-- =========================================================
+     PROJETO: Orion
+     PASTA: C:\orion\frontend\templates\produtor
+     MODULO: templates\produtor\parceiro_lista.html
+     AUTOR: Benedito Silva Filho
+     CRIADO EM: 2026-08-18 19:37 -03
+     ATUALIZADO EM: 2026-10-13 19:10 -03
+     VERSAO: 1.6.0
+
+     DESCRICAO:
+         Tela de consulta de Parceiros/Fornecedores (P-047),
+         chamada a partir do card "Parceiros / Fornecedores" no
+         Hub de Entrada (ver backend/routers/hubs.py). Lista
+         TODOS os Parceiros do schema do Produtor logado, com
+         busca (Nome/CPF-CNPJ/Estabelecimento/Municipio - ver
+         backend/routers/parceiros_fornecedores.py para o detalhe
+         da busca). Botao "Imprimir Lista Completa" gera o PDF
+         completo de todos os Parceiros e suas Propriedades.
+
+         v1.0.0: Criacao do modulo (Sessao 034 continuacao 9,
+             18/08/2026).
+         v1.1.0: Sessao 035 (19/08/2026) - Reestruturacao: bloco
+             por Parceiro + sub-tabela de Propriedades, nascimento
+             do padrao "Lista Clicavel" (hover + cursor + seta +
+             frase de ajuda).
+         v1.2.0: Sessao 035 (19/08/2026, continuacao) - A pedido de
+             Benedito, apos avaliar a v1.1.0 ao vivo: a seta (>) no
+             final da linha era discreta demais, pouco intuitiva
+             para um usuario que nao soubesse de antemao que a
+             linha era clicavel. Substituida por um BOTAO de
+             verdade ("Ver Detalhes >"), visualmente obvio. A linha
+             continua clicavel por inteiro (clique em qualquer
+             ponto da linha funciona, nao so no botao) - o botao e
+             reforco visual, nao a unica forma de interacao.
+     v1.3.0: Sessao 077 (22/09/2026, 11:05 -03) - Tela estava fora
+         do padrao atual do Orion (apontado por Benedito): topo e
+         rodape ainda escritos direto no HTML, em vez das
+         pecas-mestras padronizadas na Sessao 076. Modularizados
+         para produtor_topo.html / produtor_rodape.html. Junto,
+         CORRECAO DE BUG REAL apontada por Benedito: o botao
+         "Voltar" do cabecalho da pagina usava a navegacao para
+         tras do proprio navegador, em vez de um destino fixo -
+         como o caminho real e Lista -> Detalhe -> Lista, essa
+         navegacao ficava alternando entre as duas telas
+         indefinidamente, nunca saindo para o Hub de Entrada (de
+         onde esta tela e alcancada de verdade). Corrigido: Voltar
+         (tanto o do topo quanto o do cabecalho da pagina) agora
+         aponta direto para /produtor/hub/entrada (Regra de Ouro
+         #9). Nenhuma outra parte do arquivo foi alterada.
+         v1.4.0: Sessao 089 (07/10/2026, 09:45 -03) - Parceiros agora
+             tem item proprio no menu lateral (grupo Cadastro), alem do
+             card do Hub de Entrada. O Voltar (do topo e do cabecalho da
+             pagina) deixa de apontar fixo para o Hub de Entrada e passa
+             para a Home, porque a tela pode ser aberta pelo menu (Regra
+             de Ouro #9). Quando o Hub novo substituir o antigo, o card
+             some do Hub e a Home passa a ser o unico caminho de volta.
+             Nenhuma outra parte do arquivo foi alterada.
+         v: Sessao 095 (13/10/2026, 14:10 -03) - AVISO DE DOWNLOAD PADRAO (lote 3): inclui a peca
+                 aviso_download e marca o link do PDF com data-aviso-*. REVERSAO: .bak_antes_aviso_download_s095.
+1.5.0         v1.6.0: Sessao 095 (13/10/2026, 19:10 -03) - Botao "+ Novo Parceiro", mensagem de sucesso, coluna Cód. Município e UF sem repeticao. REVERSAO: .bak_antes_novo_parceiro_s095.
+     ========================================================= -->
+<html lang="pt-BR" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="pt-BR">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orion SISBOV &#8212; Parceiros / Fornecedores</title>
+    <link rel="icon" type="image/x-icon" href="/static/img/Consiste_icon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; height: 100vh; }
+
+        .topo { color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .topo-esquerda { display: flex; align-items: center; gap: 14px; }
+        .topo h1 { font-size: 18px; font-weight: bold; }
+        .topo-direita { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+        .badge-perfil { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+        .btn-menu { background: none; border: none; color: white; cursor: pointer; font-size: 22px; line-height: 1; }
+        .btn-sair { color: white; text-decoration: none; font-size: 13px; }
+        .btn-sair:hover { text-decoration: underline; }
+        .btn-voltar-topo { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 5px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .btn-voltar-topo:hover { background: rgba(255,255,255,0.35); }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { background: #ffffff; border-right: 1px solid #e0e0e0; width: 220px; transition: width 0.2s; overflow: hidden; flex-shrink: 0; }
+        .sidebar.recolhido { width: 52px; }
+        .sidebar.recolhido .menu-texto { display: none; }
+        .sidebar.recolhido .menu-secao { display: none; }
+        .menu-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 3px solid transparent; text-decoration: none; color: #333333; font-size: 14px; white-space: nowrap; }
+        .menu-item:hover { background-color: #f5f5f5; }
+        .menu-item.ativo { background-color: #FBE9E4; border-left-color: #D4370A; color: #D4370A; font-weight: bold; }
+        .menu-icone { font-size: 18px; color: #666666; flex-shrink: 0; }
+        .menu-item.ativo .menu-icone { color: #D4370A; }
+        .menu-secao { font-size: 11px; color: #999999; padding: 8px 16px 4px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+
+        .conteudo { flex: 1; padding: 24px; overflow-y: auto; }
+
+        .cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .pagina-titulo { font-size: 20px; font-weight: bold; color: #333333; }
+        .botoes-topo { display: flex; gap: 8px; }
+        .btn-nav { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #888888; background: #ffffff; color: #666666; }
+        .btn-nav:hover { background: #888888; color: #ffffff; }
+        .btn-primario { padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #D4370A; background: #D4370A; color: #ffffff; }
+        .btn-primario:hover { background: #B22F09; }
+
+        .caixa-busca { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; margin-bottom: 20px; display: flex; gap: 10px; }
+        .caixa-busca input[type="text"] { flex: 1; padding: 8px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; }
+        .caixa-busca button { padding: 8px 20px; background: #D4370A; color: #ffffff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .caixa-busca button:hover { background: #B22F09; }
+
+        /* ---------- Bloco por Parceiro ---------- */
+        .cartao-parceiro { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+        .cabecalho-parceiro { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #FBE9E4; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; gap: 8px; }
+        .nome-parceiro { font-size: 15px; font-weight: bold; color: #333333; }
+        .cpf-parceiro { font-size: 12.5px; color: #777777; margin-left: 8px; }
+        .status-ativo { color: #2e7d32; font-weight: bold; }
+        .status-inativo { color: #999999; }
+
+        /* ---------- Padrao "Lista Clicavel" do Orion ----------
+           Reaproveitar em toda lista futura com linhas clicaveis:
+           hover destacando a linha + cursor de mao + frase de
+           ajuda + botao "Ver Detalhes" no final da linha (v1.2.0
+           substituiu a seta isolada, pouco intuitiva). */
+        .aviso-clicavel { font-size: 12px; color: #888888; padding: 8px 16px 0; font-style: italic; }
+        .tabela-propriedades { width: 100%; border-collapse: collapse; }
+        .tabela-propriedades th { text-align: left; padding: 8px 16px; font-size: 12px; color: #999999; font-weight: normal; border-bottom: 1px solid #f0f0f0; }
+        .linha-clicavel { cursor: pointer; }
+        .linha-clicavel td { padding: 10px 16px; font-size: 13.5px; border-bottom: 1px solid #f5f5f5; color: #333333; vertical-align: middle; }
+        .linha-clicavel:last-child td { border-bottom: none; }
+        .linha-clicavel:hover td { background-color: #FBE9E4; }
+        .coluna-acao { width: 150px; text-align: right; }
+        .btn-ver-detalhes { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid #D4370A; border-radius: 6px; background: #ffffff; color: #D4370A; font-size: 12.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .linha-clicavel:hover .btn-ver-detalhes { background: #D4370A; color: #ffffff; }
+
+        .sem-propriedades-parceiro { padding: 12px 16px; color: #999999; font-style: italic; font-size: 13px; }
+        .sem-resultados { text-align: center; padding: 30px; color: #999999; font-style: italic; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; }
+
+        .msg-ok { background: #e8f5e9; border-left: 6px solid #1b7a2b; color: #1b5e20; padding: 12px 16px; border-radius: 6px; font-size: 14.5px; font-weight: bold; margin: 0 0 16px 0; }
+        .rodape { text-align: center; padding: 10px; color: #999999; font-size: 11px; background: #ffffff; border-top: 1px solid #e0e0e0; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    {% set url_voltar = '/produtor/home' %}
+    {% include 'produtor/produtor_topo.html' with context %}
+
+    <div class="layout">
+
+        {% include 'produtor/produtor_menu.html' %}
+
+        <div class="conteudo">
+            {% include 'produtor/aviso_download.html' %}
+            {% if mensagem_ok %}
+            <div class="msg-ok">&#9989; {{ mensagem_ok }}</div>
+            {% endif %}
+
+            <div class="cabecalho-pagina">
+                <div class="pagina-titulo">Parceiros / Fornecedores</div>
+                <div class="botoes-topo">
+                    <a href="{{ url_for('parceiros_fornecedores.novo') }}" class="btn-primario">&#10133; Novo Parceiro</a>
+                    <a href="{{ url_for('parceiros_fornecedores.relatorio_lista_pdf') }}" class="btn-primario" data-aviso-descricao="Lista completa de Parceiros" data-aviso-arquivo="parceiros_lista.pdf">&#128424; Imprimir Lista Completa</a>
+                    <a href="/produtor/home" class="btn-nav">&#8592; Voltar</a>
+                </div>
+            </div>
+
+            <form class="caixa-busca" method="GET" action="{{ url_for('parceiros_fornecedores.lista') }}">
+                <input type="text" name="busca" placeholder="Buscar por Nome, CPF/CNPJ, Estabelecimento ou Município..." value="{{ termo_busca }}">
+                <button type="submit">Buscar</button>
+            </form>
+
+            {% if parceiros %}
+                {% for p in parceiros %}
+                <div class="cartao-parceiro">
+                    <div class="cabecalho-parceiro">
+                        <div>
+                            <span class="nome-parceiro">{{ p.nome }}</span>
+                            <span class="cpf-parceiro">CPF/CNPJ: {{ p.cpf_cnpj }}</span>
+                        </div>
+                        <span class="{{ 'status-ativo' if p.ativo else 'status-inativo' }}">{{ 'Ativo' if p.ativo else 'Inativo' }}</span>
+                    </div>
+
+                    {% if p.propriedades %}
+                    <div class="aviso-clicavel">Clique em uma Propriedade abaixo para ver os detalhes completos.</div>
+                    <table class="tabela-propriedades">
+                        <thead>
+                            <tr>
+                                <th>Estabelecimento</th>
+                                <th>Município/UF</th>
+                                <th>Cód. Município</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prop in p.propriedades %}
+                            <tr class="linha-clicavel" onclick="window.location.href='{{ url_for('parceiros_fornecedores.detalhe', id=p.id, propriedade=prop.id) }}'">
+                                <td>{{ prop.estabelecimento }}</td>
+                                <td>{{ ((prop.municipio_nome or '-') | replace(' / ' ~ prop.uf, '')) if prop.uf else (prop.municipio_nome or '-') }}{% if prop.uf %} / {{ prop.uf }}{% endif %}</td>
+                                <td>{{ prop.municipio_codigo or '-' }}</td>
+                                <td class="{{ 'status-ativo' if prop.ativo else 'status-inativo' }}">{{ 'Ativa' if prop.ativo else 'Inativa' }}</td>
+                                <td class="coluna-acao">
+                                    <button type="button" class="btn-ver-detalhes">Ver Detalhes &#8250;</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="sem-propriedades-parceiro">Nenhuma Propriedade vinculada a este Parceiro.</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="sem-resultados">
+                {% if termo_busca %}
+                Nenhum Parceiro encontrado para "{{ termo_busca }}".
+                {% else %}
+                Nenhum Parceiro cadastrado ainda. Use o botão "+ Novo Parceiro" ou leia uma GTA de Compra.
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% include 'produtor/produtor_rodape.html' %}
+
+    <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('recolhido');
+            }
+        }
+    </script>
+
+</body>
+</html>
+<!-- =========================================================
+     FIM DE ARQUIVO: templates\produtor\parceiro_lista.html
+     ========================================================= -->

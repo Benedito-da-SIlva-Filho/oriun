@@ -1,0 +1,501 @@
+﻿
+> backend\routers\auth.py:619:                db.commit()
+  backend\routers\auth.py:620:
+  backend\routers\auth.py:621:                # Envia email com a senha provisoria
+  backend\routers\auth.py:622:                try:
+  backend\routers\auth.py:623:                    msg = Message(
+  backend\routers\auth.py:624:                        subject    = 'Orion SISBOV — Sua senha provisoria',
+  backend\routers\auth.py:625:                        sender     = 'noreply.consisteti@gmail.com',
+> backend\routers\auth.py:643:                    db.commit()
+  backend\routers\auth.py:644:                    erro = 'Erro ao enviar email. Contate o administrador.'
+  backend\routers\auth.py:645:                    print(f'ERRO Flask-Mail: {e}')
+  backend\routers\auth.py:646:
+  backend\routers\auth.py:647:    return render_template('auth/auth_esqueci_senha.html',
+  backend\routers\auth.py:648:        mensagem = mensagem,
+  backend\routers\auth.py:649:        erro     = erro
+> backend\routers\backup_restore.py:97:        db.commit()
+  backend\routers\backup_restore.py:98:
+  backend\routers\backup_restore.py:99:
+  backend\routers\backup_restore.py:100:def _buscar_produtor(id_produtor):
+  backend\routers\backup_restore.py:101:    with Session(engine) as db:
+  backend\routers\backup_restore.py:102:        return db.get(Produtor, id_produtor)
+  backend\routers\backup_restore.py:103:
+> backend\routers\backup_restore.py:300:        db.commit()
+  backend\routers\backup_restore.py:301:
+  backend\routers\backup_restore.py:302:    return redirect(f'/produtor/backup?id_propriedade={id_propriedade}')
+  backend\routers\backup_restore.py:303:
+  backend\routers\backup_restore.py:304:
+  backend\routers\backup_restore.py:305:# ==========================================================
+  backend\routers\backup_restore.py:306:# LADO CONSISTE
+> backend\routers\backup_restore.py:442:            db.commit()
+  backend\routers\backup_restore.py:443:
+  backend\routers\backup_restore.py:444:    return redirect('/consiste/backup-restore')
+  backend\routers\backup_restore.py:445:
+  backend\routers\backup_restore.py:446:# =========================================================
+  backend\routers\backup_restore.py:447:# FIM DE ARQUIVO: backend\routers\backup_restore.py
+  backend\routers\backup_restore.py:448:# =========================================================
+> backend\routers\brincagem_bastao.py:96:#             db.commit() (regra da Sessao 078), com db.flush()
+  backend\routers\brincagem_bastao.py:97:#             antes para o animal recem-gravado entrar na conta.
+  backend\routers\brincagem_bastao.py:98:#         Nenhuma outra rota alterada.
+  backend\routers\brincagem_bastao.py:99:#     v1.2.0: Sessao 078 (23/09/2026, 18:40 -03) - BUG REAL
+  backend\routers\brincagem_bastao.py:100:#         apontado por Benedito em teste real (RFID digitado no
+  backend\routers\brincagem_bastao.py:101:#         campo do SISBOV foi aceito ate Gravar). Regra fechada:
+  backend\routers\brincagem_bastao.py:102:#           - SISBOV: NOVA _validar_sisbov() - duplicidade +
+> backend\routers\brincagem_bastao.py:364:    db.commit()
+  backend\routers\brincagem_bastao.py:365:
+  backend\routers\brincagem_bastao.py:366:
+  backend\routers\brincagem_bastao.py:367:# -------------------------------------------------------
+  backend\routers\brincagem_bastao.py:368:# Rota: GET /produtor/brincagem-bastao/iniciar — ponto de
+  backend\routers\brincagem_bastao.py:369:# partida. IDENTICA a brincagem_leitor.iniciar(), so trocando o
+  backend\routers\brincagem_bastao.py:370:# destino da Tela 02.
+> backend\routers\brincagem_bastao.py:715:        db.commit()
+  backend\routers\brincagem_bastao.py:716:
+  backend\routers\brincagem_bastao.py:717:    return jsonify({
+  backend\routers\brincagem_bastao.py:718:        'sucesso': True,
+  backend\routers\brincagem_bastao.py:719:        'mensagem': 'Gravação Efetuada com Sucesso',
+  backend\routers\brincagem_bastao.py:720:        'rfid': rfid,
+  backend\routers\brincagem_bastao.py:721:        'sisbov': sisbov,
+> backend\routers\brincagem_consulta.py:750:        db.commit()
+  backend\routers\brincagem_consulta.py:751:
+  backend\routers\brincagem_consulta.py:752:    destino = f'/produtor/brincagem-consulta?id_propriedade={id_propriedade}'
+  backend\routers\brincagem_consulta.py:753:    return redirect(destino)
+  backend\routers\brincagem_consulta.py:754:
+  backend\routers\brincagem_consulta.py:755:
+  backend\routers\brincagem_consulta.py:756:# -------------------------------------------------------
+> backend\routers\brincagem_consulta.py:805:        db.commit()
+  backend\routers\brincagem_consulta.py:806:
+  backend\routers\brincagem_consulta.py:807:    return jsonify({'ok': True})
+  backend\routers\brincagem_consulta.py:808:
+  backend\routers\brincagem_consulta.py:809:
+  backend\routers\brincagem_consulta.py:810:# -------------------------------------------------------
+  backend\routers\brincagem_consulta.py:811:# Rota: GET /produtor/brincagem-consulta/inconformidades — lista
+> backend\routers\brincagem_leitor.py:146:#                 acontece ANTES do db.commit() (regra firmada na
+  backend\routers\brincagem_leitor.py:147:#                 Sessao 078 - depois do commit nao se le mais
+  backend\routers\brincagem_leitor.py:148:#                 nada do banco), com um db.flush() antes para o
+  backend\routers\brincagem_leitor.py:149:#                 animal recem-gravado ja entrar na conta.
+  backend\routers\brincagem_leitor.py:150:#             Nenhuma outra rota alterada.
+  backend\routers\brincagem_leitor.py:151:#     v1.5.0: Sessao 078 (23/09/2026, 18:40 -03) - BUG REAL
+  backend\routers\brincagem_leitor.py:152:#             apontado por Benedito em teste real: qualquer
+> backend\routers\brincagem_leitor.py:370:    db.commit()
+  backend\routers\brincagem_leitor.py:371:
+  backend\routers\brincagem_leitor.py:372:
+  backend\routers\brincagem_leitor.py:373:# -------------------------------------------------------
+  backend\routers\brincagem_leitor.py:374:# Rota: GET /produtor/brincagem-leitor/iniciar — ponto de partida.
+  backend\routers\brincagem_leitor.py:375:# Resolve Propriedade E Produtor (Padrao Reutilizavel N.1). Com 1
+  backend\routers\brincagem_leitor.py:376:# unico par, pula DIRETO para a Tela 02 (decisao de Benedito,
+> backend\routers\brincagem_leitor.py:698:        db.commit()
+  backend\routers\brincagem_leitor.py:699:
+  backend\routers\brincagem_leitor.py:700:    return jsonify({
+  backend\routers\brincagem_leitor.py:701:        'sucesso': True,
+  backend\routers\brincagem_leitor.py:702:        'mensagem': 'Gravação Efetuada com Sucesso',
+  backend\routers\brincagem_leitor.py:703:        'sisbov': sisbov,
+  backend\routers\brincagem_leitor.py:704:        'total_gravados': total_gravados,
+> backend\routers\brincagem_sequencial.py:610:        db.commit()
+  backend\routers\brincagem_sequencial.py:611:
+  backend\routers\brincagem_sequencial.py:612:        return render_template('produtor/brincagem_formulario.html', **contexto)
+  backend\routers\brincagem_sequencial.py:613:
+  backend\routers\brincagem_sequencial.py:614:
+  backend\routers\brincagem_sequencial.py:615:# -------------------------------------------------------
+  backend\routers\brincagem_sequencial.py:616:# Rota: POST /produtor/brincagem-sequencial/salvar
+> backend\routers\brincagem_sequencial.py:985:        db.commit()
+  backend\routers\brincagem_sequencial.py:986:
+  backend\routers\brincagem_sequencial.py:987:        numero_gta_confirmada = gta.numero_gta_completo
+  backend\routers\brincagem_sequencial.py:988:
+  backend\routers\brincagem_sequencial.py:989:    return 
+redirect(f'/produtor/brincagem-sequencial/lista?sucesso={quote(numero_gta_confirmada)}')
+  backend\routers\brincagem_sequencial.py:990:
+  backend\routers\brincagem_sequencial.py:991:# =========================================================
+> backend\routers\brincos_cancelamento.py:691:        db.commit()
+  backend\routers\brincos_cancelamento.py:692:
+  backend\routers\brincos_cancelamento.py:693:    return render_template(
+  backend\routers\brincos_cancelamento.py:694:        'produtor/brincos_cancelamento_resultado.html',
+  backend\routers\brincos_cancelamento.py:695:        cabecalho=cabecalho,
+  backend\routers\brincos_cancelamento.py:696:        motivo=motivo,
+  backend\routers\brincos_cancelamento.py:697:        cancelados=cancelados,
+> backend\routers\brincos_entrada.py:103:#             lido DEPOIS do db.commit() - o objeto expira e a
+  backend\routers\brincos_entrada.py:104:#             releitura acontece sem o schema do Produtor ("nao
+  backend\routers\brincos_entrada.py:105:#             existe a relacao"), estourando erro APOS gravar.
+  backend\routers\brincos_entrada.py:106:#             Agora o id e guardado ANTES do commit.
+  backend\routers\brincos_entrada.py:107:#           - SEGURANCA: nova() e salvar() conferem se o
+  backend\routers\brincos_entrada.py:108:#             id_propriedade pertence aos pares do usuario
+  backend\routers\brincos_entrada.py:109:#             logado (NOVA funcao _propriedade_permitida()) -
+> backend\routers\brincos_entrada.py:566:        db.commit()
+  backend\routers\brincos_entrada.py:567:
+  backend\routers\brincos_entrada.py:568:    return redirect(f'/produtor/brincos-entrada/sucesso/{id_lote_gravado}')
+  backend\routers\brincos_entrada.py:569:
+  backend\routers\brincos_entrada.py:570:
+  backend\routers\brincos_entrada.py:571:# -------------------------------------------------------
+  backend\routers\brincos_entrada.py:572:# Rota: GET /produtor/brincos-entrada/sucesso/<id> — confirmacao
+> backend\routers\certificadoras.py:214:                db.commit()
+  backend\routers\certificadoras.py:215:
+  backend\routers\certificadoras.py:216:            else:
+  backend\routers\certificadoras.py:217:                # Nova — cadastra Certificadora + Master + envia email
+  backend\routers\certificadoras.py:218:                cert = Certificadora(
+  backend\routers\certificadoras.py:219:                    razao_social  = razao_social,
+  backend\routers\certificadoras.py:220:                    nome_fantasia = nome_fantasia,
+> backend\routers\certificadoras.py:248:                db.commit()
+  backend\routers\certificadoras.py:249:
+  backend\routers\certificadoras.py:250:                _enviar_email_master(master_nome, master_email, master_login, senha_provisoria)
+  backend\routers\certificadoras.py:251:
+  backend\routers\certificadoras.py:252:            return redirect(url_for('certificadoras.lista'))
+  backend\routers\certificadoras.py:253:
+  backend\routers\certificadoras.py:254:        except IntegrityError:
+> backend\routers\certificadoras.py:335:            db.commit()
+  backend\routers\certificadoras.py:336:
+  backend\routers\certificadoras.py:337:            # Envia email ao novo Master
+  backend\routers\certificadoras.py:338:            _enviar_email_master(master_nome, master_email, master_login, senha_provisoria)
+  backend\routers\certificadoras.py:339:
+  backend\routers\certificadoras.py:340:            return redirect(url_for('certificadoras.lista'))
+  backend\routers\certificadoras.py:341:
+> backend\routers\certificadoras.py:359:        db.commit()
+  backend\routers\certificadoras.py:360:
+  backend\routers\certificadoras.py:361:    return redirect(url_for('certificadoras.lista'))
+  backend\routers\certificadoras.py:362:
+  backend\routers\certificadoras.py:363:# =========================================================
+  backend\routers\certificadoras.py:364:# FIM DE ARQUIVO: backend\routers\certificadoras.py
+  backend\routers\certificadoras.py:365:# =========================================================
+> backend\routers\cert_usuarios.py:252:                db.commit()
+  backend\routers\cert_usuarios.py:253:
+  backend\routers\cert_usuarios.py:254:            else:
+  backend\routers\cert_usuarios.py:255:                # Novo usuario — gera senha provisoria e envia email
+  backend\routers\cert_usuarios.py:256:                senha_provisoria = _gerar_senha_provisoria()
+  backend\routers\cert_usuarios.py:257:
+  backend\routers\cert_usuarios.py:258:                u = Usuario(
+> backend\routers\cert_usuarios.py:270:                db.commit()
+  backend\routers\cert_usuarios.py:271:
+  backend\routers\cert_usuarios.py:272:                # Envia email com login e senha provisoria
+  backend\routers\cert_usuarios.py:273:                _enviar_email_boas_vindas(nome, email, login, senha_provisoria)
+  backend\routers\cert_usuarios.py:274:
+  backend\routers\cert_usuarios.py:275:            return redirect(url_for('cert_usuarios.lista'))
+  backend\routers\cert_usuarios.py:276:
+> backend\routers\cert_usuarios.py:292:        db.commit()
+  backend\routers\cert_usuarios.py:293:
+  backend\routers\cert_usuarios.py:294:    return redirect(url_for('cert_usuarios.lista'))
+  backend\routers\cert_usuarios.py:295:
+  backend\routers\cert_usuarios.py:296:# =========================================================
+  backend\routers\cert_usuarios.py:297:# FIM DE ARQUIVO: backend\routers\cert_usuarios.py
+  backend\routers\cert_usuarios.py:298:# =========================================================
+> backend\routers\comunicado_entrada.py:393:        db.commit()
+  backend\routers\comunicado_entrada.py:394:
+  backend\routers\comunicado_entrada.py:395:    return render_template(
+  backend\routers\comunicado_entrada.py:396:        'produtor/comunicado_entrada_sucesso.html',
+  backend\routers\comunicado_entrada.py:397:        numeros_gerados=numeros_gerados,
+  backend\routers\comunicado_entrada.py:398:        usuario_nome=session.get('usuario_nome'),
+  backend\routers\comunicado_entrada.py:399:        usuario_perfil=session.get('usuario_perfil'),
+> backend\routers\convite.py:374:                    db.commit()
+  backend\routers\convite.py:375:
+  backend\routers\convite.py:376:                # Link de WhatsApp com mensagem pre-preenchida,
+  backend\routers\convite.py:377:                # personalizada com o nome do visitante.
+  backend\routers\convite.py:378:                mensagem_whatsapp = (
+  backend\routers\convite.py:379:                    f'Olá! Sou {nome_informado} e vi a demonstração '
+  backend\routers\convite.py:380:                    f'do Orion SISBOV. Quero saber mais!'
+> backend\routers\convite.py:506:            db.commit()
+  backend\routers\convite.py:507:
+  backend\routers\convite.py:508:        except Exception as e:
+  backend\routers\convite.py:509:            db.rollback()
+  backend\routers\convite.py:510:            print(f'ERRO na transacao do Convite Publico: {e}')
+  backend\routers\convite.py:511:            return render_template('convite/convite_etapa2.html',
+  backend\routers\convite.py:512:                erro='Nao foi possivel concluir seu cadastro. Tente novamente ou contate o suporte.',
+> backend\routers\gta_compra.py:882:            db.commit()
+  backend\routers\gta_compra.py:883:            print('=== TESTE resolver_parceiro() - COMMIT REAL, GRAVADO NO BANCO ===')
+  backend\routers\gta_compra.py:884:            print(resultado_teste)
+  backend\routers\gta_compra.py:885:            print('===================================================================')
+  backend\routers\gta_compra.py:886:
+  backend\routers\gta_compra.py:887:    # -----------------------------------------------------
+  backend\routers\gta_compra.py:888:    # Reconstroi um objeto com os dados ja digitados, para o
+> backend\routers\gta_consulta.py:1009:        db.commit()
+  backend\routers\gta_consulta.py:1010:
+  backend\routers\gta_consulta.py:1011:    return redirect(f'/produtor/gta-consulta/detalhe/{id_gta}')
+  backend\routers\gta_consulta.py:1012:
+  backend\routers\gta_consulta.py:1013:# =========================================================
+  backend\routers\gta_consulta.py:1014:# FIM DE ARQUIVO: backend\routers\gta_consulta.py
+  backend\routers\gta_consulta.py:1015:# =========================================================
+> backend\routers\gta_manual.py:627:        db.commit()
+  backend\routers\gta_manual.py:628:        id_gta_gravada = gta.id
+  backend\routers\gta_manual.py:629:
+  backend\routers\gta_manual.py:630:    return redirect(f'/produtor/gta-manual/sucesso/{id_gta_gravada}')
+  backend\routers\gta_manual.py:631:
+  backend\routers\gta_manual.py:632:
+  backend\routers\gta_manual.py:633:# -------------------------------------------------------
+> backend\routers\impressao_comunicado.py:228:            db.commit()
+  backend\routers\impressao_comunicado.py:229:
+  backend\routers\impressao_comunicado.py:230:    # ---- 4. Devolve o PDF ----
+  backend\routers\impressao_comunicado.py:231:    nome_arquivo = f'comunicado_{numero_comunicado:06d}_anexo_xix.pdf'
+  backend\routers\impressao_comunicado.py:232:    return send_file(buffer, mimetype='application/pdf', as_attachment=False, 
+download_name=nome_arquivo)
+  backend\routers\impressao_comunicado.py:233:
+  backend\routers\impressao_comunicado.py:234:# =========================================================
+> backend\routers\operacoes_recentes.py:323:        db.commit()
+  backend\routers\operacoes_recentes.py:324:
+  backend\routers\operacoes_recentes.py:325:    return render_template(
+  backend\routers\operacoes_recentes.py:326:        'produtor/operacoes_recentes_desfeito.html',
+  backend\routers\operacoes_recentes.py:327:        sucesso=True,
+  backend\routers\operacoes_recentes.py:328:        mensagem='Operação desfeita com sucesso.',
+  backend\routers\operacoes_recentes.py:329:        url_voltar=url_origem,
+> backend\routers\parceiro_cadastro_manual.py:217:        db.commit()
+  backend\routers\parceiro_cadastro_manual.py:218:
+  backend\routers\parceiro_cadastro_manual.py:219:        id_parceiro_novo = parceiro.id
+  backend\routers\parceiro_cadastro_manual.py:220:        id_propriedade_novo = propriedade.id
+  backend\routers\parceiro_cadastro_manual.py:221:
+  backend\routers\parceiro_cadastro_manual.py:222:    # PENDENCIA (ver cabecalho): trocar por url_for('gta_manual.nova', ...)
+  backend\routers\parceiro_cadastro_manual.py:223:    # assim que gta_manual.py ganhar a rota nova().
+> backend\routers\produtores.py:546:            db.commit()
+  backend\routers\produtores.py:547:
+  backend\routers\produtores.py:548:            produtor    = db.get(Produtor, int(id_existente))
+  backend\routers\produtores.py:549:            propriedade = db.get(Propriedade, int(id_propriedade))
+  backend\routers\produtores.py:550:
+  backend\routers\produtores.py:551:            return render_template('consiste/produtor_vinculado.html',
+  backend\routers\produtores.py:552:                produtor       = produtor,
+> backend\routers\produtores.py:756:            db.commit()
+  backend\routers\produtores.py:757:
+  backend\routers\produtores.py:758:            # v1.7.0: PRODUTOR nao tem acesso a produtores.lista -
+  backend\routers\produtores.py:759:            # volta para a Propriedade de origem.
+  backend\routers\produtores.py:760:            if perfil == 'PRODUTOR':
+  backend\routers\produtores.py:761:                return redirect(url_for('propriedades.editar', id=int(id_propriedade)))
+  backend\routers\produtores.py:762:            return redirect(url_for('produtores.editar', id=id))
+> backend\routers\produtores.py:794:            db.commit()
+  backend\routers\produtores.py:795:
+  backend\routers\produtores.py:796:            return redirect(url_for('propriedades.editar', id=int(id_propriedade)))
+  backend\routers\produtores.py:797:
+  backend\routers\produtores.py:798:        else:
+  backend\routers\produtores.py:799:            p = Produtor(
+  backend\routers\produtores.py:800:                tipo_pessoa     = tipo_pessoa,
+> backend\routers\produtores.py:867:            db.commit()
+  backend\routers\produtores.py:868:
+  backend\routers\produtores.py:869:            acesso_criado_agora = bool(p.email)
+  backend\routers\produtores.py:870:
+  backend\routers\produtores.py:871:            # --- Envio de e-mail (obrigatorio quando ha acesso) ---
+  backend\routers\produtores.py:872:            if acesso_criado_agora:
+  backend\routers\produtores.py:873:                try:
+> backend\routers\produtores.py:939:        db.commit()
+  backend\routers\produtores.py:940:
+  backend\routers\produtores.py:941:    return redirect(url_for('produtores.lista'))
+  backend\routers\produtores.py:942:
+  backend\routers\produtores.py:943:
+  backend\routers\produtores.py:944:# -------------------------------------------------------
+  backend\routers\produtores.py:945:# Rota: /produtores/toggle-vinculo/<id_vinculo> — alterna o
+> backend\routers\produtores.py:980:        db.commit()
+  backend\routers\produtores.py:981:
+  backend\routers\produtores.py:982:    return redirect(url_for('propriedades.editar', id=id_propriedade))
+  backend\routers\produtores.py:983:
+  backend\routers\produtores.py:984:
+  backend\routers\produtores.py:985:@produtores.route('/produtores/onboarding/<int:id>', methods=['POST'])
+  backend\routers\produtores.py:986:def onboarding(id):
+> backend\routers\produtores.py:1108:            db.commit()
+  backend\routers\produtores.py:1109:
+  backend\routers\produtores.py:1110:            # Usuario/UsuarioVinculo ja foram criados e commitados
+  backend\routers\produtores.py:1111:            # neste ponto - acesso_criado_agora reflete isso, mesmo
+  backend\routers\produtores.py:1112:            # que o envio do e-mail (logo abaixo) venha a falhar.
+  backend\routers\produtores.py:1113:            acesso_criado_agora = True
+  backend\routers\produtores.py:1114:
+> backend\routers\produtor_usuarios.py:294:            db.commit()
+  backend\routers\produtor_usuarios.py:295:
+  backend\routers\produtor_usuarios.py:296:        return redirect(url_for('produtor_usuarios.lista'))
+  backend\routers\produtor_usuarios.py:297:
+  backend\routers\produtor_usuarios.py:298:    # -----------------------------------------------------
+  backend\routers\produtor_usuarios.py:299:    # Novo usuario (fluxo original, agora com E-mail
+  backend\routers\produtor_usuarios.py:300:    # obrigatorio - ver validacao acima).
+> backend\routers\produtor_usuarios.py:335:        db.commit()
+  backend\routers\produtor_usuarios.py:336:
+  backend\routers\produtor_usuarios.py:337:    return redirect(url_for('produtor_usuarios.lista'))
+  backend\routers\produtor_usuarios.py:338:
+  backend\routers\produtor_usuarios.py:339:
+  backend\routers\produtor_usuarios.py:340:# -------------------------------------------------------
+  backend\routers\produtor_usuarios.py:341:# Rota: /produtor/usuarios/toggle/<id> — Inativar/Ativar.
+> backend\routers\produtor_usuarios.py:367:            db.commit()
+  backend\routers\produtor_usuarios.py:368:
+  backend\routers\produtor_usuarios.py:369:    if request.args.get('mostrar') == 'todos':
+  backend\routers\produtor_usuarios.py:370:        return redirect(url_for('produtor_usuarios.lista', mostrar='todos'))
+  backend\routers\produtor_usuarios.py:371:    return redirect(url_for('produtor_usuarios.lista'))
+  backend\routers\produtor_usuarios.py:372:
+  backend\routers\produtor_usuarios.py:373:# =========================================================
+> backend\routers\propriedades.py:796:        db.commit()
+  backend\routers\propriedades.py:797:
+  backend\routers\propriedades.py:798:    # P-040: redirecionamento pos-salvar depende do perfil -
+  backend\routers\propriedades.py:799:    # PRODUTOR nao tem acesso a lista de Propriedades (essa
+  backend\routers\propriedades.py:800:    # continua exclusiva CONSISTE), vai para a propria Home.
+  backend\routers\propriedades.py:801:    if perfil == 'PRODUTOR':
+  backend\routers\propriedades.py:802:        return redirecionar_home(perfil)
+> backend\routers\propriedades.py:817:        db.commit()
+  backend\routers\propriedades.py:818:
+  backend\routers\propriedades.py:819:    return redirect(url_for('propriedades.lista'))
+  backend\routers\propriedades.py:820:
+  backend\routers\propriedades.py:821:# -------------------------------------------------------
+  backend\routers\propriedades.py:822:# Rota: /produtor/propriedade — descobre a Propriedade do
+  backend\routers\propriedades.py:823:# PRODUTOR logado e redireciona para editar().
+> backend\routers\proprietarios.py:446:            db.commit()
+  backend\routers\proprietarios.py:447:
+  backend\routers\proprietarios.py:448:            proprietario = db.get(Proprietario, int(id_existente))
+  backend\routers\proprietarios.py:449:            propriedade  = db.get(Propriedade, int(id_propriedade))
+  backend\routers\proprietarios.py:450:
+  backend\routers\proprietarios.py:451:            return render_template('consiste/proprietario_vinculado.html',
+  backend\routers\proprietarios.py:452:                proprietario     = proprietario,
+> backend\routers\proprietarios.py:620:            db.commit()
+  backend\routers\proprietarios.py:621:
+  backend\routers\proprietarios.py:622:            # v2.6.0: PRODUTOR nao tem acesso a lista de
+  backend\routers\proprietarios.py:623:            # Proprietarios - volta para a Propriedade de origem.
+  backend\routers\proprietarios.py:624:            if perfil == 'PRODUTOR':
+  backend\routers\proprietarios.py:625:                return redirect(url_for('propriedades.editar', id=int(id_propriedade)))
+  backend\routers\proprietarios.py:626:            return redirect(url_for('proprietarios.lista'))
+> backend\routers\proprietarios.py:658:            db.commit()
+  backend\routers\proprietarios.py:659:
+  backend\routers\proprietarios.py:660:            propriedade = db.get(Propriedade, int(id_propriedade))
+  backend\routers\proprietarios.py:661:
+  backend\routers\proprietarios.py:662:            return render_template('consiste/proprietario_vinculado.html',
+  backend\routers\proprietarios.py:663:                proprietario     = p,
+  backend\routers\proprietarios.py:664:                propriedade      = propriedade,
+> backend\routers\proprietarios.py:686:        db.commit()
+  backend\routers\proprietarios.py:687:
+  backend\routers\proprietarios.py:688:    return redirect(url_for('proprietarios.lista'))
+  backend\routers\proprietarios.py:689:
+  backend\routers\proprietarios.py:690:
+  backend\routers\proprietarios.py:691:# -------------------------------------------------------
+  backend\routers\proprietarios.py:692:# Rota: /proprietarios/toggle-vinculo/<id_vinculo> — alterna
+> backend\routers\proprietarios.py:732:        db.commit()
+  backend\routers\proprietarios.py:733:
+  backend\routers\proprietarios.py:734:    return redirect(url_for('propriedades.editar', id=id_propriedade))
+  backend\routers\proprietarios.py:735:
+  backend\routers\proprietarios.py:736:
+  backend\routers\proprietarios.py:737:# -------------------------------------------------------
+  backend\routers\proprietarios.py:738:# Rota: /proprietarios/relatorio/<id> — gera PDF com dados
+> backend\routers\prospects.py:219:        db.commit()
+  backend\routers\prospects.py:220:
+  backend\routers\prospects.py:221:    with Session(engine) as db:
+  backend\routers\prospects.py:222:        convidados = _buscar_convidados(db)
+  backend\routers\prospects.py:223:
+  backend\routers\prospects.py:224:    return render_template('consiste/prospects.html',
+  backend\routers\prospects.py:225:        convidados     = convidados,
+> backend\routers\prospects.py:307:        db.commit()
+  backend\routers\prospects.py:308:
+  backend\routers\prospects.py:309:    return redirect(link_whatsapp)
+  backend\routers\prospects.py:310:
+  backend\routers\prospects.py:311:# =========================================================
+  backend\routers\prospects.py:312:# FIM DE ARQUIVO: backend\routers\prospects.py
+  backend\routers\prospects.py:313:# =========================================================
+> backend\routers\protocolos.py:221:        db.commit()
+  backend\routers\protocolos.py:222:
+  backend\routers\protocolos.py:223:    return redirect(url_for('protocolos.lista'))
+  backend\routers\protocolos.py:224:
+  backend\routers\protocolos.py:225:# -------------------------------------------------------
+  backend\routers\protocolos.py:226:# Rota: /protocolos/toggle/<id> — ativa ou inativa
+  backend\routers\protocolos.py:227:# Inativar aqui NAO apaga o catalogo nem os vinculos
+> backend\routers\protocolos.py:242:        db.commit()
+  backend\routers\protocolos.py:243:
+  backend\routers\protocolos.py:244:    return redirect(url_for('protocolos.lista'))
+  backend\routers\protocolos.py:245:
+  backend\routers\protocolos.py:246:# =========================================================
+  backend\routers\protocolos.py:247:# FIM DE ARQUIVO: backend\routers\protocolos.py
+  backend\routers\protocolos.py:248:# =========================================================
+> backend\routers\racas.py:191:        db.commit()
+  backend\routers\racas.py:192:
+  backend\routers\racas.py:193:    return jsonify({'ok': True})
+  backend\routers\racas.py:194:
+  backend\routers\racas.py:195:# =========================================================
+  backend\routers\racas.py:196:# FIM DE ARQUIVO: backend\routers\racas.py
+  backend\routers\racas.py:197:# =========================================================
+> backend\routers\usuarios.py:227:            db.commit()
+  backend\routers\usuarios.py:228:        return redirect(url_for('usuarios.lista'))
+  backend\routers\usuarios.py:229:
+  backend\routers\usuarios.py:230:    # -----------------------------------------------------
+  backend\routers\usuarios.py:231:    # Funcao auxiliar interna: reexibe o formulario de novo
+  backend\routers\usuarios.py:232:    # cadastro com uma mensagem de erro, sem perder o que ja
+  backend\routers\usuarios.py:233:    # foi carregado (lista de Produtores/Cargos).
+> backend\routers\usuarios.py:317:            db.commit()
+  backend\routers\usuarios.py:318:
+  backend\routers\usuarios.py:319:        return redirect(url_for('usuarios.lista'))
+  backend\routers\usuarios.py:320:
+  backend\routers\usuarios.py:321:    # -----------------------------------------------------
+  backend\routers\usuarios.py:322:    # Novo usuario CONSISTE (fluxo original, agora grava email)
+  backend\routers\usuarios.py:323:    # -----------------------------------------------------
+> backend\routers\usuarios.py:338:        db.commit()
+  backend\routers\usuarios.py:339:
+  backend\routers\usuarios.py:340:    return redirect(url_for('usuarios.lista'))
+  backend\routers\usuarios.py:341:
+  backend\routers\usuarios.py:342:# -------------------------------------------------------
+  backend\routers\usuarios.py:343:# Rota: /usuarios/toggle/<id> — ativa ou inativa
+  backend\routers\usuarios.py:344:# -------------------------------------------------------
+> backend\routers\usuarios.py:353:        db.commit()
+  backend\routers\usuarios.py:354:
+  backend\routers\usuarios.py:355:    return redirect(url_for('usuarios.lista'))
+  backend\routers\usuarios.py:356:
+  backend\routers\usuarios.py:357:# -------------------------------------------------------
+  backend\routers\usuarios.py:358:# Rota: /trocar-senha — troca de senha obrigatoria
+  backend\routers\usuarios.py:359:# (INALTERADA nesta versao - identica a v1.7.0)
+> backend\routers\usuarios.py:401:                        db.commit()
+  backend\routers\usuarios.py:402:                        return _redirecionar_sem_cache(session.get('usuario_perfil'))
+  backend\routers\usuarios.py:403:                else:
+  backend\routers\usuarios.py:404:                    if senha_nova != senha_conf:
+  backend\routers\usuarios.py:405:                        erro = 'Nova senha e confirmacao nao conferem!'
+  backend\routers\usuarios.py:406:                    elif len(senha_nova) < 6:
+  backend\routers\usuarios.py:407:                        erro = 'A nova senha deve ter pelo menos 6 caracteres!'
+> backend\routers\usuarios.py:412:                        db.commit()
+  backend\routers\usuarios.py:413:                        sucesso = 'Senha alterada com sucesso!'
+  backend\routers\usuarios.py:414:
+  backend\routers\usuarios.py:415:            login_atual = u.login
+  backend\routers\usuarios.py:416:
+  backend\routers\usuarios.py:417:    return render_template('usuarios/usuario_senha.html',
+  backend\routers\usuarios.py:418:        erro           = erro,
+> backend\routers\vincular_gta.py:122:#         de objetos do banco DEPOIS do db.commit() (juntar_datas()
+  backend\routers\vincular_gta.py:123:#         e salvar()) - tudo passa a ser lido ANTES do commit.
+  backend\routers\vincular_gta.py:124:#     v1.6.0: Sessao 079 (24/09/2026, 18:30 -03) - CONFERENCIA
+  backend\routers\vincular_gta.py:125:#         ASSERTIVA + AUDITORIA (regra de Benedito: erro achado =
+  backend\routers\vincular_gta.py:126:#         para tudo, corrige e volta). Primeiro teste real do
+  backend\routers\vincular_gta.py:127:#         Confirmar mostrou: Data com 99 animais x GTA de 50 (sem
+  backend\routers\vincular_gta.py:128:#         como escolher), troca de idade que so mudava a faixa e
+> backend\routers\vincular_gta.py:841:        db.commit()
+  backend\routers\vincular_gta.py:842:
+  backend\routers\vincular_gta.py:843:    session['vincular_gta_ids'] = ids_finais
+  backend\routers\vincular_gta.py:844:
+  backend\routers\vincular_gta.py:845:    return jsonify({
+  backend\routers\vincular_gta.py:846:        'sucesso': True,
+  backend\routers\vincular_gta.py:847:        'nova_data': nova_data.strftime('%d/%m/%Y'),
+> backend\routers\vincular_gta.py:1181:        db.commit()
+  backend\routers\vincular_gta.py:1182:
+  backend\routers\vincular_gta.py:1183:    # v1.6.0 (A2) - so a selecao de animais sai da sessao; a
+  backend\routers\vincular_gta.py:1184:    # Propriedade e o modo ficam (proxima GTA no mesmo fluxo).
+  backend\routers\vincular_gta.py:1185:    session.pop('vincular_gta_ids', None)
+  backend\routers\vincular_gta.py:1186:
+  backend\routers\vincular_gta.py:1187:    if modo == 'por_gta':
+> backend\routers\vitrine_visitantes.py:116:        db.commit()
+  backend\routers\vitrine_visitantes.py:117:
+  backend\routers\vitrine_visitantes.py:118:
+  backend\routers\vitrine_visitantes.py:119:# -------------------------------------------------------
+  backend\routers\vitrine_visitantes.py:120:# Funcao auxiliar: busca todos os visitantes ainda NAO
+  backend\routers\vitrine_visitantes.py:121:# convertidos (convertido_em IS NULL), mais recente primeiro.
+  backend\routers\vitrine_visitantes.py:122:# Reaproveitada em lista() e no retorno de converter() (lista
+> backend\routers\vitrine_visitantes.py:204:            db.commit()
+  backend\routers\vitrine_visitantes.py:205:            return redirect(url_for('vitrine_visitantes.lista'))
+  backend\routers\vitrine_visitantes.py:206:
+  backend\routers\vitrine_visitantes.py:207:        # --- Cria o Produtor, com placeholders nos campos
+  backend\routers\vitrine_visitantes.py:208:        # obrigatorios sem fonte de dado real (ver DESCRICAO). ---
+  backend\routers\vitrine_visitantes.py:209:        tipo_pessoa = 'FISICA' if len(visitante.cpf_cnpj) == 11 else 'JURIDICA'
+  backend\routers\vitrine_visitantes.py:210:
+> backend\routers\vitrine_visitantes.py:283:        db.commit()
+  backend\routers\vitrine_visitantes.py:284:        acesso_criado_agora = True
+  backend\routers\vitrine_visitantes.py:285:
+  backend\routers\vitrine_visitantes.py:286:        # --- Envio de e-mail (obrigatorio) ---
+  backend\routers\vitrine_visitantes.py:287:        try:
+  backend\routers\vitrine_visitantes.py:288:            link_login = url_for('auth.login', _external=True)
+  backend\routers\vitrine_visitantes.py:289:            msg = Message(
+> backend\utils\onboarding.py:242:        db.commit()
+  backend\utils\onboarding.py:243:
+  backend\utils\onboarding.py:244:        try:
+  backend\utils\onboarding.py:245:            engine_traduzido = engine.execution_options(
+  backend\utils\onboarding.py:246:                schema_translate_map={None: schema_nome}
+  backend\utils\onboarding.py:247:            )
+  backend\utils\onboarding.py:248:
+> backend\utils\onboarding.py:257:            db.commit()
+  backend\utils\onboarding.py:258:
+  backend\utils\onboarding.py:259:        except Exception:
+  backend\utils\onboarding.py:260:            # Rollback total - qualquer falha no meio da criacao das
+  backend\utils\onboarding.py:261:            # tabelas apaga o schema inteiro, nunca fica pela metade.
+  backend\utils\onboarding.py:262:            db.execute(text(f'DROP SCHEMA {schema_nome} CASCADE'))
+> backend\utils\onboarding.py:263:            db.commit()
+  backend\utils\onboarding.py:264:            raise
+  backend\utils\onboarding.py:265:
+  backend\utils\onboarding.py:266:        return schema_nome
+  backend\utils\onboarding.py:267:
+  backend\utils\onboarding.py:268:
+  backend\utils\onboarding.py:269:def completar_ambiente_produtor(id_produtor: int) -> list[str]:
+
+
