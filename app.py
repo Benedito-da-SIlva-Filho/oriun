@@ -5,8 +5,8 @@
 # MODULO:       app.py
 # AUTOR:        Benedito Silva Filho
 # CRIADO EM:    2026-06-20 19:49 -03
-# ATUALIZADO EM: 2026-11-19 12:40 -03
-# VERSAO: 1.60.0
+# ATUALIZADO EM: 2026-11-26 17:15 -03
+# VERSAO: 1.61.0
 #
 # DESCRICAO:
 #     Arquivo principal do Orion.
@@ -241,6 +241,7 @@
 #     v1.57.0: Sessao 129 (2026-11-17 11:30 -03) - Registra o blueprint pesos_relatorios (Relatorios de Pesagem em PDF). REVERSAO: .bak_antes_s129_pesos_relatorios.
 #     v1.59.0: Sessao 133 (2026-11-19 11:10 -03) - Celular: after_request "_injetar_mobile" coloca orion_mobile.css/.js (static) e o viewport em TODAS as telas HTML, sem mexer nos templates. REVERSAO: .bak_antes_s133_mobile.
 #     v1.60.0: Sessao 133 (2026-11-19 12:40 -03) - Servidor: .env ganha TRUST_PROXY=True (Orion atras de proxy HTTPS: enxerga https e o dominio certo, necessario para cookie seguro e barreira CSRF), ORION_HOST (padrao 0.0.0.0; atras de proxy usar 127.0.0.1) e ORION_PORT (padrao 5001). Sem essas linhas tudo funciona como antes.
+#     v1.61.0: Sessao 137 (2026-11-26 17:15 -03) - Icone/aplicativo instalavel (PWA): rotas /manifest.webmanifest e /orion-sw.js e, na _injetar_mobile, manifesto, cor do tema, icone do iPhone e orion_pwa.js em TODAS as telas HTML, sem mexer nos templates. Icone A1 (cinturao de Orion com sinal de satelite), nome "Orion". Nada fica em cache. REVERSAO: .bak_antes_s137_pwa.
 #     v1.51.0: Sessao 114 (2026-11-04 19:00 -03) - Registra o blueprint pesos_consulta (Consulta de Peso e Conferidos).  REVERSAO: .bak_antes_s114_consulta.
 #     v1.50.0: Sessao 114 (2026-11-04 14:50 -03) - Registra o blueprint pesos_bastao (Leitor de Peso com Bastao).  REVERSAO: .bak_antes_s114_bastao.
 #     v1.52.0: Sessao 115 (2026-11-05 13:45 -03) - Registra o blueprint posse (Leitor da Alteracao de Posse e com Bastao).  REVERSAO: .bak_antes_s115_posse_pacote2.
@@ -691,6 +692,52 @@ from backend.routers.auditoria_eras import auditoria_eras
 app.register_blueprint(auditoria_eras)
 print('Auditorias ERAS: OK!')
 
+# v1.61.0 - Aplicativo instalavel do Orion (PWA): manifesto e service worker.
+# O manifesto e montado aqui (JSON nao aceita comentario). O service worker fica em static/pwa e e
+# servido na RAIZ (/orion-sw.js) para valer em todas as telas. Nada de cache de dados.
+from flask import send_from_directory
+
+def _carimbo_static(caminho):   # carimbo de data do arquivo: o navegador pega o icone novo sozinho
+    try:
+        return str(int(os.path.getmtime(os.path.join(app.static_folder, caminho))))
+    except OSError:
+        return '0'
+
+@app.route('/manifest.webmanifest')
+def pwa_manifesto():
+    manifesto = {
+        'name': 'Orion',
+        'short_name': 'Orion',
+        'description': 'Orion SISBOV - Sistema de Rastreabilidade Bovina',
+        'id': '/',
+        'start_url': '/',
+        'scope': '/',
+        'display': 'standalone',
+        'lang': 'pt-BR',
+        'background_color': '#FFFFFF',
+        'theme_color': '#D4370A',
+        'icons': [
+            {'src': '/static/img/pwa/icon-192.png?v=' + _carimbo_static('img/pwa/icon-192.png'),
+             'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+            {'src': '/static/img/pwa/icon-512.png?v=' + _carimbo_static('img/pwa/icon-512.png'),
+             'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+            {'src': '/static/img/pwa/icon-maskable-512.png?v=' + _carimbo_static('img/pwa/icon-maskable-512.png'),
+             'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
+        ],
+    }
+    resposta = jsonify(manifesto)
+    resposta.mimetype = 'application/manifest+json'
+    resposta.headers['Cache-Control'] = 'no-cache'
+    return resposta
+
+@app.route('/orion-sw.js')
+def pwa_service_worker():
+    resposta = send_from_directory(os.path.join(app.static_folder, 'pwa'), 'orion-sw.js',
+                                   mimetype='application/javascript')
+    resposta.headers['Cache-Control'] = 'no-cache'
+    resposta.headers['Service-Worker-Allowed'] = '/'
+    return resposta
+
 # v1.59.0 - Celular: coloca o CSS/JS de tela pequena e o viewport em toda tela HTML (os arquivos so agem ate 768px).
 @app.after_request
 def _injetar_mobile(resposta):
@@ -712,6 +759,12 @@ def _injetar_mobile(resposta):
             extra += b'<meta name="viewport" content="width=device-width, initial-scale=1">'
         extra += ('<link rel="stylesheet" href="/static/css/orion_mobile.css?v=' + _v('css/orion_mobile.css') + '">'
                   '<script src="/static/js/orion_mobile.js?v=' + _v('js/orion_mobile.js') + '" defer></script>').encode('utf-8')
+        if b'rel="manifest"' not in dados:   # v1.61.0 - aplicativo instalavel (icone do Orion)
+            extra += ('<link rel="manifest" href="/manifest.webmanifest">'
+                      '<meta name="theme-color" content="#D4370A">'
+                      '<meta name="apple-mobile-web-app-title" content="Orion">'
+                      '<link rel="apple-touch-icon" href="/static/img/pwa/apple-touch-icon.png?v=' + _v('img/pwa/apple-touch-icon.png') + '">'
+                      '<script src="/static/js/orion_pwa.js?v=' + _v('js/orion_pwa.js') + '" defer></script>').encode('utf-8')
         resposta.set_data(dados[:pos] + extra + dados[pos:])
     except Exception as erro:   # nunca derruba a tela por causa do celular
         print(f'_injetar_mobile: ignorado ({erro})')
